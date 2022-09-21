@@ -5,7 +5,7 @@ router.use(express.json());
 var Interface = require('./Interface');
 
 // CREATE AN INTERFACE
-router.post('/interfaces', function(req,res) {
+router.post('/', function(req,res) {
     Interface.create({
         name: req.body.name,
         description: req.body.description,
@@ -18,7 +18,7 @@ router.post('/interfaces', function(req,res) {
 });
 
 // GET ALL INTERFACES
-router.get('/interfaces', function (req,res) {
+router.get('/', function (req,res) {
     Interface.find({}, function (err, interfaces) {
         if (err) return res.status(500).send("There was a problem finding the interfaces.");
         res.status(200).send(interfaces);
@@ -26,7 +26,7 @@ router.get('/interfaces', function (req,res) {
 });
 
 // GET AN INTERFACE
-router.get('/interfaces/:id', function(req,res){
+router.get('/:id', function(req,res){
     Interface.findById(req.params.id, function (err, interface) {
         if (err) return res.status(500).send("There was a problem find the interface.");
         if (!user) return res.status(404).send("The interface you provided was not found.")
@@ -35,7 +35,7 @@ router.get('/interfaces/:id', function(req,res){
 });
 
 // DELETE AN INTERFACE FROM THE DATABASE
-router.delete('/interfaces/:id', function(req,res){
+router.delete('/:id', function(req,res){
     Interface.findByIdAndRemove(req.params.id, function(err,interface) {
         if (err) return req.status(500).send("There was a problem deleting your interface.");
         res.status(200).send("The interface " + interface.name+ " has been sucessfully deleted.")
@@ -43,7 +43,7 @@ router.delete('/interfaces/:id', function(req,res){
 });
 
 // UPDATE AN INTERFACE
-router.put('/interfaces/:id', function(req,res){ 
+router.put('/:id', function(req,res){ 
     Interface.findByIdAndUpdate(req.params.id, req.body, {new: true}, function(err,interface) {
         if (err) return res.status(500).send("There was a problem updating the interface.");
         res.status(200).send(interface);
