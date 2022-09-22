@@ -3,6 +3,17 @@ var router = express.Router();
 router.use(express.urlencoded({extended: true}));
 router.use(express.json());
 var Interface = require('./Interface');
+const lib = require('../lib');
+const crypto = require('crypto');
+
+
+// IMPORT AN INTERFACE FROM SWAGGER
+router.post('/upload', function(req,res) {
+   var info = lib.parseSwagger(req.body);
+
+   res.status(200).send(info);
+    
+});
 
 // CREATE AN INTERFACE
 router.post('/', function(req,res) {
