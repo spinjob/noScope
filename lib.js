@@ -2,7 +2,7 @@ var Interface = require('./interface/Interface');
 const InterfaceEntity = require('./interface_entity/InterfaceEntity');
 const InterfaceProperty = require('./interface_property/InterfaceProperty');
 const crypto = require('crypto');
-const InterfacePath = require('./interface_path/InterfacePath');
+const InterfaceAction = require('./interface_action/InterfaceAction');
 
 function parseSwagger(swagger) {
 
@@ -29,7 +29,7 @@ function parseSwagger(swagger) {
                     console.log(err);
                     return; 
                 }
-                console.log("Interface Created with ID: " + interface._id);
+                //console.log("Interface Created with ID: " + interface._id);
                 processSchema(schemaKeys, schemaValues, interfaceUUID);
                 processPathActions(pathKeys,pathValues,interfaceUUID)
                 return;
@@ -55,7 +55,7 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
                     console.log(err);
                     return; 
                 }
-                console.log("Interface Entity Created with ID: " + interfaceEntity._id);
+                //console.log("Interface Entity Created with ID: " + interfaceEntity._id);
                    
         });
         
@@ -93,7 +93,7 @@ function processProperties(propertyValues, parent_object_uuid, parent_interface_
                     console.log(err);
                     return; 
                 }
-                console.log("Interface Entity for Property Created "+ interfaceEntity._id);
+                //console.log("Interface Entity for Property Created "+ interfaceEntity._id);
                 var propertyUUID = crypto.randomUUID();
 
                 InterfaceProperty.create({
@@ -106,8 +106,8 @@ function processProperties(propertyValues, parent_object_uuid, parent_interface_
                         if (err) {
                             console.log(err);
                         }
-                        console.log("Interface Property Created with ID: " + interfaceProperty._id);
-                        return "All schema and properties processed";
+                        //console.log("Interface Property Created with ID: " + interfaceProperty._id);
+                        return;
                 });
         });
     
@@ -121,14 +121,13 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
     //iterate through paths
     for (var i = 0; i < pathKeys.length; ++i) {
         var path = pathKeys[i];
+        var methods = Object.keys(pathValues[i]);
+        var values = Object.values(pathValues[i]);
 
         //iterate through path methods
-        for (var j = 0; j < Object.keys(pathValues[i]).length; ++j){
-            var method = Object.keys(pathValues[i]);
-            var values = Object.values(pathValues[i]);
+        for (var j = 0; j < methods.length; ++j){
             var actionUUID = crypto.randomUUID();
-            
-            //check if there's a request body documented.  If not, create the InterfacePath without one; else, process schema references and create with Request Body schema
+            //check if there's a request body documented.  If not, create the InterfaceAction without one; else, process schema references and create with Request Body schema
             if (values[j].requestBody == undefined && values[j].parameters == undefined ){
                 
                 // console.log(
@@ -143,21 +142,22 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                 //     }
                 // );
 
-                InterfacePath.create({
+                InterfaceAction.create({
                     uuid: actionUUID,
                     parent_interface_uuid: parent_interface_uuid,
                     name: values[j].operationId,
                     path: path,
-                    method: method[j],
+                    method: methods[j],
                     parameters: null,
                     requestBody: null
                 },
-                    function(err,interfacePath){
+                    function(err,interfaceAction){
                         if (err) {
                             console.log(err);
+                            console.log(path + " both requestBody and parameters are undefined (ln 158)");
                             return; 
                         }
-                        console.log("Interface Path Created with ID: " + interfacePath._id);
+                        console.log("Interface Action Created with ID: " + interfaceAction._id);
                         
                 });  
 
@@ -169,27 +169,29 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                 //         "parent_interface_uuid": parent_interface_uuid,
                 //         "name": values[j].operationId,
                 //         "path": path,
-                //         "method": method[j],
+                //         "method": methods[j],
                 //         "parameters": processReferences(values[j].parameters),
                 //         "requestBody": null
                 //     }
                 // );
 
-                InterfacePath.create({
+                InterfaceAction.create({
                     uuid: actionUUID,
                     parent_interface_uuid: parent_interface_uuid,
                     name: values[j].operationId,
                     path: path,
-                    method: method[j],
+                    method: methods[j],
                     parameters: processReferences(values[j].parameters),
                     requestBody: null
                 },
-                    function(err,interfacePath){
+                    function(err,interfaceAction){
                         if (err) {
                             console.log(err);
+                            console.log(path + " requestBody is undefined but parameters are present (ln 166)");
                             return; 
                         }
-                        console.log("Interface Path Created with ID: " + interfacePath._id);
+                        console.log("Interface Action Created with ID: " + interfaceAction._id);
+                        actionVariable = "";
                         
                 });  
 
@@ -197,22 +199,23 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
             } else {
                  //application/json
                 if (values[j].requestBody.content["application/json"] !== undefined) {
-                var requestBodyKeys = Object.keys(values[j].requestBody.content["application/json"].schema);
-                var requestBodyArray = [];
-                var requestBody = values[j].requestBody.content["application/json"].schema;
 
-                    if(requestBodyKeys.length > 1) {
+                    var requestBodyKeys = Object.keys(values[j].requestBody.content["application/json"].schema);
+                    var requestBodyArray = [];
+                    var requestBody = values[j].requestBody.content["application/json"].schema;
+
+                    if(requestBodyKeys.length > 1 && requestBodyKeys.includes("$ref") == true) {
                     
                         for (var h = 0; h < requestBodyKeys.length; ++h){
                             requestBodyArray.push(requestBody[h]);
                         }
 
-                        InterfacePath.create({
+                        InterfaceAction.create({
                             uuid: actionUUID,
                             parent_interface_uuid: parent_interface_uuid,
                             name: values[j].operationId,
                             path: path,
-                            method: method[j],
+                            method: methods[j],
                             parameters: processReferences(values[j].parameters),
                             requestBody: {
                                 schema: processReferences(requestBodyArray),
@@ -220,24 +223,25 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                 required: values[j].requestBody.required
                             }
                         },
-                            function(err,interfacePath){
+                            function(err,interfaceAction){
                                 if (err) {
                                     console.log(err);
+                                    console.log(path + " both requestBody (1 schema + JSON) and parameters are present (ln 200)");
                                     return; 
                                 }
-                                console.log("Interface Path Created with ID: " + interfacePath._id);
+                                console.log("Interface Action Created with ID: " + interfaceAction._id);
                                 
                         });  
 
-                    } else {
+                    } else if(requestBodyKeys.includes("$ref") == true) {
                         requestBodyArray.push(requestBody);
                             
-                        InterfacePath.create({
+                        InterfaceAction.create({
                             uuid: actionUUID,
                             parent_interface_uuid: parent_interface_uuid,
                             name: values[j].operationId,
                             path: path,
-                            method: method[j],
+                            method: methods[j],
                             parameters: processReferences(values[j].parameters),
                             requestBody: {
                                 schema: processReferences(requestBodyArray),
@@ -245,35 +249,55 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                 required: values[j].requestBody.required
                             }
                         },
-                            function(err,interfacePath){
+                            function(err,interfaceAction){
                                 if (err) {
                                     console.log(err);
+                                    console.log(path + "both requestBody (> 1 schema + JSON) and parameters are present (ln 235)");
                                     return; 
                                 }
-                                console.log("Interface Path Created with ID: " + interfacePath._id);
+                                console.log("Interface Action Created with ID: " + interfaceAction._id);
                                 
                         });  
 
+                } else {
+                    ///Implement a function to validate new InterfaceEntity and add it as a Request Body Schema
+                    InterfaceAction.create({
+                        uuid: actionUUID,
+                        parent_interface_uuid: parent_interface_uuid,
+                        name: values[j].operationId,
+                        path: path,
+                        method: methods[j],
+                        parameters: processReferences(values[j].parameters),
+                        requestBody: null
+                    },
+                        function(err,interfaceAction){
+                            if (err) {
+                                console.log(err);
+                                return; 
+                            }
+                            console.log("Interface Action Created with ID: " + interfaceAction._id);
+                            actionVariable = "";
+                            
+                    });  
                 }
 
-                } else {
-                    
+                } else if (values[j].requestBody.content["application/x-www-form-urlencoded"] !== undefined) {
                     var requestBodyKeys = Object.keys(values[j].requestBody.content["application/x-www-form-urlencoded"].schema);
                     var requestBodyArray = [];
                     var requestBody = values[j].requestBody.content["application/x-www-form-urlencoded"].schema;
 
-                        if(requestBodyKeys.length > 1) {
+                        if(requestBodyKeys.length > 1 && requestBodyKeys.includes("$ref") == true) {
                         
                             for (var h = 0; h < requestBodyKeys.length; ++h){
                                 requestBodyArray.push(requestBody[h]);
                             }
 
-                            InterfacePath.create({
+                            InterfaceAction.create({
                                 uuid: actionUUID,
                                 parent_interface_uuid: parent_interface_uuid,
                                 name: values[j].operationId,
                                 path: path,
-                                method: method[j],
+                                method: methods[j],
                                 parameters: processReferences(values[j].parameters),
                                 requestBody: {
                                     schema: processReferences(requestBodyArray),
@@ -281,24 +305,25 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                     required: values[j].requestBody.required
                                 }
                             },
-                                function(err,interfacePath){
+                                function(err,interfaceAction){
                                     if (err) {
                                         console.log(err);
+                                        console.log(path + "both requestBody (1 schema + form-urlencoded) and parameters are present (ln 264)");
                                         return; 
                                     }
-                                    console.log("Interface Path Created with ID: " + interfacePath._id);
+                                    console.log("Interface Action Created with ID: " + interfaceAction._id);
                                     
                             });  
 
-                        } else {
+                        } else if (requestBodyKeys.includes("$ref") == true) {
                             requestBodyArray.push(requestBody);
                                 
-                            InterfacePath.create({
+                            InterfaceAction.create({
                                 uuid: actionUUID,
                                 parent_interface_uuid: parent_interface_uuid,
                                 name: values[j].operationId,
                                 path: path,
-                                method: method[j],
+                                method: methods[j],
                                 parameters: processReferences(values[j].parameters),
                                 requestBody:   {
                                     schema: processReferences(requestBodyArray),
@@ -306,18 +331,41 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                     required: values[j].requestBody.required
                                 }
                             },
-                                function(err,interfacePath){
+                                function(err,interfaceAction){
                                     if (err) {
                                         console.log(err);
+                                        cconsole.log(path + "both requestBody (>1 schema + form-urlencoded) and parameters are present (ln 299)");
                                         return; 
                                     }
-                                    console.log("Interface Path Created with ID: " + interfacePath._id);
+                                    console.log("Interface Action Created with ID: " + interfaceAction._id);
                                     
                             });  
 
+                 } else {
+                    ///Implement a function to validate new InterfaceEntity and add it as a Request Body Schema
+                        InterfaceAction.create({
+                            uuid: actionUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: values[j].operationId,
+                            path: path,
+                            method: methods[j],
+                            parameters: processReferences(values[j].parameters),
+                            requestBody: null
+                        },
+                            function(err,interfaceAction){
+                                if (err) {
+                                    console.log(err);
+                                    console.log(path + " requestBody is undefined but parameters are present (ln 166)");
+                                    return; 
+                                }
+                                console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                actionVariable = "";
+                                
+                        });  
                 }
-
                 
+                } else {
+                    console.log("not application/json or application/x-www-form-urlencoded");
                 }
                
                 }
@@ -339,6 +387,7 @@ function processReferences(parameters){
     } else if (parameters[0] == undefined) {
         return [];
     } else {
+
         for (var i = 0; i < parameters.length; ++i){
 
             var reference = Object.keys(parameters[i])

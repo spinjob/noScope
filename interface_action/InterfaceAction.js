@@ -8,8 +8,7 @@ var RequestBodySchema = new mongoose.Schema({
 
 mongoose.model('RequestBody', RequestBodySchema);
 
-
-var InterfacePathSchema = new mongoose.Schema({
+var InterfaceActionSchema = new mongoose.Schema({
     uuid: String,
     name: String,
     parent_interface_uuid: String,
@@ -19,7 +18,6 @@ var InterfacePathSchema = new mongoose.Schema({
     requestBody: RequestBodySchema
 });
 
+mongoose.model('InterfaceAction', InterfaceActionSchema);
 
-mongoose.model('InterfacePath', InterfacePathSchema);
-
-module.exports = mongoose.model('InterfacePath');
+module.exports = mongoose.model('InterfaceAction');
