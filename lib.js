@@ -4,6 +4,7 @@ const InterfaceEntity = require('./interface_entity/InterfaceEntity');
 const InterfaceProperty = require('./interface_property/InterfaceProperty');
 const InterfaceParameter = require('./interface_parameter/InterfaceParameter');
 const InterfaceAction = require('./interface_action/InterfaceAction');
+const InterfaceSecurityScheme = require('./interface_security_scheme/InterfaceSecurityScheme');
 
 function parseSwagger(swagger) {
 
@@ -13,6 +14,8 @@ function parseSwagger(swagger) {
     var pathValues = Object.values(swagger.paths);
     var parameterKeys = Object.keys(swagger.components.parameters);
     var parameterValues = Object.values(swagger.components.parameters);
+    var securitySchemeKeys = Object.keys(swagger.components.securitySchemes);
+    var securitySchemeValues = Object.values(swagger.components.securitySchemes);
 
     var interfaceUUID = crypto.randomUUID();
 
@@ -33,10 +36,10 @@ function parseSwagger(swagger) {
                     return; 
                 }
                 //console.log("Interface Created with ID: " + interface._id);
-                processSchema(schemaKeys, schemaValues, interfaceUUID);
-                processPathActions(pathKeys,pathValues,interfaceUUID);
-                processParameters(parameterKeys,parameterValues,interfaceUUID);
-               
+                //processSchema(schemaKeys, schemaValues, interfaceUUID);
+                //processPathActions(pathKeys,pathValues,interfaceUUID);
+                //processParameters(parameterKeys,parameterValues,interfaceUUID);
+                processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
                 return;
         });
 
@@ -401,7 +404,7 @@ function processParameters(parameterKeys, parameterValues,parent_interface_uuid)
                     console.log(err);
                     return; 
                 }
-                console.log("Interface Parameter Created "+ interfaceParameter._id);
+                //console.log("Interface Parameter Created "+ interfaceParameter._id);
         });
     
     }
@@ -409,6 +412,48 @@ function processParameters(parameterKeys, parameterValues,parent_interface_uuid)
     return;  
 }
 
+function processSecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_interface_uuid){
+   
+    //var securitySchemeAttributes = Object.values(securitySchemeValues);
+
+    for (var i = 0; i < securitySchemeKeys.length; ++i) {
+        var securitySchemeUUID = crypto.randomUUID();
+
+        var flowKeys = Object.keys(securitySchemeValues[i].flows);
+        var flowValues = Object.values(securitySchemeValues[i].flows);
+        var flowsArray = [];
+    
+        for (var j = 0; j < flowKeys.length; ++j){
+    
+            var flow = {
+                "type": flowKeys[j],
+                "tokenUrl": flowValues[j].tokenUrl,
+                "scopes": flowValues[j].scopes,
+            }
+
+            flowsArray.push(flow);
+        }
+
+        InterfaceSecurityScheme.create({
+            uuid: securitySchemeUUID,
+            parent_interface_uuid: parent_interface_uuid,
+            name: securitySchemeKeys[i],
+            description: securitySchemeValues[i].description,
+            type: securitySchemeValues[i].type,
+            flows: flowsArray
+        },
+            function(err,interfaceSecurityScheme){
+                if (err) {
+                    console.log(err);
+                    return; 
+                }
+                console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
+        });
+    
+    }
+    
+    return;  
+}
 
 function processReferences(parameters){
 
