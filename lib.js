@@ -1,7 +1,8 @@
-var Interface = require('./interface/Interface');
+const crypto = require('crypto');
+const Interface = require('./interface/Interface');
 const InterfaceEntity = require('./interface_entity/InterfaceEntity');
 const InterfaceProperty = require('./interface_property/InterfaceProperty');
-const crypto = require('crypto');
+const InterfaceParameter = require('./interface_parameter/InterfaceParameter');
 const InterfaceAction = require('./interface_action/InterfaceAction');
 
 function parseSwagger(swagger) {
@@ -10,6 +11,8 @@ function parseSwagger(swagger) {
     var schemaValues = Object.values(swagger.components.schemas);
     var pathKeys = Object.keys(swagger.paths);
     var pathValues = Object.values(swagger.paths);
+    var parameterKeys = Object.keys(swagger.components.parameters);
+    var parameterValues = Object.values(swagger.components.parameters);
 
     var interfaceUUID = crypto.randomUUID();
 
@@ -31,11 +34,13 @@ function parseSwagger(swagger) {
                 }
                 //console.log("Interface Created with ID: " + interface._id);
                 processSchema(schemaKeys, schemaValues, interfaceUUID);
-                processPathActions(pathKeys,pathValues,interfaceUUID)
+                processPathActions(pathKeys,pathValues,interfaceUUID);
+                processParameters(parameterKeys,parameterValues,interfaceUUID);
+               
                 return;
         });
 
-};
+}
 
 function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
 
@@ -69,15 +74,14 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
     }
 
     return
-};
+}
 
 function processProperties(propertyValues, parent_object_uuid, parent_interface_uuid) {
 
     //console.log(Object.keys(propertyValues));
     var propertyNames = Object.keys(propertyValues);
     var propertyAttributes = Object.values(propertyValues);
-    
-    
+
     for (var i = 0; i < propertyNames.length; ++i) {
         var entityUUID = crypto.randomUUID();
         InterfaceEntity.create({
@@ -114,7 +118,7 @@ function processProperties(propertyValues, parent_object_uuid, parent_interface_
     }
     
     return;
-};
+}
 
 function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
 
@@ -157,7 +161,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                             console.log(path + " both requestBody and parameters are undefined (ln 158)");
                             return; 
                         }
-                        console.log("Interface Action Created with ID: " + interfaceAction._id);
+                        //console.log("Interface Action Created with ID: " + interfaceAction._id);
                         
                 });  
 
@@ -190,8 +194,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                             console.log(path + " requestBody is undefined but parameters are present (ln 166)");
                             return; 
                         }
-                        console.log("Interface Action Created with ID: " + interfaceAction._id);
-                        actionVariable = "";
+                        //console.log("Interface Action Created with ID: " + interfaceAction._id);
                         
                 });  
 
@@ -229,7 +232,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                     console.log(path + " both requestBody (1 schema + JSON) and parameters are present (ln 200)");
                                     return; 
                                 }
-                                console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                //console.log("Interface Action Created with ID: " + interfaceAction._id);
                                 
                         });  
 
@@ -255,7 +258,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                     console.log(path + "both requestBody (> 1 schema + JSON) and parameters are present (ln 235)");
                                     return; 
                                 }
-                                console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                //console.log("Interface Action Created with ID: " + interfaceAction._id);
                                 
                         });  
 
@@ -275,7 +278,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                 console.log(err);
                                 return; 
                             }
-                            console.log("Interface Action Created with ID: " + interfaceAction._id);
+                            //console.log("Interface Action Created with ID: " + interfaceAction._id);
                             actionVariable = "";
                             
                     });  
@@ -311,7 +314,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                         console.log(path + "both requestBody (1 schema + form-urlencoded) and parameters are present (ln 264)");
                                         return; 
                                     }
-                                    console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                    //console.log("Interface Action Created with ID: " + interfaceAction._id);
                                     
                             });  
 
@@ -337,7 +340,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                         cconsole.log(path + "both requestBody (>1 schema + form-urlencoded) and parameters are present (ln 299)");
                                         return; 
                                     }
-                                    console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                    //console.log("Interface Action Created with ID: " + interfaceAction._id);
                                     
                             });  
 
@@ -375,7 +378,37 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
     }
 
     return;
-};
+}
+
+function processParameters(parameterKeys, parameterValues,parent_interface_uuid){
+    var parameterAttributes = Object.values(parameterValues);
+
+    for (var i = 0; i < parameterNames.length; ++i) {
+        var parameterUUID = crypto.randomUUID();
+
+        InterfaceParameter.create({
+            uuid: parameterUUID,
+            parent_interface_uuid: parent_interface_uuid,
+            parameter_type: parameterAttributes[i].in,
+            type: parameterAttributes[i].schema.type,
+            name: parameterKeys[i],
+            description: parameterAttributes[i].schema.description,
+            example: parameterAttributes[i].schema.example,
+            required: parameterAttributes[i].required,
+        },
+            function(err,interfaceParameter){
+                if (err) {
+                    console.log(err);
+                    return; 
+                }
+                console.log("Interface Parameter Created "+ interfaceParameter._id);
+        });
+    
+    }
+    
+    return;  
+}
+
 
 function processReferences(parameters){
 
@@ -420,6 +453,6 @@ function sleep(ms) {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
-  }
+}
 
 module.exports = { parseSwagger };
