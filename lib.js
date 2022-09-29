@@ -37,10 +37,10 @@ function parseSwagger(swagger) {
                     return; 
                 }
                 //console.log("Interface Created with ID: " + interface._id);
-                //processSchema(schemaKeys, schemaValues, interfaceUUID);
+                processSchema(schemaKeys, schemaValues, interfaceUUID);
                 processPathActions(pathKeys,pathValues,interfaceUUID);
-                //processParameters(parameterKeys,parameterValues,interfaceUUID);
-                //processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
+                processParameters(parameterKeys,parameterValues,interfaceUUID);
+                processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
                 return;
         });
 
@@ -408,6 +408,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
 }
 
 function processParameters(parameterKeys, parameterValues,parent_interface_uuid){
+    var parameterNames = Object.keys(parameterKeys);
     var parameterAttributes = Object.values(parameterValues);
 
     for (var i = 0; i < parameterNames.length; ++i) {
