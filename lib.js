@@ -6,25 +6,28 @@ const InterfaceParameter = require('./interface_parameter/InterfaceParameter');
 const InterfaceAction = require('./interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./interface_security_scheme/InterfaceSecurityScheme');
 const { castObject } = require('./interface/Interface');
+const InterfaceWebhook = require('./interface_webhook/InterfaceWebhook');
 
-function parseSwagger(swagger) {
+function processOpenApiV3(json) {
 
-    var schemaKeys = Object.keys(swagger.components.schemas);
-    var schemaValues = Object.values(swagger.components.schemas);
-    var pathKeys = Object.keys(swagger.paths);
-    var pathValues = Object.values(swagger.paths);
-    var parameterKeys = Object.keys(swagger.components.parameters);
-    var parameterValues = Object.values(swagger.components.parameters);
-    var securitySchemeKeys = Object.keys(swagger.components.securitySchemes);
-    var securitySchemeValues = Object.values(swagger.components.securitySchemes);
+    var schemaKeys = Object.keys(json.components.schemas);
+    var schemaValues = Object.values(json.components.schemas);
+    var pathKeys = Object.keys(json.paths);
+    var pathValues = Object.values(json.paths);
+    var parameterKeys = Object.keys(json.components.parameters);
+    var parameterValues = Object.values(json.components.parameters);
+    var securitySchemeKeys = Object.keys(json.components.securitySchemes);
+    var securitySchemeValues = Object.values(json.components.securitySchemes);
+    var webhookKeys = Object.keys(json.webhooks)
+    var webhookValues = Object.values(json.webhooks)
 
     var interfaceUUID = crypto.randomUUID();
 
         Interface.create({
             uuid: interfaceUUID,
-            name: swagger.info.title,
-            description: swagger.info.description,
-            version: swagger.info.version,
+            name: json.info.title,
+            description: json.info.description,
+            version: json.info.version,
             created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             deleted_at: null,
@@ -41,6 +44,7 @@ function parseSwagger(swagger) {
                 processPathActions(pathKeys,pathValues,interfaceUUID);
                 processParameters(parameterKeys,parameterValues,interfaceUUID);
                 processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
+                processWebhooks(webhookKeys,webhookValues,interfaceUUID);
                 return;
         });
 
@@ -145,7 +149,6 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
             var responsesArray = [];
             var responseSchemaArray = [];
 
-            //Iterate through 
             for (var k = 0; k < responseKeys.length; ++k){
                 if (responseValues[k].content !== undefined) {
                 
@@ -169,10 +172,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                 }
                 
              }
-            
-
-               
-    
+              
            // check if there's a request body documented.  If not, create the InterfaceAction without one; else, process schema references and create with Request Body schema
             if (values[j].requestBody == undefined && values[j].parameters == undefined ){
 
@@ -493,6 +493,7 @@ function processReferences(parameters){
 
         for (var i = 0; i < parameters.length; ++i){
 
+            //Apply a filter to each parameter in the array to split the top-level references out to format them.
             var reference = Object.keys(parameters[i])
                 .filter((key) => key.includes("$ref"))
                 .reduce((obj, key) => {
@@ -500,29 +501,136 @@ function processReferences(parameters){
                     "property": parameters[i][key]
                     });
             }, {});
-    
-            if (Object.keys(reference).length > 0) {
-                reference = reference.property.split("/")[3]
-                references.push(reference);
-            } else {
-                properties.push(parameters[i]);
-            }
             
+            if (Object.keys(reference).length > 0) {
+            //If this parameter is a reference (i.e. it wasn't filtered out), format it and add it to the references array.
+                reference = reference.property.split("/")[3];
+                references.push(reference);
+
+            } else {
+            //if this parameter isn't a top-level reference, we'll reach this statement. 
+            if(parameters[i].type !== undefined && parameters[i].type == "object"){
+                //check if this schema is an object
+                    var propertiesArray = [];
+                    var webhookPayload = parameters[i].properties.metadata.properties.payload
+                      
+                    var nestedReference = Object.keys(webhookPayload)
+                        .filter((key) => key.includes("$ref"))
+                        .reduce((obj, key) => {
+                            return Object.assign(obj, {
+                            "property": webhookPayload[key]
+                            });
+                    }, {});
+
+                     if (Object.keys(nestedReference).length > 0) {
+                        //If this parameter is a reference (i.e. it wasn't filtered out), format it and add it to the references array.
+                            nestedReference = nestedReference.property.split("/")[3]
+                            references.push(nestedReference);
+                    } else {
+                        //Process Object Schema
+                    }
+
+                } 
+            
+            }
         }
+    }
+
     if (references == undefined){
         return [];
     }
-        return references
+    
+    return references
+}
+
+
+
+function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid){
+
+    for (var i = 0; i < webhookKeys.length; ++i){
+
+        var webhookUUID = crypto.randomUUID();
+        
+        var thisWebhookKey = webhookKeys[i];
+        var thisWebhookValues = webhookValues[i]["post"];
+    
+        // allOf Schema Handling
+
+        if (thisWebhookValues.requestBody.content["application/json"].schema["allOf"] !== undefined) {
+            var allOfSchemas = thisWebhookValues.requestBody.content["application/json"].schema["allOf"];
+            var webhookSchemas = processReferences(allOfSchemas);
+
+            if (thisWebhookValues.responses !== undefined) {
+
+                    //Adapt the Path+Method (i.e. Action) Responses into an Array
+                    var responseKeys = Object.keys(thisWebhookValues.responses);
+                    var responseValues = Object.values(thisWebhookValues.responses);
+                    var responsesArray = [];
+                    
+                    for (var j = 0; j < responseKeys.length; ++j){
+
+                        var response = {
+                                "http_status_code": responseKeys[j],
+                                "content_type": "json",
+                                "schema": processReferences(responseValues)
+                            };
+
+                            responsesArray.push(response); 
+                
+                     }
+                        
+                        InterfaceWebhook.create({
+                            uuid: webhookUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: thisWebhookValues.operationId,
+                            description: thisWebhookValues.summary,
+                            method: "post",
+                            requestBody: {
+                                type: "json",
+                                schema: webhookSchemas,
+                                validationType: "allOf"
+                            },
+                            responses: responsesArray
+                        },
+                            function(err,interfaceWebhook){
+                                if (err) {
+                                    console.log(err);
+                                    return; 
+                                }
+                            console.log("Interface Webhook Created With Responses"+ interfaceWebhook._id);
+                        });
+                    
+
+            } else {
+
+                    InterfaceWebhook.create({
+                        uuid: webhookUUID,
+                        parent_interface_uuid: parent_interface_uuid,
+                        name: thisWebhookValues.operationId,
+                        description: thisWebhookValues.summary,
+                        method: "post",
+                        requestBody: {
+                            type: "json",
+                            schema: webhookSchemas,
+                            validationType: "all_of"
+                        },
+                        responses: []
+                    },
+                        function(err,interfaceWebhook){
+                            if (err) {
+                                console.log(err);
+                                return; 
+                            }
+                            console.log("Interface Webhook Created Without Responses"+ interfaceWebhook._id);
+                    });
+            }
+
+        } else {}
+
+        
+
     }
-
+    
 }
 
-
-
-function sleep(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-}
-
-module.exports = { parseSwagger };
+module.exports = { processOpenApiV3 };

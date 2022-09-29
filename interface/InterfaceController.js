@@ -9,7 +9,7 @@ const crypto = require('crypto');
 
 // IMPORT AN INTERFACE FROM SWAGGER
 router.post('/upload', function(req,res) {
-   var info = lib.parseSwagger(req.body);
+   var info = lib.processOpenApiV3(req.body);
 
    res.status(200).send(info);
     
