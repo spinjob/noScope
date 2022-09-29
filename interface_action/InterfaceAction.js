@@ -15,7 +15,8 @@ var InterfaceActionSchema = new mongoose.Schema({
     path: String,
     method: String,
     parameters: Array,
-    requestBody: RequestBodySchema
+    requestBody: RequestBodySchema,
+    responses: Array
 });
 
 mongoose.model('InterfaceAction', InterfaceActionSchema);

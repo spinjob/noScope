@@ -5,6 +5,7 @@ const InterfaceProperty = require('./interface_property/InterfaceProperty');
 const InterfaceParameter = require('./interface_parameter/InterfaceParameter');
 const InterfaceAction = require('./interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./interface_security_scheme/InterfaceSecurityScheme');
+const { castObject } = require('./interface/Interface');
 
 function parseSwagger(swagger) {
 
@@ -37,13 +38,14 @@ function parseSwagger(swagger) {
                 }
                 //console.log("Interface Created with ID: " + interface._id);
                 //processSchema(schemaKeys, schemaValues, interfaceUUID);
-                //processPathActions(pathKeys,pathValues,interfaceUUID);
+                processPathActions(pathKeys,pathValues,interfaceUUID);
                 //processParameters(parameterKeys,parameterValues,interfaceUUID);
-                processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
+                //processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
                 return;
         });
 
 }
+
 
 function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
 
@@ -123,6 +125,7 @@ function processProperties(propertyValues, parent_object_uuid, parent_interface_
     return;
 }
 
+
 function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
 
     //iterate through paths
@@ -131,23 +134,47 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
         var methods = Object.keys(pathValues[i]);
         var values = Object.values(pathValues[i]);
 
-        //iterate through path methods
+        //iterate through Path Actions (i.e. HTTP Methods)
         for (var j = 0; j < methods.length; ++j){
+
             var actionUUID = crypto.randomUUID();
-            //check if there's a request body documented.  If not, create the InterfaceAction without one; else, process schema references and create with Request Body schema
-            if (values[j].requestBody == undefined && values[j].parameters == undefined ){
+            
+            //Adapt the Path+Method (i.e. Action) Responses into an Array
+            var responseKeys = Object.keys(values[j].responses);
+            var responseValues = Object.values(values[j].responses);
+            var responsesArray = [];
+            var responseSchemaArray = [];
+
+            //Iterate through 
+            for (var k = 0; k < responseKeys.length; ++k){
+                if (responseValues[k].content !== undefined) {
                 
-                // console.log(
-                //     {
-                //         "uuid": actionUUID,
-                //         "parent_interface_uuid": parent_interface_uuid,
-                //         "name": values[j].operationId,
-                //         "path": path,
-                //         "method": method[j],
-                //         "parameters": processReferences(values[j].parameters),
-                //         "requestBody": null
-                //     }
-                // );
+                    var response = {
+                        "http_status_code": responseKeys[k],
+                        "content_type": "json",
+                        "schema": processReferences([responseValues[k].content["application/json"].schema])
+                    }
+
+                    responsesArray.push(response);
+        
+                } else {
+                       
+                        var response = {
+                            "http_status_code": responseKeys[k],
+                            "content_type": "json",
+                            "schema": []
+                        }
+                        responsesArray.push(response);
+        
+                }
+                
+             }
+            
+
+               
+    
+           // check if there's a request body documented.  If not, create the InterfaceAction without one; else, process schema references and create with Request Body schema
+            if (values[j].requestBody == undefined && values[j].parameters == undefined ){
 
                 InterfaceAction.create({
                     uuid: actionUUID,
@@ -156,7 +183,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                     path: path,
                     method: methods[j],
                     parameters: null,
-                    requestBody: null
+                    requestBody: null,
+                    responses: responsesArray
                 },
                     function(err,interfaceAction){
                         if (err) {
@@ -170,18 +198,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
 
 
             } else if (values[j].requestBody == undefined && values[j].parameters !== undefined ) {
-                // console.log(
-                //     {
-                //         "uuid": actionUUID,
-                //         "parent_interface_uuid": parent_interface_uuid,
-                //         "name": values[j].operationId,
-                //         "path": path,
-                //         "method": methods[j],
-                //         "parameters": processReferences(values[j].parameters),
-                //         "requestBody": null
-                //     }
-                // );
-
+   
                 InterfaceAction.create({
                     uuid: actionUUID,
                     parent_interface_uuid: parent_interface_uuid,
@@ -189,7 +206,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                     path: path,
                     method: methods[j],
                     parameters: processReferences(values[j].parameters),
-                    requestBody: null
+                    requestBody: null,
+                    responses: responsesArray
                 },
                     function(err,interfaceAction){
                         if (err) {
@@ -227,7 +245,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                 schema: processReferences(requestBodyArray),
                                 type: "json",
                                 required: values[j].requestBody.required
-                            }
+                            },
+                            responses: responsesArray
                         },
                             function(err,interfaceAction){
                                 if (err) {
@@ -253,7 +272,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                 schema: processReferences(requestBodyArray),
                                 type: "json",
                                 required: values[j].requestBody.required
-                            }
+                            },
+                            responses: responsesArray
                         },
                             function(err,interfaceAction){
                                 if (err) {
@@ -274,7 +294,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                         path: path,
                         method: methods[j],
                         parameters: processReferences(values[j].parameters),
-                        requestBody: null
+                        requestBody: null,
+                        responses: responsesArray
                     },
                         function(err,interfaceAction){
                             if (err) {
@@ -309,7 +330,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                     schema: processReferences(requestBodyArray),
                                     type: "form-urlencoded",
                                     required: values[j].requestBody.required
-                                }
+                                },
+                                responses: responsesArray
                             },
                                 function(err,interfaceAction){
                                     if (err) {
@@ -335,7 +357,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                                     schema: processReferences(requestBodyArray),
                                     type: "form-urlencoded",
                                     required: values[j].requestBody.required
-                                }
+                                },
+                                responses: responsesArray
                             },
                                 function(err,interfaceAction){
                                     if (err) {
@@ -356,7 +379,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                             path: path,
                             method: methods[j],
                             parameters: processReferences(values[j].parameters),
-                            requestBody: null
+                            requestBody: null,
+                            responses: responsesArray
                         },
                             function(err,interfaceAction){
                                 if (err) {
@@ -374,7 +398,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                     console.log("not application/json or application/x-www-form-urlencoded");
                 }
                
-                }
+            }
 
 
         }        
@@ -490,9 +514,9 @@ function processReferences(parameters){
         return references
     }
 
-
-
 }
+
+
 
 function sleep(ms) {
     return new Promise((resolve) => {
