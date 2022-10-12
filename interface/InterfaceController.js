@@ -40,7 +40,6 @@ router.get('/', function (req,res) {
 router.get('/:id', function(req,res){
     Interface.findById(req.params.id, function (err, interface) {
         if (err) return res.status(500).send("There was a problem find the interface.");
-        if (!user) return res.status(404).send("The interface you provided was not found.")
         res.status(200).send(interface);
     });
 });
