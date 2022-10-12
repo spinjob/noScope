@@ -3,7 +3,7 @@ var router = express.Router();
 router.use(express.urlencoded({extended: true}));
 router.use(express.json());
 var Interface = require('./Interface');
-const lib = require('../lib');
+const lib = require('../lib.js')
 const crypto = require('crypto');
 
 

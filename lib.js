@@ -50,7 +50,6 @@ function processOpenApiV3(json) {
 
 }
 
-
 function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
 
     for (var i = 0; i < schemaKeys.length; ++i) {
@@ -128,7 +127,6 @@ function processProperties(propertyValues, parent_object_uuid, parent_interface_
     
     return;
 }
-
 
 function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
 
@@ -542,8 +540,6 @@ function processReferences(parameters){
     
     return references
 }
-
-
 
 function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid){
 
