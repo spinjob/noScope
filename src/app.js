@@ -21,6 +21,7 @@ if (process.env.NODE_ENV !== "production") {
 app.use(express.json({limit: "200mb", extended: true}))
 app.use(express.urlencoded({limit: "200mb", extended: true, parameterLimit: 50000}))
 app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(express.static('client/build'));
 
 const whitelist = process.env.WHITELISTED_DOMAINS 
 ? process.env.WHITELISTED_DOMAINS.split(',')
