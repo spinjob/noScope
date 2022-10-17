@@ -1,12 +1,12 @@
 const crypto = require('crypto');
-const Interface = require('./interface/Interface');
-const InterfaceEntity = require('./interface_entity/InterfaceEntity');
-const InterfaceProperty = require('./interface_property/InterfaceProperty');
-const InterfaceParameter = require('./interface_parameter/InterfaceParameter');
-const InterfaceAction = require('./interface_action/InterfaceAction');
-const InterfaceSecurityScheme = require('./interface_security_scheme/InterfaceSecurityScheme');
-const { castObject } = require('./interface/Interface');
-const InterfaceWebhook = require('./interface_webhook/InterfaceWebhook');
+const Interface = require('./models/interface/Interface');
+const InterfaceEntity = require('./models/interface_entity/InterfaceEntity');
+const InterfaceProperty = require('./models/interface_property/InterfaceProperty');
+const InterfaceParameter = require('./models/interface_parameter/InterfaceParameter');
+const InterfaceAction = require('./models/interface_action/InterfaceAction');
+const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
+const { castObject } = require('./models/interface/Interface');
+const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
 
 function processOpenApiV3(json) {
 
