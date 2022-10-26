@@ -66,8 +66,7 @@ const ManageProject = () => {
       
       useEffect(() => {
         if(!projectInterfaces.length) {
-            fetchProjectDetails();
-            console.log(fetchProjectDetails());
+            fetchProjectDetails()
         }
       }, [projectInterfaces, fetchProjectDetails])
 
@@ -76,11 +75,14 @@ const ManageProject = () => {
         "Error Loading User details"
       ) : !userContext.details ? (
         <Loader />
-      ) : (
+      ) : !projectInterfaces[0] ? ( 
+        <Loader />
+     ) : (
         <div style={{display: 'block', width: 500, padding: 30}}>
             <Navigation />
             <Card>
                 <h1>Manage Project</h1>
+                <h2>{projectInterfaces[0].name}</h2>
                 <p>Project ID: {location.state.projectID}</p>
             </Card>
             <Card>

@@ -33,12 +33,11 @@ function CreateProjectForm({ params, setParams }) {
       axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/new", 
       { 
         uuid: projectUUID,
-        projectName: projectName,
+        name: projectName,
         interfaces: [firstApi, secondApi],
         created_by: userContext.details._id
       })
       .then(response => {  
-        console.log(response);
         setIsSubmitting(false);
         navigate("/projects/" + projectUUID,{state:{projectID: projectUUID}});
       })
