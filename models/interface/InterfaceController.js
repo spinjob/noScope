@@ -5,22 +5,49 @@ router.use(express.json());
 var Interface = require('./Interface');
 const lib = require('../../lib.js')
 const crypto = require('crypto');
-
+const User = require('../user/User');
+const {verifyUser} = require('../../authenticate.js');
 
 // IMPORT AN INTERFACE FROM SWAGGER
-router.post('/upload', function(req,res) {
-   var info = lib.processOpenApiV3(req.body);
+router.post('/upload', verifyUser, (req,res, next) => {
 
-   res.status(200).send(info);
+    const { signedCookies = {} } = req
+    const { refreshToken } = signedCookies
+    var userIdString = JSON.stringify(req.user._id).replace('"', '').replace('"', '');
+
+    User.findById(req.user._id).then(
+        user => {
+          const tokenIndex = user.refreshToken.findIndex(
+            item => item.refreshToken === refreshToken
+          )
+    
+          if (tokenIndex !== -1) {
+            user.refreshToken.id(user.refreshToken[tokenIndex]._id).remove()
+          }
+    
+          user.save((err, user) => {
+            if (err) {
+              res.statusCode = 500
+              res.send(err)
+            } else {
+              var info = lib.processOpenApiV3(req.body, userIdString);
+              res.send({ success: true, info: info })
+            }
+          })
+        },
+        err => next(err)
+      )
     
 });
+
 
 // CREATE AN INTERFACE
 router.post('/', function(req,res) {
     Interface.create({
         name: req.body.name,
         description: req.body.description,
-        version: req.body.version
+        version: req.body.version,
+
     },
     function (err,interface) {
         if (err) return res.status(500).send("There was a problem adding the information to the database.");
@@ -28,9 +55,11 @@ router.post('/', function(req,res) {
     });
 });
 
-// GET ALL INTERFACES
-router.get('/', function (req,res) {
-    Interface.find({}, function (err, interfaces) {
+// GET MY INTERFACES
+router.get('/', verifyUser, (req,res, next) => {
+    const { signedCookies = {} } = req
+
+    Interface.find({created_by: req.user._id}, function (err, interfaces) {
         if (err) return res.status(500).send("There was a problem finding the interfaces.");
         res.status(200).send(interfaces);
     });

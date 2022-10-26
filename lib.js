@@ -8,7 +8,7 @@ const InterfaceSecurityScheme = require('./models/interface_security_scheme/Inte
 const { castObject } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
 
-function processOpenApiV3(json) {
+function processOpenApiV3(json, userId) {
 
     var schemaKeys = Object.keys(json.components.schemas);
     var schemaValues = Object.values(json.components.schemas);
@@ -28,6 +28,7 @@ function processOpenApiV3(json) {
             name: json.info.title,
             description: json.info.description,
             version: json.info.version,
+            created_by: userId,
             created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             deleted_at: null,
@@ -39,6 +40,7 @@ function processOpenApiV3(json) {
                     console.log(err);
                     return; 
                 }
+                console.log(userId);
                 //console.log("Interface Created with ID: " + interface._id);
                 processSchema(schemaKeys, schemaValues, interfaceUUID);
                 processPathActions(pathKeys,pathValues,interfaceUUID);
@@ -593,7 +595,7 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid){
                                     console.log(err);
                                     return; 
                                 }
-                            console.log("Interface Webhook Created With Responses"+ interfaceWebhook._id);
+                            //console.log("Interface Webhook Created With Responses"+ interfaceWebhook._id);
                         });
                     
 
@@ -629,4 +631,16 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid){
     
 }
 
-module.exports = { processOpenApiV3 };
+function retrieveInterfaces(userId){
+
+    Interface.find({created_by: userId}, function(err, interfaces) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        return interfaces;
+    });
+
+}
+
+module.exports = { processOpenApiV3, retrieveInterfaces };

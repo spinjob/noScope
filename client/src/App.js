@@ -1,15 +1,20 @@
-import { Card, Tab, Tabs, Navbar, NavbarHeading, NavbarGroup, NavbarDivider, Button } from "@blueprintjs/core"
+import { Card, Tab, Tabs} from "@blueprintjs/core"
 import { useCallback, useContext, useEffect, useState } from "react"
 import { UserContext } from "./context/UserContext"
-import Loader from "./Loader"
-import Login from "./Login"
-import Register from "./Register"
-import Home from "./Home"
+import Loader from "./components/Loader"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import Home from "./pages/Home"
+import NewProject from "./pages/NewProject"
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+
 
 function App() {
+
   const [currentTab, setCurrentTab] = useState("login")
   const [userContext, setUserContext] = useContext(UserContext)
-
+  
+ 
   const verifyUser = useCallback(() => {
     fetch(process.env.REACT_APP_API_ENDPOINT + "/users/refreshToken", {
       method: "POST",
@@ -53,7 +58,6 @@ function App() {
     }, [syncLogout])
 
   return  userContext.token === null ? (
-    
     <Card elevation="1">
       <Tabs id="Tabs" onChange={setCurrentTab} selectedTabId={currentTab}>
         <Tab id="login" title="Login" panel={<Login />} />
@@ -62,7 +66,10 @@ function App() {
       </Tabs>
     </Card>
   ) : userContext.token ? (
-    <Home />
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/projects/new" element={<NewProject />} />
+    </Routes> 
   ) : (
     <Loader />
   )
