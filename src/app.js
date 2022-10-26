@@ -12,6 +12,7 @@ require('../authenticate.js');
 const UserController = require('../models/user/UserController');
 const InterfaceController = require('../models/interface/InterfaceController')
 const InterfaceEntityController = require('../models/interface_entity/InterfaceEntityController');
+const ProjectController = require('../models/project/ProjectController');
 
 if (process.env.NODE_ENV !== "production") {
     // Load environment variables from .env file in non prod environments
@@ -43,6 +44,7 @@ app.use(passport.initialize());
 app.use('/users', UserController);
 app.use('/interfaces', InterfaceController);
 app.use('/interfaces', InterfaceEntityController);
+app.use('/projects', ProjectController);
 
 //All other GET requests not handled will return our React app
 app.get('*', (req, res) => {

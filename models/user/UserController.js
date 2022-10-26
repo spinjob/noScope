@@ -115,7 +115,7 @@ router.post("/login", passport.authenticate("local"), (req, res, next) => {
     }
   })
 
-  router.get("/me", verifyUser, (req, res, next) => {
+router.get("/me", verifyUser, (req, res, next) => {
     res.send(req.user)
   })  
   

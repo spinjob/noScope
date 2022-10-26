@@ -6,6 +6,7 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Home from "./pages/Home"
 import NewProject from "./pages/NewProject"
+import ManageProject from "./pages/ManageProject"
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 
@@ -69,6 +70,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/projects/new" element={<NewProject />} />
+      <Route path="/projects/:id" element={<ManageProject />} />
     </Routes> 
   ) : (
     <Loader />

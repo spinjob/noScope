@@ -1,37 +1,17 @@
-import {   
-  FormGroup,
-  Intent,
-  Menu,
-  InputGroup,
-  Position,
-  Button,
-  RadioGroup,
-  Radio,
-  Divider
-} from "@blueprintjs/core"
-
-import { 
-  Select2, 
-  MultiSelect2 
-} from "@blueprintjs/select";
-
 import React, 
 { 
   useCallback, 
   useContext, 
   useEffect, 
-  useState 
 } from "react"
 
-import { useNavigate } from "react-router-dom"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
-import CreateProjectForm from "./CreateProjectForm";
+import CreateProjectForm from "../components/CreateProjectForm";
 
 const NewProject = () => {
   const [userContext, setUserContext] = useContext(UserContext)
-  const [item, setItem] = useState("Select");
 
   const fetchUserDetails = useCallback(() => {
     fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
@@ -78,10 +58,6 @@ const NewProject = () => {
   ) : (
     <div style={{display: 'block', width: 500, padding: 30}}>
         <Navigation />
-        
-        <FormGroup label="Project Name" labelFor="text-input" labelInfo="(required)">
-            <InputGroup id="text-input" placeholder="Project Name" />
-        </FormGroup>
         <CreateProjectForm />
    </div>     
     

@@ -9,7 +9,7 @@ const Register = () => {
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [userContext, setUserContext] = useContext(UserContext)
+  const [setUserContext] = useContext(UserContext)
 
   const formSubmitHandler = e => {
     e.preventDefault()

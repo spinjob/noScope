@@ -6,6 +6,7 @@
 
 import { MenuItem } from "@blueprintjs/core";
 import * as React from "react";
+import axios from "axios";
 
 ////// ** All imported and written to pull the user's interfaces from the database and display them in a dropdown menu.//////
 // import lib from "../../../../lib";
@@ -14,52 +15,8 @@ import * as React from "react";
 
 //Retrieve the current users imported APIs
 
-export const userInterfaces = [
-    {
-        "_id": "63585af90c20eeda23606ad6",
-        "uuid": "8bfdae78-c6e2-4199-874d-a748da3ef287",
-        "name": "Otter Public API",
-        "description": "Description for API",
-        "version": "v1",
-        "created_at": "2022-10-25 21:54:01",
-        "updated_at": "2022-10-25 21:54:01",
-        "deleted_at": null,
-        "production_server": "",
-        "sandbox_server": "",
-        "created_by": "634d897585c3d9a0f8bb433b",
-        "__v": 0
-    },
-    {
-        "_id": "63587a1f14b5e9b8d7d6efb1",
-        "uuid": "37d6706b-7025-4c20-a603-0f303bdcaba5",
-        "name": "Doordash Marketplace API",
-        "description": "Description for API",
-        "version": "v2.0",
-        "created_at": "2022-10-26 00:06:55",
-        "updated_at": "2022-10-26 00:06:55",
-        "deleted_at": null,
-        "production_server": "",
-        "sandbox_server": "",
-        "created_by": "634d897585c3d9a0f8bb433b",
-        "__v": 0
-    },
-    {
-        "_id": "63587a1f14b5e9b8d7d6efb1",
-        "uuid": "37d6706b-7025-4c20-a603-0f303bdcaba5",
-        "name": "Uber Direct API",
-        "description": "Description for API",
-        "version": "v3.3",
-        "created_at": "2022-10-26 00:06:55",
-        "updated_at": "2022-10-26 00:06:55",
-        "deleted_at": null,
-        "production_server": "",
-        "sandbox_server": "",
-        "created_by": "634d897585c3d9a0f8bb433b",
-        "__v": 0
-    }
-].map((m, index) => ({ ...m, rank: index + 1 }));
+export const userInterfaces = retrieveInterfaces();
 
-//export const userInterfaces = lib.retrieveInterfaces(userId).map((m, index) => ({ ...m, rank: index + 1 }));
 
 export const renderInterfaces = (userInterface, { handleClick, modifiers, query }) => {
   if (!modifiers.matchesPredicate) {
@@ -121,6 +78,14 @@ function highlightText(text, query) {
 
 function escapeRegExpChars(text) {
   return text.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
+
+export async function retrieveInterfaces() {
+
+    const response = await axios.get("http://localhost:3001/interfaces").data.map((m, index) => ({ ...m, rank: index + 1 })) 
+
+    return response
+
 }
 
 export const interfaceSelectProps = {

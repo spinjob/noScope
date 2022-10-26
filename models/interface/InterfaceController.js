@@ -56,10 +56,19 @@ router.post('/', function(req,res) {
 });
 
 // GET MY INTERFACES
-router.get('/', verifyUser, (req,res, next) => {
-    const { signedCookies = {} } = req
+// router.get('/', verifyUser, (req,res, next) => {
+//     const { signedCookies = {} } = req
 
-    Interface.find({created_by: req.user._id}, function (err, interfaces) {
+//     Interface.find({created_by: req.user._id}, function (err, interfaces) {
+//         if (err) return res.status(500).send("There was a problem finding the interfaces.");
+//         res.status(200).send(interfaces);
+//     });
+// });
+
+//GET ALL INTERFACES (NO USER AUTH)
+router.get('/', (req,res) => {
+
+    Interface.find({}, function (err, interfaces) {
         if (err) return res.status(500).send("There was a problem finding the interfaces.");
         res.status(200).send(interfaces);
     });
