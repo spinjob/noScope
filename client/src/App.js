@@ -7,13 +7,14 @@ import Register from "./pages/Register"
 import Home from "./pages/Home"
 import NewProject from "./pages/NewProject"
 import ManageProject from "./pages/ManageProject"
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 
 
 function App() {
 
   const [currentTab, setCurrentTab] = useState("login")
   const [userContext, setUserContext] = useContext(UserContext)
+  let { projectId } = useParams();
   
  
   const verifyUser = useCallback(() => {
@@ -70,7 +71,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/projects/new" element={<NewProject />} />
-      <Route path="/projects/:id" exact={true} element={<ManageProject />} />
+      <Route path="/projects/:projectId" exact={true} element={<ManageProject />} />
     </Routes> 
   ) : (
     <Loader />

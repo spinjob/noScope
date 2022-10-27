@@ -4,7 +4,7 @@ import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import axios from 'axios';
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 const ManageProject = () => {
 
@@ -12,7 +12,10 @@ const ManageProject = () => {
 
     const [userContext, setUserContext] = useContext(UserContext)
     const location = useLocation();
+    
     const projectId = location.pathname.split('/')[2];
+
+    console.log(projectId);
     
     const fetchProjectDetails = useCallback(() => { 
         axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + projectId + "/details")
