@@ -83,7 +83,7 @@ const ManageProject = () => {
             <Card>
                 <h1>Manage Project</h1>
                 <h2>{projectInterfaces[0].name}</h2>
-                <p>Project ID: {location.state.projectID}</p>
+                <p>Project ID: {projectInterfaces[0].uuid}</p>
             </Card>
             <Card>
                 <h2>Primary Interface</h2>

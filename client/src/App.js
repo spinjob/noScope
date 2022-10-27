@@ -70,7 +70,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/projects/new" element={<NewProject />} />
-      <Route path="/projects/:id" element={<ManageProject />} />
+      <Route path="/projects/:id" exact={true} element={<ManageProject />} />
     </Routes> 
   ) : (
     <Loader />
