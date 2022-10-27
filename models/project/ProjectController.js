@@ -4,6 +4,7 @@ router.use(express.urlencoded({extended: true}));
 router.use(express.json());
 const crypto = require('crypto');
 const Project = require('../project/Project');
+const {verifyUser} = require('../../authenticate.js');
 
 // CREATE A PROJECT
 router.post('/new', function(req,res) {
@@ -30,6 +31,25 @@ router.get('/:id/details', function(req,res) {
         res.status(200).send(project);
     });
 });
+
+// GET USER PROJECTS
+// router.get('/', verifyUser, (req,res, next) => {
+//     const { signedCookies = {} } = req
+
+//     Project.find({created_by: req.user._id}, function (err, projects) {
+//                 if (err) return res.status(500).send("There was a problem finding the interfaces.");
+//                 res.status(200).send(projects);
+//     });
+// })
+
+//GET PROJECTS
+router.get('/', function (req,res){
+
+    Project.find({}, function (err, projects) {
+                if (err) return res.status(500).send("There was a problem finding the interfaces.");
+                res.status(200).send(projects);
+    });
+})
 
 
 module.exports = router;

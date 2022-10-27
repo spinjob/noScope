@@ -1,24 +1,24 @@
-import { Card, Button, Callout, FormGroup, InputGroup } from "@blueprintjs/core"
+import { H1,Card, Button, Callout, FormGroup, InputGroup } from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
+import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import axios from 'axios';
+import MyProjectsTable from "../components/MyProjectsTable.tsx"
 import { useLocation, useParams } from "react-router-dom";
 
-const ManageProject = () => {
+const MyProjects = () => {
 
-    const [projectInterfaces, setInterfaces] = useState([]);
+    const [myProjects, setProjects] = useState([]);
+    const navigate = useNavigate();
 
     const [userContext, setUserContext] = useContext(UserContext)
-    const location = useLocation();
-
-    let { id } = useParams();
     
-    const fetchProjectDetails = useCallback(() => { 
-        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/details")
+    const fetchMyProjects = useCallback(() => { 
+        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/")
         .then(response => {
-            setInterfaces(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
+            setProjects(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
 
             return response
         }
@@ -67,38 +67,25 @@ const ManageProject = () => {
       }, [userContext.details, fetchUserDetails])
       
       useEffect(() => {
-        if(!projectInterfaces.length) {
-            fetchProjectDetails()
+        if(!myProjects.length) {
+            fetchMyProjects()
         }
-      }, [projectInterfaces, fetchProjectDetails])
+      }, [myProjects, fetchMyProjects])
 
 
       return userContext.details === null ? (
         "Error Loading User details"
       ) : !userContext.details ? (
         <Loader />
-      ) : !projectInterfaces[0] ? ( 
-        <Loader />
-     ) : (
+      ) : (
         <div style={{display: 'block', width: 500, padding: 30}}>
             <Navigation />
-            <Card>
-                <h1>Manage Project</h1>
-                <h2>{projectInterfaces[0].name}</h2>
-                <p>Project ID: {projectInterfaces[0].uuid}</p>
-            </Card>
-            <Card>
-                <h2>Primary Interface</h2>
-                <p>Interface ID: {projectInterfaces[0].interfaces[0]}</p>
-            </Card>
-            <Card>
-                <h2>Secondary Interface</h2>
-                <p>Interface ID: {projectInterfaces[0].interfaces[1]}</p>
-            </Card>
+            <H1>My Projects</H1>
+            <MyProjectsTable />
        </div>     
         
       )
 
 }
 
-export default ManageProject
+export default MyProjects

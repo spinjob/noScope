@@ -80,11 +80,20 @@ function escapeRegExpChars(text) {
   return text.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 }
 
+
 export async function retrieveInterfaces() {
 
-    const response = await axios.get("http://localhost:3001/interfaces").data.map((m, index) => ({ ...m, rank: index + 1 })) 
+        axios.get(process.env.REACT_APP_API_ENDPOINT + "/interfaces")
+            .then(response => {
+    
+                return response.data.map((m, index) => ({ ...m, rank: index + 1 })) 
+            }
+            )
+            .catch(error => {
+                console.log(error);
 
-    return response
+                return error
+            })
 
 }
 

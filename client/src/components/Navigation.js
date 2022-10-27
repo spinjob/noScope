@@ -89,7 +89,7 @@ const Navigation = () => {
   }
 
   const projectHandler = () => {
-    navigate("/projects/new");
+    navigate("/projects");
   }
 
 

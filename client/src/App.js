@@ -8,6 +8,7 @@ import Home from "./pages/Home"
 import NewProject from "./pages/NewProject"
 import ManageProject from "./pages/ManageProject"
 import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
+import MyProjects from "./pages/MyProjects"
 
 
 function App() {
@@ -70,6 +71,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/projects/new" element={<NewProject />} />
       <Route path="/projects/:id" exact={true} element={<ManageProject />} />
+      <Route path="/projects/" exact={true} element={<MyProjects />} />
     </Routes> 
   ) : (
     <Loader />
