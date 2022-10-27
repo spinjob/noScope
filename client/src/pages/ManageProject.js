@@ -12,21 +12,22 @@ const ManageProject = () => {
 
     const [userContext, setUserContext] = useContext(UserContext)
     const location = useLocation();
-    
-    const projectId = location.pathname.split('/')[2];
 
-    console.log(projectId);
+    let { id } = useParams();
+
+    console.log(id);
     
     const fetchProjectDetails = useCallback(() => { 
-        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + projectId + "/details")
+        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/details")
         .then(response => {
             setInterfaces(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
-            console.log(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
+
             return response
         }
         )
         .catch(error => {
             console.log(error);
+            return error
         })
     });
 

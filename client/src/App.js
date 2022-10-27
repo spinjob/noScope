@@ -14,8 +14,6 @@ function App() {
 
   const [currentTab, setCurrentTab] = useState("login")
   const [userContext, setUserContext] = useContext(UserContext)
-  let { projectId } = useParams();
-  
  
   const verifyUser = useCallback(() => {
     fetch(process.env.REACT_APP_API_ENDPOINT + "/users/refreshToken", {
@@ -71,7 +69,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/projects/new" element={<NewProject />} />
-      <Route path="/projects/:projectId" exact={true} element={<ManageProject />} />
+      <Route path="/projects/:id" exact={true} element={<ManageProject />} />
     </Routes> 
   ) : (
     <Loader />
