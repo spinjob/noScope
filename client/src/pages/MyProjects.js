@@ -1,19 +1,17 @@
 import { H1,Card, Button, Callout, FormGroup, InputGroup } from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
-import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import axios from 'axios';
 import MyProjectsTable from "../components/MyProjectsTable.tsx"
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 
 const MyProjects = () => {
 
     const [myProjects, setProjects] = useState([]);
-    const navigate = useNavigate();
-
     const [userContext, setUserContext] = useContext(UserContext)
+    const navigate = useNavigate();
     
     const fetchMyProjects = useCallback(() => { 
         axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/")
@@ -81,6 +79,9 @@ const MyProjects = () => {
         <div style={{display: 'block', width: 500, padding: 30}}>
             <Navigation />
             <H1>My Projects</H1>
+            <div style={{alignItems: 'left', display: 'block', padding: 20}}>
+            <Button text="New Project" onClick={() => navigate("/projects/new")}> </Button>
+            </div>
             <MyProjectsTable />
        </div>     
         

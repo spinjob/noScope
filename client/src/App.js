@@ -7,6 +7,7 @@ import Register from "./pages/Register"
 import Home from "./pages/Home"
 import NewProject from "./pages/NewProject"
 import ManageProject from "./pages/ManageProject"
+import Flow from "./pages/NewWorkflow"
 import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import MyProjects from "./pages/MyProjects"
 
@@ -72,6 +73,7 @@ function App() {
       <Route path="/projects/new" element={<NewProject />} />
       <Route path="/projects/:id" exact={true} element={<ManageProject />} />
       <Route path="/projects/" exact={true} element={<MyProjects />} />
+      <Route path="/projects/:id/workflows/new" exact={true} element={<Flow />} />
     </Routes> 
   ) : (
     <Loader />

@@ -1,10 +1,10 @@
-import { Card, Button, Callout, FormGroup, InputGroup } from "@blueprintjs/core"
+import { Card, Divider, Button, Callout, FormGroup, InputGroup } from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import axios from 'axios';
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 
 const ManageProject = () => {
 
@@ -12,6 +12,7 @@ const ManageProject = () => {
 
     const [userContext, setUserContext] = useContext(UserContext)
     const location = useLocation();
+    const navigate = useNavigate();
 
     let { id } = useParams();
     
@@ -94,6 +95,11 @@ const ManageProject = () => {
             <Card>
                 <h2>Secondary Interface</h2>
                 <p>Interface ID: {projectInterfaces[0].interfaces[1]}</p>
+            </Card>
+            <Divider />
+            <Card>
+                <h2>Project Workflows</h2>
+                <Button text="New Workflow" onClick={() => navigate("/projects/"+projectInterfaces[0].uuid+"/workflows/new")}> </Button>
             </Card>
        </div>     
         
