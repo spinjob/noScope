@@ -13,6 +13,7 @@ const UserController = require('../models/user/UserController');
 const InterfaceController = require('../models/interface/InterfaceController')
 const InterfaceEntityController = require('../models/interface_entity/InterfaceEntityController');
 const ProjectController = require('../models/project/ProjectController');
+const InterfaceWebhookController = require('../models/interface_webhook/InterfaceWebhookController');
 
 if (process.env.NODE_ENV !== "production") {
     // Load environment variables from .env file in non prod environments
@@ -45,6 +46,7 @@ app.use('/users', UserController);
 app.use('/interfaces', InterfaceController);
 app.use('/interfaces', InterfaceEntityController);
 app.use('/projects', ProjectController);
+app.use('/interfaces', InterfaceWebhookController);
 
 //All other GET requests not handled will return our React app
 app.get('*', (req, res) => {
