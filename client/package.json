@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@blueprintjs/docs-theme": "^4.4.13",
+    "@blueprintjs/popover2": "^1.8.0",
     "@blueprintjs/select": "^4.8.5",
     "@blueprintjs/table": "^4.7.5",
     "@testing-library/jest-dom": "^5.16.5",

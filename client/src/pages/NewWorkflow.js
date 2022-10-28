@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import ReactFlow, {
   addEdge,
   MiniMap,
@@ -9,6 +9,9 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import Navigation from "../components/Navigation";
+import CreateTriggerForm from "../components/CreateTriggerForm";
+import {Drawer, Classes} from "@blueprintjs/core";
+import axios from "axios";
 
 import {
   nodes as initialNodes,
@@ -21,6 +24,7 @@ const onInit = (reactFlowInstance) =>
 const OverviewFlow = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
@@ -29,31 +33,43 @@ const OverviewFlow = () => {
   return (
    <div style={{height: 1000, width: 1400}}>  
       <Navigation />
+      <Drawer
+        isOpen={true}
+        icon="info-sign"
+        title="Workflow Editor"
+        hasBackdrop={true}>
+        <div className={Classes.DRAWER_BODY}>
+          <div className={Classes.DIALOG_BODY}>
+            <CreateTriggerForm/>
+          </div>
+        </div>
+        <div className={Classes.DRAWER_FOOTER}>Drawer Footer</div>
+      </Drawer>
       <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      onInit={onInit}
-      fitView
-      attributionPosition="top-right"
-    >
-      <MiniMap
-        nodeStrokeColor={(n) => {
-          if (n.style?.background) return n.style.background;
-          if (n.type === "input") return "#0041d0";
-          if (n.type === "output") return "#ff0072";
-          if (n.type === "default") return "#1a192b";
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onInit={onInit}
+          fitView
+          attributionPosition="top-right"
+      >
+        <MiniMap
+          nodeStrokeColor={(n) => {
+            if (n.style?.background) return n.style.background;
+            if (n.type === "input") return "#0041d0";
+            if (n.type === "output") return "#ff0072";
+            if (n.type === "default") return "#1a192b";
 
-          return "#eee";
-        }}
-        nodeColor={(n) => {
-          if (n.style?.background) return n.style.background;
+            return "#eee";
+          }}
+          nodeColor={(n) => {
+            if (n.style?.background) return n.style.background;
 
-          return "#fff";
-        }}
-        nodeBorderRadius={2}
+            return "#fff";
+          }}
+          nodeBorderRadius={2}
       />
       <Controls />
       <Background color="#aaa" gap={16} />
