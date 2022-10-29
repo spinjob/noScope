@@ -10,8 +10,10 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import Navigation from "../components/Navigation";
 import CreateTriggerForm from "../components/CreateTriggerForm";
-import {Drawer, Classes} from "@blueprintjs/core";
+import {Drawer, Classes, Icon} from "@blueprintjs/core";
 import axios from "axios";
+import FloatingActionButton from "../components/FloatingActionButton/FloatingActionButton.jsx";
+import { FcAbout, FcBusinessman, FcCamera, FcFullTrash } from "react-icons/fc";
 
 import {
   nodes as initialNodes,
@@ -20,6 +22,7 @@ import {
 
 const onInit = (reactFlowInstance) =>
   console.log("flow loaded:", reactFlowInstance);
+  
 
 const OverviewFlow = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -30,17 +33,33 @@ const OverviewFlow = () => {
     [setEdges]
   );
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const onClose = () => setIsDrawerOpen(false);
+  const onOpen = () => setIsDrawerOpen(true);
+
+
+  const floatingButtonActions = [
+    { label: "Triggers", icon: <Icon icon="play"/>, onClick: onOpen },
+    { label: "Actions", icon: <FcBusinessman />, onClick: console.log },
+
+  ];
+
+
   return (
    <div style={{height: 1000, width: 1400}}>  
+      <FloatingActionButton actions={floatingButtonActions}/>
       <Navigation />
       <Drawer
-        isOpen={true}
-        icon="info-sign"
+        isOpen={isDrawerOpen}
+        icon="flow: branch"
         title="Workflow Editor"
-        hasBackdrop={true}>
+        hasBackdrop={true}
+        canEscapeKeyClose={true}
+        canOutsideClickClose={true}
+        onClose={onClose}>
         <div className={Classes.DRAWER_BODY}>
           <div className={Classes.DIALOG_BODY}>
-            <CreateTriggerForm/>
+            <CreateTriggerForm nodes={{initialNodes}}/>
           </div>
         </div>
         <div className={Classes.DRAWER_FOOTER}>Drawer Footer</div>
@@ -55,13 +74,12 @@ const OverviewFlow = () => {
           fitView
           attributionPosition="top-right"
       >
-        <MiniMap
+        {/* <MiniMap
           nodeStrokeColor={(n) => {
             if (n.style?.background) return n.style.background;
             if (n.type === "input") return "#0041d0";
             if (n.type === "output") return "#ff0072";
             if (n.type === "default") return "#1a192b";
-
             return "#eee";
           }}
           nodeColor={(n) => {
@@ -70,7 +88,7 @@ const OverviewFlow = () => {
             return "#fff";
           }}
           nodeBorderRadius={2}
-      />
+      /> */}
       <Controls />
       <Background color="#aaa" gap={16} />
     </ReactFlow>

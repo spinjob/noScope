@@ -20,8 +20,6 @@ class SelectTrigger extends React.PureComponent {
 
   componentDidMount(){
     this.getTriggers();
-    console.log("componentDidMount")
-    console.log(this.getTriggers())
   }
 
   async getTriggers(){
@@ -72,7 +70,7 @@ class SelectTrigger extends React.PureComponent {
   handleValueChange = trigger => {
     this.setState({ trigger: trigger });
     if (this.props.setTrigger) {
-      this.props.setTrigger(trigger.uuid);
+      this.props.setTrigger(trigger);
     }
   };
 }
