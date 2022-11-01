@@ -124,9 +124,59 @@ const WorkflowStudio = () => {
 
             setNodes(nodes => [...nodes, ...actionNodes]);
             setEdges(edges => [...edges, actionEdge]);
-        }  else if (type === "action" && node.method in ("post","put")) {
-
+        }  else if (type === "action" && node.method == "post"||"put") {
             
+            if (node.requestBody != null){
+                const actionNodeHeight = (node.requestBody.schema.length * 50) + 40
+                const actionNodeId = "action_"+(nodes.length+1)
+                const actionEdgeLabel = node.method+ " " +node.path
+
+                const actionNodes =  [{
+                    id: actionNodeId,
+                    type: "default",
+                    data: {
+                    label: node.name
+                    },
+                    position: { x: triggerX, y: 200 },
+                    style: {
+                        width: 170,
+                        height: actionNodeHeight,
+                    }
+                }]
+
+                const actionEdge =  {
+                    id: "etrigger-"+actionNodeId,
+                    source: "trigger",
+                    target: actionNodeId,
+                    animated: true,
+                    label: actionEdgeLabel
+                }
+
+                const schemaY = 50
+                node.requestBody.schema.forEach( function (schema, index) {
+
+                    const childNode = {
+                        id: "action_request_schema"+index,
+                        type: "input",
+                        data: {
+                        label: schema
+                        },
+                        position: { x: 10, y: (40+index*schemaY) },
+                        parentNode: actionNodeId,
+                        draggable: false,
+                        connectable: false,
+                        extent: "parent"
+                    }
+
+                    actionNodes.push(childNode);
+                    
+                });
+
+                setNodes(nodes => [...nodes, ...actionNodes]);
+                setEdges(edges => [...edges, actionEdge]);
+
+            }
+                        
         }
             
            
