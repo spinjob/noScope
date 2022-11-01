@@ -13,28 +13,28 @@ import React from "react";
 
 //Retrieve the current users imported APIs
 
-export const renderTriggers = (interfaceTrigger, { handleClick, modifiers, query }) => {
+export const renderActions = (interfaceAction, { handleClick, modifiers, query }) => {
   if (!modifiers.matchesPredicate) {
     return null;
   }
-  const text = `${interfaceTrigger.rank}. ${interfaceTrigger.name}`;
+  const text = `${interfaceAction.rank}. ${interfaceAction.name}`;
   return (
     <MenuItem
       active={modifiers.active}
       disabled={modifiers.disabled}
-      label={interfaceTrigger.method}
-      key={interfaceTrigger.rank}
+      label={interfaceAction.method}
+      key={interfaceAction.rank}
       onClick={handleClick}
       text={highlightText(text, query)}
     />
   );
 };
 
-export const filterTriggers = (query, interfaceTrigger) => {
+export const filterActions = (query, interfaceAction) => {
   return (
     `${
-        interfaceTrigger.rank
-    }. ${interfaceTrigger.name.toLowerCase()} ${interfaceTrigger.method.toLowerCase()}`.indexOf(
+        interfaceAction.rank
+    }. ${interfaceAction.name.toLowerCase()} ${interfaceAction.method.toLowerCase()}`.indexOf(
       query.toLowerCase()
     ) >= 0
   );
@@ -76,6 +76,6 @@ function escapeRegExpChars(text) {
 }
 
 export const interfaceSelectProps = {
-  itemPredicate: filterTriggers,
-  itemRenderer: renderTriggers
+  itemPredicate: filterActions,
+  itemRenderer: renderActions
 };

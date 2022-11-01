@@ -1,7 +1,7 @@
-import React, {useEffect, useState, useRef, useCallback} from "react";
-import { Card, Button, MenuItem, H1, H2, H3, H4, H5 } from "@blueprintjs/core";
+import React, {useEffect, useState} from "react";
+import { Card, Button, H3} from "@blueprintjs/core";
 import { useNavigate } from "react-router-dom";
-import { Table2, Column, Cell} from '@blueprintjs/table';
+import { Column, Cell} from '@blueprintjs/table';
 import axios from "axios";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/table/lib/css/table.css";

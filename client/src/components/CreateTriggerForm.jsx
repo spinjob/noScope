@@ -6,7 +6,8 @@ import {
   Intent,
   Divider,
   Button,
-  InputGroup
+  InputGroup,
+  Card
 } from "@blueprintjs/core";
 import SelectTrigger from "./SelectTrigger/SelectTrigger";
 import axios from "axios";
@@ -14,66 +15,66 @@ import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from "react-router-dom";
 
 
-function CreateTriggerForm({ params, setParams, nodes}) {
+function CreateTriggerForm({ prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
 
     const [trigger, setTrigger] = useState("");
     const [triggerIntent, setTriggerIntent] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [userContext] = useContext(UserContext);
 
-    const navigate = useNavigate();
+    const Continue = e => {
+      //e.preventDefault();
+      nextStep();
+  }
 
-    const submitFormHandler = e => {
-      const triggerNode =  {
-        id: "100",
-        type: "input",
-        data: {
-          label: trigger.name
-        },
-        position: { x: 250, y: 0 }
-      }
-
-      console.log(triggerNode)
-
-
-    }
+  const Previous = e => {
+    //e.preventDefault();
+    prevStep();
+}
       
     return (
         <div className="create-trigger-form-container">
           <div className="select-workflow-trigger">
-            <h3>Select a Workflow Trigger</h3>
-            <p>Choose the webhook that, when received, will start the workflow.</p>
-            <FormGroup 
-              intent={triggerIntent}
-              helperText={
-                triggerIntent === Intent.NONE
-              }
-              label="Select a Webhook"
-              labelInfo="(required)"
-            >
-                <SelectTrigger
+            <Card>
+              <h3>1. Select a Workflow Trigger</h3>
+              <p>Choose the webhook that, when received, will start the workflow.</p>
+              <FormGroup 
+                intent={triggerIntent}
+                helperText={
+                  triggerIntent === Intent.NONE
+                }
+                label="Select a Webhook"
+                labelInfo="(required)"
+              >
+                  <SelectTrigger
+                    projectId={projectId}
+                    style={{ padding: 10}}
+                    intent={triggerIntent}
+                    isDisabled={isDisabled}
+                    onChange={e => setTrigger(trigger)}
+                    value={trigger}
+                    setTrigger={trigger => {
+                      setTrigger(trigger);
+                    }}
+                  />
+                  
+              </FormGroup>
+              <Button
                   style={{ padding: 10}}
-                  intent={triggerIntent}
-                  onChange={e => setTrigger(trigger)}
-                  value={trigger}
-                  setTrigger={trigger => {
-                    setTrigger(trigger);
+                  className="pt-button pt-intent-success"
+                  disabled={isDisabled}
+                  onClick={() => {
+                    handleNewNode(trigger,"trigger")
+                    Continue();
                   }}
-                />
-                
-            </FormGroup>
-            <Button
-                style={{ padding: 10}}
-                className="pt-button pt-intent-success"
-                disabled={isSubmitting}
-                onClick={submitFormHandler}
-                text={`${isSubmitting ? "Submitting" : "Submit"}`}
-                type="submit"
-                />
+                  text={`${isSubmitting ? "Submitting" : "Select"}`}
+                  type="submit"
+                  />  
+
+                </Card>
           </div>
       
         <Divider style={{padding: 5}} />
- 
       </div>
     );
   }

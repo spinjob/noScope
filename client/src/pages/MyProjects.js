@@ -1,11 +1,11 @@
-import { H1,Card, Button, Callout, FormGroup, InputGroup } from "@blueprintjs/core"
+import { H1, Button } from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import axios from 'axios';
 import MyProjectsTable from "../components/MyProjectsTable.tsx"
-import { useLocation, useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const MyProjects = () => {
 

@@ -1,4 +1,4 @@
-import { Card, Divider, Button, Callout, FormGroup, InputGroup } from "@blueprintjs/core"
+import { Card, Divider, Button} from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
@@ -11,7 +11,6 @@ const ManageProject = () => {
     const [projectInterfaces, setInterfaces] = useState([]);
 
     const [userContext, setUserContext] = useContext(UserContext)
-    const location = useLocation();
     const navigate = useNavigate();
 
     let { id } = useParams();

@@ -7,7 +7,7 @@ import Register from "./pages/Register"
 import Home from "./pages/Home"
 import NewProject from "./pages/NewProject"
 import ManageProject from "./pages/ManageProject"
-import Flow from "./pages/NewWorkflow"
+import Flow from "./pages/WorkflowStudio"
 import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import MyProjects from "./pages/MyProjects"
 
