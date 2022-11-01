@@ -7,7 +7,8 @@ var ProjectSchema = new mongoose.Schema({
     created_at: String,
     updated_at: String,
     deleted_at: String,
-    created_by: String
+    created_by: String,
+    workflows: Array
 });
 
 mongoose.model('Project', ProjectSchema);

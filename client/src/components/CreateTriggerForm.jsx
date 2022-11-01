@@ -6,14 +6,9 @@ import {
   Intent,
   Divider,
   Button,
-  InputGroup,
   Card
 } from "@blueprintjs/core";
 import SelectTrigger from "./SelectTrigger/SelectTrigger";
-import axios from "axios";
-import { v4 as uuidv4 } from 'uuid';
-import { useNavigate } from "react-router-dom";
-
 
 function CreateTriggerForm({ prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
 
@@ -30,7 +25,7 @@ function CreateTriggerForm({ prevStep, projectId, handleNewNode, nextStep, isDis
   const Previous = e => {
     //e.preventDefault();
     prevStep();
-}
+  }
       
     return (
         <div className="create-trigger-form-container">

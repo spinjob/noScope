@@ -5,15 +5,10 @@ import {
   FormGroup,
   Intent,
   Divider,
-  Button,
-  InputGroup,
-  Card
+  Card,
+    Button
 } from "@blueprintjs/core";
 import SelectAction from "./SelectAction/SelectAction";
-import axios from "axios";
-import { v4 as uuidv4 } from 'uuid';
-import { useNavigate } from "react-router-dom";
-
 
 function CreateActionForm({ prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
 
@@ -52,6 +47,7 @@ function CreateActionForm({ prevStep, projectId, handleNewNode, nextStep, isDisa
                     intent={actionIntent}
                     onChange={e => setAction(action)}
                     value={action}
+                    isDisabled={isDisabled}
                     setAction={action => {
                         setAction(action);
                     }}

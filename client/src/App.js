@@ -10,6 +10,7 @@ import ManageProject from "./pages/ManageProject"
 import Flow from "./pages/WorkflowStudio"
 import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import MyProjects from "./pages/MyProjects"
+import SchemaMapper from "./pages/SchemaMapper"
 
 
 function App() {
@@ -74,6 +75,7 @@ function App() {
       <Route path="/projects/:id" exact={true} element={<ManageProject />} />
       <Route path="/projects/" exact={true} element={<MyProjects />} />
       <Route path="/projects/:id/workflows/new" exact={true} element={<Flow />} />
+      <Route path="/projects/:id/workflows/:workflowId" exact={true} element={<SchemaMapper />} />
     </Routes> 
   ) : (
     <Loader />

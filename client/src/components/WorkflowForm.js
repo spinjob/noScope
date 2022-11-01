@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import CreateActionForm from './CreateActionForm.js';
 import CreateTriggerForm from './CreateTriggerForm.jsx';
+import ConfirmWorkflow  from './ConfirmWorkflow.js';
 
 export default class SelectAction extends Component {
 
@@ -13,7 +14,6 @@ export default class SelectAction extends Component {
             actions: [],
             projectId: this.props.projectId
         }
-    
 
     }
 
@@ -37,9 +37,7 @@ export default class SelectAction extends Component {
     }
 
     render() {
-        const {step} = this.state;
-        //const {trigger, actions} = this.state;
-        
+        const {step} = this.state;   
         switch(step) {
             case 1: 
                 return (
@@ -64,12 +62,29 @@ export default class SelectAction extends Component {
                         nextStep={this.nextStep}
                         prevStep={this.prevStep}
                         projectId={this.props.projectId}
-                        handleNewNode={this.props.handleNewNode} />
+                        handleNewNode={this.props.handleNewNode}/>
                     </div>
                 )
             case 3:
                 return (
-                    "Success"
+                    <div>
+                    <CreateTriggerForm 
+                    nextStep={this.nextStep}
+                    handleChange={this.handleChange}
+                    isDisabled={true} />
+                    <CreateActionForm 
+                    nextStep={this.nextStep}
+                    prevStep={this.prevStep}
+                    projectId={this.props.projectId}
+                    handleNewNode={this.props.handleNewNode} 
+                    isDisabled={true}/>
+                    <ConfirmWorkflow 
+                    prevStep={this.prevStep}
+                    projectId={this.props.projectId}
+                    createWorkflow={this.props.createWorkflow}
+                    />
+
+                    </div>
                 )
             default:
                 

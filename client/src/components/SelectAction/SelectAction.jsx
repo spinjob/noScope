@@ -55,6 +55,7 @@ class SelectAction extends React.PureComponent {
           itemRenderer={Actions.renderActions}
           noResults={<MenuItem disabled={true} text="No results." />}
           onItemSelect={this.handleValueChange}
+          disabled={this.props.isDisabled}
         >
           <Button
           {...this.props}
@@ -62,6 +63,7 @@ class SelectAction extends React.PureComponent {
             text={buttonText}
             rightIcon="caret-down"
             icon={IconNames.CODE}
+            disabled={this.props.isDisabled}
           />
         </Select2>
       </div>

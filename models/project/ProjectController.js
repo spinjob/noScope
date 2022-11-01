@@ -51,5 +51,18 @@ router.get('/', function (req,res){
     });
 })
 
+//UPDATE A PROJECT
+router.put('/:id', function (req,res){
+
+    const workflowArray = []
+
+    Project.findOneAndUpdate({uuid: req.params.id}, { $push: {workflows: req.body.uuid}}, function (err, project) {
+        if (err) return res.status(500).send("There was a problem updating the project.");
+        res.status(200).send(project);
+    });
+
+})
+
+
 
 module.exports = router;
