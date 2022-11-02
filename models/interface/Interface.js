@@ -10,7 +10,8 @@ var InterfaceSchema = new mongoose.Schema({
     deleted_at: String,
     production_server: String,
     sandbox_server: String,
-    created_by: String
+    created_by: String,
+    actions: Array
 });
 
 mongoose.model('Interface', InterfaceSchema);

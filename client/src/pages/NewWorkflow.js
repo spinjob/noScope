@@ -8,7 +8,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import Navigation from "../components/Navigation";
-import CreateTriggerForm from "../components/CreateTriggerForm";
+import CreateTriggerForm from "../components/CreateWorkflow/CreateTriggerForm";
 import {Drawer, Classes, Icon} from "@blueprintjs/core";
 import axios from "axios";
 import FloatingActionButton from "../components/FloatingActionButton/FloatingActionButton.jsx";

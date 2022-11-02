@@ -192,6 +192,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid) {
                             console.log(path + " both requestBody and parameters are undefined (ln 158)");
                             return; 
                         }
+                        else {
+                        }
                         //console.log("Interface Action Created with ID: " + interfaceAction._id);
                         
                 });  

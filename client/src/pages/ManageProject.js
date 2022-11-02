@@ -1,33 +1,22 @@
-import { Card, Divider, Button} from "@blueprintjs/core"
+import { Card, Divider, Button, H1, H2, H3} from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import axios from 'axios';
+import ProjectWorkflows from "../components/ViewProject/ProjectWorkflows"
+import ProjectInterfaces from "../components/ViewProject/ProjectInterfaces"
 import { useLocation, useParams, useNavigate } from "react-router-dom";
+import "../styles/workflowStudioStyles.css";
+
 
 const ManageProject = () => {
 
-    const [projectInterfaces, setInterfaces] = useState([]);
-
+    const [project, setProject] = useState({});
     const [userContext, setUserContext] = useContext(UserContext)
     const navigate = useNavigate();
 
     let { id } = useParams();
-    
-    const fetchProjectDetails = useCallback(() => { 
-        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/details")
-        .then(response => {
-            setInterfaces(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
-
-            return response
-        }
-        )
-        .catch(error => {
-            console.log(error);
-            return error
-        })
-    });
 
     const fetchUserDetails = useCallback(() => {
         fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
@@ -58,50 +47,65 @@ const ManageProject = () => {
           }
         })
       }, [setUserContext, userContext.token])
+    
+    const fetchProjectDetails = useCallback(() => { 
+        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/details")
+        
+        .then(response => {
+            setProject(response.data[0])
+            return response
+        }
+        )
+        .catch(error => {
+            console.log(error);
+            return error
+        })
+    });
 
-      useEffect(() => {
+    useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
           fetchUserDetails()
         }
       }, [userContext.details, fetchUserDetails])
-      
-      useEffect(() => {
-        if(!projectInterfaces.length) {
+
+    useEffect(() => {
+        if(!project._id) {
             fetchProjectDetails()
         }
-      }, [projectInterfaces, fetchProjectDetails])
+      }, [project, fetchProjectDetails])
 
 
       return userContext.details === null ? (
         "Error Loading User details"
       ) : !userContext.details ? (
         <Loader />
-      ) : !projectInterfaces[0] ? ( 
+      ) : !project ? ( 
         <Loader />
      ) : (
-        <div style={{display: 'block', width: 500, padding: 30}}>
+        <div>
             <Navigation />
-            <Card>
-                <h1>Manage Project</h1>
-                <h2>{projectInterfaces[0].name}</h2>
-                <p>Project ID: {projectInterfaces[0].uuid}</p>
-            </Card>
-            <Card>
-                <h2>Primary Interface</h2>
-                <p>Interface ID: {projectInterfaces[0].interfaces[0]}</p>
-            </Card>
-            <Card>
-                <h2>Secondary Interface</h2>
-                <p>Interface ID: {projectInterfaces[0].interfaces[1]}</p>
-            </Card>
+            <div className="container" style={{padding:40}}>
+                <H1 >Manage Project</H1>
+            </div>
             <Divider />
-            <Card>
-                <h2>Project Workflows</h2>
-                <Button text="New Workflow" onClick={() => navigate("/projects/"+projectInterfaces[0].uuid+"/workflows/new")}> </Button>
-            </Card>
-       </div>     
-        
+            <H2 style={{padding:40}}>{project.name}</H2>
+            <div class="ManageProjectParent" >
+                <div class="ManageProjectChild1">
+                <Card elevation={3}>
+                 <H3>APIs</H3>
+                    <ProjectInterfaces project={project}/>
+                </Card>      
+                </div>
+                <div class="ManageProjectChild2">
+                <Card elevation={3}>
+                    <H3>Workflows</H3>
+                        <Button text="New Workflow" onClick={() => navigate("/projects/"+project.uuid+"/workflows/new")}> </Button>
+                        <ProjectWorkflows projectId={id} />
+                    </Card>
+                </div>
+            </div>
+        </div>
       )
 
 }

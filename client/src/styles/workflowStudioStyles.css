@@ -1,0 +1,68 @@
+.body {
+    padding: 0;
+    margin: 0;
+}
+
+.Parent {
+    display: flex;
+    flex-direction: row;
+}
+
+.child1 {
+    width: 40%;
+    height: 100vh;
+    background-color: rgb(211, 211, 211);
+    text-align: left;
+    color: rgb(0, 0, 0);
+    padding: 100px;
+}
+
+.child2 {
+    width: 60%;
+    color: green;
+    height: 100vh;
+}
+
+.ProjectWorkflowsParent {
+    display: flex;
+    flex-direction: row;
+}
+
+.ProjectWorkflowsChild1 {
+    width: 20%;
+    height: 10;
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    color: rgb(0, 0, 0);
+    padding: 30px;
+}
+
+.ProjectWorkflowsChild2 {
+    width: 80%;
+    color: green;
+    height: 10;
+    padding: 30px;
+}
+
+.ManageProjectParent {
+    display: flex;
+    flex-direction: row;
+}
+
+.ManageProjectChild1{
+    width: 50%;
+    height: 100vh;
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    color: rgb(0, 0, 0);
+    padding: 40px;
+}
+
+.ManageProjectChild2{
+    width: 50%;
+    height: 100vh;
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    color: rgb(0, 0, 0);
+    padding: 40px;
+}

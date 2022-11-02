@@ -50,7 +50,7 @@ app.use('/interfaces', InterfaceEntityController);
 app.use('/projects', ProjectController);
 app.use('/interfaces', InterfaceWebhookController);
 app.use('/interfaces/actions', InterfaceActionController);
-app.use('/projects/workflows',WorkflowController);
+app.use('/projects/:id/workflows',WorkflowController);
 
 //All other GET requests not handled will return our React app
 app.get('*', (req, res) => {

@@ -5,6 +5,7 @@ router.use(express.json());
 const crypto = require('crypto');
 const Project = require('../project/Project');
 const {verifyUser} = require('../../authenticate.js');
+const Interface = require('../interface/Interface');
 
 // CREATE A PROJECT
 router.post('/new', function(req,res) {
@@ -51,10 +52,18 @@ router.get('/', function (req,res){
     });
 })
 
+/// GET PROJECT INTERFACES
+router.post('/interfaces', function(req,res){
+    Interface.find({uuid:{$in: req.body.interfaces}}, function (err, interfaces) {
+        if (err) return res.status(500).send("There was a problem finding webhooks for the provided interface ID.");
+        res.status(200).send(interfaces);
+    });
+});
+
+
+
 //UPDATE A PROJECT
 router.put('/:id', function (req,res){
-
-    const workflowArray = []
 
     Project.findOneAndUpdate({uuid: req.params.id}, { $push: {workflows: req.body.uuid}}, function (err, project) {
         if (err) return res.status(500).send("There was a problem updating the project.");

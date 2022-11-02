@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 //import Project from "../models/project/Project";
-import { UserContext } from "../context/UserContext"
+import { UserContext } from "../../context/UserContext"
 import {
   FormGroup,
   Intent,
@@ -8,7 +8,7 @@ import {
   Button,
   Card
 } from "@blueprintjs/core";
-import SelectTrigger from "./SelectTrigger/SelectTrigger";
+import SelectTrigger from "./SelectTrigger/SelectTrigger.jsx";
 
 function CreateTriggerForm({ prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
 
@@ -41,6 +41,7 @@ function CreateTriggerForm({ prevStep, projectId, handleNewNode, nextStep, isDis
                 label="Select a Webhook"
                 labelInfo="(required)"
               >
+                  
                   <SelectTrigger
                     projectId={projectId}
                     style={{ padding: 10}}

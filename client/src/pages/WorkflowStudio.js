@@ -1,11 +1,11 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "../components/Navigation";
-import WorkflowForm from "../components/WorkflowForm";
+import WorkflowForm from "../components/CreateWorkflow/WorkflowForm";
 import { UserContext } from "../context/UserContext";
 import {useNavigate } from "react-router-dom";
 
-import "./workflowStudioStyles.css";
+import "../styles/workflowStudioStyles.css";
 import ReactFlow, {
   addEdge,
   Controls,
@@ -78,17 +78,15 @@ const WorkflowStudio = () => {
       [setEdges]
     );
 
-    const createWorkflow = () => {
+    const createWorkflow = (workflowName) => {
         const workflowUuid = uuidv4();
         const stepUuid = uuidv4();
         const triggerUuid = uuidv4()
-
         const workflowStep = {
             uuid: stepUuid,
             sequence: 1,
             type: 'httpRequest',
             parent_workflow_uuid: workflowUuid,
-            parent_project_uuid: id,
             request: {
                 path: action.path,
                 parameters: action.parameters,
@@ -103,7 +101,6 @@ const WorkflowStudio = () => {
             sequence: 0,
             type: 'httpWebhook',
             parent_workflow_uuid: workflowUuid,
-            parent_project_uuid: id,
             webhook: {
                 uuid: trigger.uuid,
                 name: trigger.name,
@@ -116,24 +113,28 @@ const WorkflowStudio = () => {
 
         const workflow = {
             uuid: workflowUuid,
-            name: 'test',
+            name: workflowName,
             parent_project_uuid: id,
             steps: [workflowStep],
             trigger: workflowTrigger,
             created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-            created_by: userContext.details._id
+            created_by: userContext.details._id,
+            nodes: nodes,
+            edges: edges
         }
 
-        console.log(workflow);
+        console.log(nodes[0])
+        console.log(edges[0])
 
-        axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/workflows", workflow)
+        axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ id +"/workflows", workflow)
             .then(response => {  
+
+                console.log(response.data)
 
                 axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+id, workflow)
                 .then(response => {  
-    
-                    console.log(response)
+
                     navigate("/projects/" + id + "/workflows/"+workflowUuid,{state:{projectID: id, workflowID: workflowUuid}});
                 })
                 .catch(error => { 
