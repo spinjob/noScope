@@ -1,4 +1,4 @@
-import { Button, Card, H3 } from "@blueprintjs/core"
+import { Button, Card, H3, Icon } from "@blueprintjs/core"
 import React, { useCallback, useContext, useEffect, useState} from "react"
 import { UserContext } from "../../context/UserContext"
 import Loader from "../Loader"
@@ -30,13 +30,26 @@ const ProjectWorkflows = () => {
 
 });
 
-  const Workflows = ({projectWorkflows}) => (
+const renderStatusIcon = (status) => {
+
+    if (status === "needs_mapping") {
+        return <Icon icon="one-to-many" color="green" />
+    } else if (status === "inactive") {
+        return <Icon icon="symbol-circle" color="red" />
+    } else if (status === "active") {
+        return <Icon icon="offline" color="green" />
+    } else {
+        return <Icon icon="help" color="gray" />
+    }
+}
+
+const Workflows = ({projectWorkflows}) => (
     <>
       {projectWorkflows.map(workflow => (
         <Card>
             <div class="ProjectWorkflowsParent">
                 <div class="ProjectWorkflowsChild1">
-                    <p>Status</p>
+                 {renderStatusIcon(workflow.status)}
                 </div>
                 <div class="ProjectWorkflowsChild2">
                      <H3>{workflow.name}</H3>

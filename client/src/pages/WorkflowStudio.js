@@ -121,7 +121,8 @@ const WorkflowStudio = () => {
             updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             created_by: userContext.details._id,
             nodes: nodes,
-            edges: edges
+            edges: edges,
+            status: "needs_mapping"
         }
 
         console.log(nodes[0])

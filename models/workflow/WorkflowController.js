@@ -18,6 +18,7 @@ router.post('/', function(req,res) {
         steps: req.body.steps,
         nodes: req.body.nodes,
         edges: req.body.edges,
+        status: req.body.status,
         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         created_by: req.body.created_by
@@ -36,7 +37,7 @@ router.post('/details', function(req,res) {
     });
 });
 
-router.get('/:workflowId', function(req,res) {
+router.get('/:workflowId/details', function(req,res) {
     Workflow.find({uuid: req.params.workflowId}, function (err, workflow) {
         if (err) return res.status(500).send("There was a problem finding the project.");
         res.status(200).send(workflow);

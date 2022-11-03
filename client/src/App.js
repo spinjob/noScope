@@ -10,7 +10,7 @@ import ManageProject from "./pages/ManageProject"
 import Flow from "./pages/WorkflowStudio"
 import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import MyProjects from "./pages/MyProjects"
-import SchemaMapper from "./pages/SchemaMapper"
+import ManageWorkflow from "./pages/ManageWorkflow"
 
 
 function App() {
@@ -61,13 +61,18 @@ function App() {
     }, [syncLogout])
 
   return  userContext.token === null ? (
-    <Card elevation="1">
-      <Tabs id="Tabs" onChange={setCurrentTab} selectedTabId={currentTab}>
-        <Tab id="login" title="Login" panel={<Login />} />
-        <Tab id="register" title="Register" panel={<Register />} />
-        <Tabs.Expander />
-      </Tabs>
-    </Card>
+    <div>
+       <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: 30}}>
+        <Card elevation="3" style={{width: 400}}>
+        <Tabs id="Tabs" onChange={setCurrentTab} selectedTabId={currentTab}>
+          <Tab id="login" title="Login" panel={<Login />} />
+          <Tab id="register" title="Register" panel={<Register />} />
+          <Tabs.Expander />
+        </Tabs>
+      </Card>
+       </div>
+     
+    </div>
   ) : userContext.token ? (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -75,7 +80,7 @@ function App() {
       <Route path="/projects/:id" exact={true} element={<ManageProject />} />
       <Route path="/projects/" exact={true} element={<MyProjects />} />
       <Route path="/projects/:id/workflows/new" exact={true} element={<Flow />} />
-      <Route path="/projects/:id/workflows/:workflowId" exact={true} element={<SchemaMapper />} />
+      <Route path="/projects/:id/workflows/:workflowId" exact={true} element={<ManageWorkflow />} />
     </Routes> 
   ) : (
     <Loader />

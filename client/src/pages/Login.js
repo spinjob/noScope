@@ -15,7 +15,6 @@ const Login = () => {
     setError("")
 
     const genericErrorMessage = "Something went wrong! Please try again later."
-    console.log(process.env)
     fetch(process.env.REACT_APP_API_ENDPOINT + "/users/login", {
       method: "POST",
       credentials: "include",

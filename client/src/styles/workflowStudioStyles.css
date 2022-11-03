@@ -26,15 +26,16 @@
 .ProjectWorkflowsParent {
     display: flex;
     flex-direction: row;
+    align-items: center;
 }
 
 .ProjectWorkflowsChild1 {
     width: 20%;
-    height: 10;
+    height: 100%;
     background-color: rgb(255, 255, 255);
-    text-align: left;
     color: rgb(0, 0, 0);
     padding: 30px;
+
 }
 
 .ProjectWorkflowsChild2 {
