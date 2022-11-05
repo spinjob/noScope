@@ -6,7 +6,7 @@ import { useNavigate, useParams} from "react-router-dom";
 import axios from 'axios';
 import "../../styles/workflowStudioStyles.css";
 
-const ProjectWorkflows = () => {
+const ProjectWorkflows = (interfaces) => {
 
   const navigate = useNavigate();
   const [userContext, setUserContext] = useContext(UserContext)

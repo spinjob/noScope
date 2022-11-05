@@ -63,7 +63,8 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
             parent_interface_uuid: parent_interface_uuid,
             name: schemaKeys[i],
             description: schemaValues[i].description,
-            type: schemaValues[i].type
+            type: schemaValues[i].type,
+            properties: schemaValues[i].properties
         },
             function(err,interfaceEntity){
                 if (err) {

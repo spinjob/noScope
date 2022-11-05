@@ -106,7 +106,7 @@ const WorkflowStudio = () => {
                 name: trigger.name,
                 parameters: trigger.parameters,
                 method: trigger.method,
-                request_body: trigger.request_body,
+                request_body: trigger.requestBody,
                 responses: trigger.responses
             }
         }

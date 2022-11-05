@@ -96,7 +96,6 @@ const ManageWorkflow = () => {
         
         .then(response => {
             setProject(response.data[0])
-            console.log(response.data[0])
             return response
         }
         )
@@ -110,6 +109,16 @@ const ManageWorkflow = () => {
         (params) => setEdges((eds) => addEdge(params, eds)),
         [setEdges]
       );
+
+      const renderSchemaViewer = () => {
+        if (!project) {
+            return <SchemaViewer workflow={workflow} />
+        } else if (!project.interfaces) {
+            return <SchemaViewer workflow={workflow} />
+        } else {
+            return <SchemaViewer workflow={workflow} interfaces={project.interfaces} />
+        }
+      }
 
     useEffect(() => {
         // fetch only when user details are not present
@@ -168,8 +177,8 @@ const ManageWorkflow = () => {
                 </div> 
                 <div class="ManageProjectChild2">
                 <H3 style={{padding:15}}>Schema Preview</H3>   
-                    <Card elevation={3} style={{display: 'flex', margin: 10, height: "90vh"}}>
-                            <SchemaViewer/>
+                    <Card elevation={3} style={{display: 'flex', margin: 10, height: "100vh"}}>
+                        {renderSchemaViewer()}
                     </Card>
                 </div>
             </div>

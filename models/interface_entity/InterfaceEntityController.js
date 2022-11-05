@@ -23,7 +23,7 @@ router.post('/', function(req,res) {
 router.get('/:id/objects', function(req,res){
     InterfaceEntity.find({parent_interface_uuid:req.params.id}, function (err, interfaceEntity) {
         if (err) return res.status(500).send("There was a problem finding objects for the provided interface ID.");
-        if (!user) return res.status(404).send("The interface you provided was not found.")
+        //if (!user) return res.status(404).send("The interface you provided was not found.")
         res.status(200).send(interfaceEntity);
     });
 });

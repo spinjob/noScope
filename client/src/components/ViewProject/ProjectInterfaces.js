@@ -18,7 +18,6 @@ const ProjectInterfaces = (project) => {
     axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/interfaces", {interfaces: project.project.interfaces})
         .then(response => {
             setInterfaces(response.data)
-            console.log(response.data)
             return(response.data)
         })
         .catch(error => {
