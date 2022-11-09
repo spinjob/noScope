@@ -79,6 +79,9 @@ const WorkflowStudio = () => {
     );
 
     const createWorkflow = (workflowName) => {
+
+        console.log("Workflow Studio:" + action.request_body)
+
         const workflowUuid = uuidv4();
         const stepUuid = uuidv4();
         const triggerUuid = uuidv4()
@@ -92,7 +95,7 @@ const WorkflowStudio = () => {
                 parameters: action.parameters,
                 method: action.method,
                 parent_interface_uuid: action.parent_interface_uuid,
-                request_body: action.request_body
+                request_body: action.requestBody
             }
         }
 
@@ -125,18 +128,15 @@ const WorkflowStudio = () => {
             status: "needs_mapping"
         }
 
-        console.log(nodes[0])
-        console.log(edges[0])
-
         axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ id +"/workflows", workflow)
             .then(response => {  
-
-                console.log(response.data)
-
                 axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+id, workflow)
                 .then(response => {  
 
+                  console.log("Request Payload: " + workflow)
+
                     navigate("/projects/" + id + "/workflows/"+workflowUuid,{state:{projectID: id, workflowID: workflowUuid}});
+                    console.log(workflow)
                 })
                 .catch(error => { 
                     console.log(error);

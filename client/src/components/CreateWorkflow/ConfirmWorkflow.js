@@ -30,8 +30,6 @@ function ConfirmWorkflow({ prevStep, projectId, handleNewNode, nextStep, createW
     const onChange = e => {
         setWorkflowName(e.target.value);
 
-        console.log(e.target.value)
-
         if(e.target.value == ""){
           setFormValid(false);
           setIsDisabled(true);

@@ -7,9 +7,10 @@ import axios from "axios";
 import '@blueprintjs/core/lib/css/blueprint.css';
 import _ from "lodash";
 import Loader from '../Loader';
+import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
+import {v4 as uuidv4} from 'uuid';
 
-
-function SchemaTree ({ projectId, interfaces, workflow}) {
+function SchemaTree ({ projectId, interfaces, workflow, type}) {
 
     const [isOpen, setIsOpen] = React.useState(true)
     const [interfaceSchemas, setInterfaceSchemas] = useState([])
@@ -17,19 +18,37 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
     const [triggerResponseSchemas, setTriggerResponseSchemas] = useState([])
     const [actionRequestSchemas, setActionRequestSchemas] = useState([])
     const [actionResponseSchemas, SetActionResponseSchemas] = useState([])
+    const [entityIds, setEntityIds] = useState([])
 
     const webhook = workflow.trigger.webhook
-    console.log("SchemaTree Interfaces:" + interfaces)
+    const firstStep = workflow.steps[0]
 
     const handleNodeExpand = useCallback((node) => {
         node.isExpanded = true
-        setTriggerRequestSchemas(_.cloneDeep(triggerRequestSchemas));
+
+        console.log(node)
+        console.log(type)
+
+        if (type === "trigger") {
+            setTriggerRequestSchemas(_.cloneDeep(triggerRequestSchemas));
+        } else if (type === "action") {
+            setActionRequestSchemas(_.cloneDeep(actionRequestSchemas));
+        }
+        
     })
 
     const handleNodeCollapse = useCallback((node) => {
 
+        console.log(node)
+        console.log(type)
+
         node.isExpanded = false
-        setTriggerRequestSchemas(_.cloneDeep(triggerRequestSchemas));
+        if (type === "trigger") {
+            setTriggerRequestSchemas(_.cloneDeep(triggerRequestSchemas));
+        } else if (type === "action") {
+            setActionRequestSchemas(_.cloneDeep(actionRequestSchemas));
+        }
+        
 
     })
 
@@ -38,16 +57,16 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
             console.log("No Webhook")
         } else {
             if (!webhook.request_body && !webhook.responses){
-                console.log("No Webhook Schema")
+               // console.log("No Webhook Schema")
                 return []
             } else if (!webhook.request_body && webhook.responses) {
-                console.log("No Webhook Request Schema")
+               // console.log("No Webhook Request Schema")
                
             } else if (!webhook.responses && webhook.request_body) {
-                console.log("No Webhook Response Schema")
+                //console.log("No Webhook Response Schema")
 
             } else if (webhook.request_body && webhook.responses) {
-                console.log("Webhook Request and Response Schema")
+                //console.log("Webhook Request and Response Schema")
                 if (webhook.request_body.schema.length > 0) {
                     const treeArray = [];
                     webhook.request_body.schema.forEach((schema) => {
@@ -55,7 +74,7 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
                         interfaceSchemas[0].forEach((interfaceSchema) => {
                             
                             if (schema === interfaceSchema.name) {
-                                const parentId = Math.floor(Math.random() * 1000) + 1;
+                                const parentId = uuidv4();
                                 if (interfaceSchema.properties) {
                                     var propertyKeys = Object.keys(interfaceSchema.properties);
                                     var propertyValues = Object.values(interfaceSchema.properties);
@@ -66,7 +85,7 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
                                         label: interfaceSchema.name,
                                         icon: 'cube',
                                         childNodes: properties,
-                                        isExpanded: false
+                                        isExpanded: true
                                     }
 
                                     treeArray.push(parentObject)
@@ -94,7 +113,7 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
                         response.schema.forEach((schema) => {
                             interfaceSchemas.forEach((interfaceSchema) => {
                                 if (schema === interfaceSchema.name) {
-                                    const parentId = Math.floor(Math.random() * 1000) + 1;
+                                    const parentId = uuidv4();
 
                                     if (interfaceSchema.properties !== undefined) {
 
@@ -135,6 +154,66 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
 
     })
 
+    const processActionSchema = useCallback(() => {
+        if (!firstStep) {
+            console.log("No first step")
+        } else {
+            if(firstStep.request.method === "get") {
+                console.log("GET method")
+
+            } else if (firstStep.request.method == "post"||"put") {
+                //console.log("POST or PUT method")
+
+                if (firstStep.request.request_body.schema.length > 0) {
+                        const treeArray = [];
+                        firstStep.request.request_body.schema.forEach((requestSchema) => {
+                            interfaceSchemas.forEach((interfaceSchema) => {
+                                interfaceSchema.forEach((schema) => {
+                                    if (requestSchema === schema.name) {
+                                        //console.log("Match Found" + schema.name)
+                                        const parentId = uuidv4();
+                                        if (schema.properties) {
+                                            var propertyKeys = Object.keys(schema.properties);
+                                            var propertyValues = Object.values(schema.properties);
+                                            var properties = processProperties(propertyKeys, propertyValues)
+        
+                                            const parentObject = {
+                                                id: parentId,
+                                                label: schema.name,
+                                                icon: 'cube',
+                                                childNodes: properties,
+                                                isExpanded: true
+                                            }
+        
+                                            treeArray.push(parentObject)
+                                        } else {
+        
+                                            const parentObject = {
+                                                id: parentId,
+                                                label: schema.name,
+                                                icon: 'cube'
+                                            }
+                                            treeArray.push(parentObject)
+                                        }
+                                        
+                                    }
+                                    else {}
+                                })
+
+                            })
+                        }
+                    )
+
+                    setActionRequestSchemas(treeArray)
+
+                }
+
+            } 
+        }
+
+
+    })
+
     const iconGenerator = (type) => {
         switch (type) {
             case "string":
@@ -156,45 +235,6 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
     }
 }
     
-    // const processReferences = (ref) => {
-    //     const referenceArray = ref.split("/")
-    //     var schema = referenceArray[3]
-        
-    //     interfaceSchemas[0].forEach((interfaceSchema) => {
-    //         if (schema === interfaceSchema.name) {
-    //             const parentId = Math.floor(Math.random() * 1000) + 1;
-
-    //             if (interfaceSchema.properties) {
-
-    //                 var propertyKeys = Object.keys(interfaceSchema.properties);
-    //                 var propertyValues = Object.values(interfaceSchema.properties);
-                    
-    //                 const parentObject = {
-    //                     id: parentId,
-    //                     label: interfaceSchema.name,
-    //                     icon: 'cube',
-    //                     isExpanded: false,
-    //                     childNodes: processProperties(propertyKeys, propertyValues)
-    //                 }
-
-    //                 return parentObject
-
-    //             } else {
-    //                 const parentObject = {
-    //                     id: parentId,
-    //                     label: interfaceSchema.name,
-    //                     icon: 'cube',
-    //                     isExpanded: false,
-    //                 }
-    //                 return parentObject
-
-    //             }
-
-    //         }
-    //         else {}
-    //     })
-
-    //  }
 
     const processProperties = useCallback((propertyKeys, propertyValues) => {
 
@@ -202,7 +242,7 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
         const keyArray = [];
 
         for (var i = 0; i < propertyKeys.length; ++i) {
-            const propertyID = Math.floor(Math.random() * 1000) + 1;
+            const propertyID = uuidv4();
             
             if (!propertyValues[i]["$ref"]){
                 const propertyObject = {
@@ -221,7 +261,7 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
                     keyArray.push(schema)
                     interfaceSchemas[0].forEach((interfaceSchema) => {
                         if (schema === interfaceSchema.name) {
-                            const parentId = Math.floor(Math.random() * 1000) + 1;
+                            const parentId = uuidv4();
     
                             if (interfaceSchema.properties) {
     
@@ -290,6 +330,11 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
         }
       }, [triggerRequestSchemas, processWebhookSchema])   
 
+      useEffect(() => {
+        if (interfaceSchemas.length > 0 && !setActionRequestSchemas === 0 && firstStep.request.method == "post"||"put") {
+            processActionSchema();
+        }
+      }, [actionRequestSchemas, processActionSchema])  
 
 
     return !interfaceSchemas ? (
@@ -298,7 +343,7 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
     : interfaceSchemas.length == 0 ? (
         <Loader />
     )
-    : (
+    : type == "trigger" ? (
         <Tree
         contents={triggerRequestSchemas}
         className={Popover2Classes.ELEVATION_0}
@@ -307,7 +352,26 @@ function SchemaTree ({ projectId, interfaces, workflow}) {
         onNodeExpand={handleNodeExpand}
         style={{ width: 600 }}
         />
-)
+) : type == "action" ? (
+        <Tree
+        contents={actionRequestSchemas}
+        className={Popover2Classes.ELEVATION_0}
+        onNodeClick={()=>{
+            setIsOpen(true)}}
+        onNodeCollapse={handleNodeCollapse}
+        onNodeExpand={handleNodeExpand}
+        style={{ width: 600 }}
+        />
+ ) : (
+        <Tree
+        contents={triggerRequestSchemas}
+        className={Popover2Classes.ELEVATION_0}
+        onNodeClick={()=>setIsOpen(true)}
+        onNodeCollapse={handleNodeCollapse}
+        onNodeExpand={handleNodeExpand}
+        style={{ width: 600 }}
+        />
+ )
 
 
 }

@@ -9,9 +9,9 @@ import { useNavigate, useParams} from "react-router-dom";
 
 function SchemaViewer ({ projectId, interfaces, workflow }) {
 
-    const [currentTab, setCurrentTab] = useState("login")
+    const [currentTab, setCurrentTab] = useState("1")
     const [projectInterfaces, setProjectInterfaces] = useState([interfaces]);
-    console.log("SchemaViewer Interfaces: ", interfaces)
+    const [project, setProject] = useState(null);
 
     let {id} = useParams();
 
@@ -29,6 +29,28 @@ function SchemaViewer ({ projectId, interfaces, workflow }) {
         })
     });
 
+    const fetchWorkflowDetails = useCallback(() => { 
+        axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/details", {"parent_project_uuid": projectId})
+        
+        .then(response => {
+            return response
+        }
+        )
+        .catch(error => {
+            console.log(error);
+            return error
+        })
+    });
+
+    const handleTabChange = (tabId) => {
+
+        setCurrentTab(tabId)
+    }
+
+    const fetchActionName = (method, path) => {
+        return method + " " + path
+    } 
+
 
     useEffect(() => {
         if(!interfaces) {
@@ -38,13 +60,22 @@ function SchemaViewer ({ projectId, interfaces, workflow }) {
         }
     }, [projectInterfaces, fetchProjectDetails])
 
+
+    useEffect(() => {
+        if(!workflow) {
+            workflow = fetchWorkflowDetails()
+        } else {
+            
+        }
+    }, [projectInterfaces, fetchProjectDetails])
+
     return (
         <div>
             <H5>Schema Viewer</H5>
             <p>View the schema for your workflow.</p>
-            <Tabs id="SchemaPreviewTabs" selectedTabId="1" style={{height:"100vh"}}>
-                <Tab id="1" title="TriggerSchemas" panel={<SchemaTree interfaces={projectInterfaces} workflow={workflow}/>}/>
-                <Tab id="2" title="ActionSchemas"></Tab>
+            <Tabs id="SchemaPreviewTabs" selectedTabId={currentTab} style={{height:"100vh"}} onChange={handleTabChange}>
+                <Tab id="1" title= {workflow.trigger.webhook.name} panel={<SchemaTree interfaces={projectInterfaces} workflow={workflow} type="trigger"/>}/>
+                <Tab id="2" title={fetchActionName(workflow.steps[0].request.method, workflow.steps[0].request.path)} panel={<SchemaTree interfaces={projectInterfaces} workflow={workflow} type="action"/>}/>
             </Tabs>
         </div>
     )
