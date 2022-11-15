@@ -40,8 +40,7 @@ function processOpenApiV3(json, userId) {
                     console.log(err);
                     return; 
                 }
-                console.log(userId);
-                //console.log("Interface Created with ID: " + interface._id);
+                console.log("Interface Created with ID: " + interface.uuid);
                 processSchema(schemaKeys, schemaValues, interfaceUUID);
                 processPathActions(pathKeys,pathValues,interfaceUUID);
                 processParameters(parameterKeys,parameterValues,interfaceUUID);
@@ -87,6 +86,7 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
     return
 }
 
+
 function processProperties(propertyValues, parent_object_uuid, parent_interface_uuid) {
 
     //console.log(Object.keys(propertyValues));
@@ -95,12 +95,13 @@ function processProperties(propertyValues, parent_object_uuid, parent_interface_
 
     for (var i = 0; i < propertyNames.length; ++i) {
         var entityUUID = crypto.randomUUID();
+        
         InterfaceEntity.create({
             uuid: entityUUID,
             parent_interface_uuid: parent_interface_uuid,
             name: propertyNames[i],
             description: propertyAttributes[i].description,
-            type: propertyAttributes[i].type,
+            type: propertyAttributes[i].type
             //examples: propertyAttributes[i].example
         },
             function(err,interfaceEntity){
@@ -108,6 +109,26 @@ function processProperties(propertyValues, parent_object_uuid, parent_interface_
                     console.log(err);
                     return; 
                 }
+                var propertyPath = "properties."+ interfaceEntity.name+ ".uuid";
+
+                InterfaceEntity.findOneAndUpdate({uuid: parent_object_uuid},
+                    {$set: {[propertyPath]: interfaceEntity.uuid}}, 
+                    
+                    function(err, interfaceEntity) {
+                        if (err) {
+                            console.log(err);
+                            return; 
+                        } else {
+                            if (interfaceEntity.name == "OrderIdentifier") {
+                                console.log(interfaceEntity);
+                            }
+                        }
+                        
+                        return;
+                    }
+                )
+
+
                 //console.log("Interface Entity for Property Created "+ interfaceEntity._id);
                 var propertyUUID = crypto.randomUUID();
 

@@ -1,28 +1,33 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
+import { Overlay, Card } from '@blueprintjs/core';
+
 import { useParams } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import { UserContext } from "../context/UserContext";
-import ReactFlow, {
-  addEdge,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState
-} from "reactflow";
 import "reactflow/dist/style.css";
 import SchemaMapperHeader from "../components/EditWorkflow/SchemaMapperHeader";
 import TriggerSchemaMapper from "../components/EditWorkflow/TriggerSchemaMapper";
 import SchemaMappingView from "../components/EditWorkflow/SchemaMappingView";
 import ActionStepSchemaMapper from "../components/EditWorkflow/ActionStepSchemaMapper";
-import { UncontrolledTreeEnvironment, Tree, StaticTreeDataProvider } from 'react-complex-tree';
-
-const onInit = (reactFlowInstance) =>
-  console.log("flow loaded:", reactFlowInstance);
+import "@blueprintjs/core/lib/css/blueprint.css";
+import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
 
 const SchemaMapper = () => {
     let { id, workflowId } = useParams();
 
+    const emptyNode = {
+        label: "",
+        nodeData: {
+            type: "",
+            description: "",
+            uuid: ""
+        }
+    }
+
     const [userContext, setUserContext] = useContext(UserContext)
+    const [actionNode, setActionNode] = useState(emptyNode);
+    const [triggerNode, setTriggerNode] = useState(emptyNode);
+    const [mappingViewOpen, setMappingViewOpen] = useState(false);
 
     const fetchUserDetails = useCallback(() => {
         fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
@@ -54,7 +59,27 @@ const SchemaMapper = () => {
         })
       }, [setUserContext, userContext.token])
 
-   
+
+    const selectTriggerNode = (node) => {
+      setTriggerNode(node);
+      console.log(node)
+     }
+    
+
+   const selectActionNode = (node) => {
+       setActionNode(node);
+       console.log(node)
+   }
+
+   const toggleOverlay = () => {
+     if (mappingViewOpen)
+      {
+        setMappingViewOpen(false);
+      } else {
+        setMappingViewOpen(true);
+      }
+    
+  }
 
     useEffect(() => {
         // fetch only when user details are not present
@@ -65,18 +90,30 @@ const SchemaMapper = () => {
 
   return (
 
-    <div>
-        <body>
+    <div style={{justifyContent: 'center',alignItems: 'center'}}>
             <Navigation />
             <SchemaMapperHeader />
-            <div class="Parent">
-              <TriggerSchemaMapper />
+
+              <Overlay
+              isOpen={mappingViewOpen} 
+              onClose={toggleOverlay} 
+              canEscapeKeyClose={true} 
+              canOutsideClickClose={true}>
+                <div 
+                style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
+                <Card elevation={3} style={{alignItems: 'center', margin: 10}}>
+                    <p>Mapping</p>  
+                  </Card> 
+                </div>  
+              </Overlay>
+            
+            <div class="SchemaMapperParent">
+              <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} />
               <div>
-                <SchemaMappingView/>
+                <SchemaMappingView triggerField={triggerNode} actionField={actionNode} onClick={toggleOverlay}/>
               </div>
-              <ActionStepSchemaMapper/>
+              <ActionStepSchemaMapper selectActionNode={selectActionNode} />
             </div>
-        </body>
   </div>
 );
 }

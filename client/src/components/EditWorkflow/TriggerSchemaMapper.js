@@ -11,7 +11,7 @@ import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function TriggerSchemaMapper () {
+function TriggerSchemaMapper ({selectTriggerNode}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
@@ -49,6 +49,7 @@ function TriggerSchemaMapper () {
                 } else {
                     node.isSelected = true
                     setSelected(1)
+                    selectTriggerNode(node)
                 }
             } else {
                 if (node.isSelected) {
@@ -92,14 +93,18 @@ function TriggerSchemaMapper () {
                                     if (interfaceSchema.properties) {
                                         var propertyKeys = Object.keys(interfaceSchema.properties);
                                         var propertyValues = Object.values(interfaceSchema.properties);
-                                        var properties = processProperties(propertyKeys, propertyValues)
+                                        var properties = processProperties(propertyKeys, propertyValues, interfaceSchema.name)
     
                                         const parentObject = {
                                             id: parentId,
                                             label: interfaceSchema.name,
                                             icon: 'cube',
                                             childNodes: properties,
-                                            isExpanded: true
+                                            isExpanded: true,
+                                            nodeData: {
+                                                pathName: interfaceSchema.name,
+                                                schema: interfaceSchema
+                                            }
                                         }
     
                                         treeArray.push(parentObject)
@@ -169,7 +174,7 @@ function TriggerSchemaMapper () {
        
 
     })
-    const processProperties = useCallback((propertyKeys, propertyValues) => {
+    const processProperties = useCallback((propertyKeys, propertyValues, parentSchema) => {
 
         const propertiesArray = [];
         const keyArray = [];
@@ -181,7 +186,8 @@ function TriggerSchemaMapper () {
                 const propertyObject = {
                     id: propertyID,
                     label: propertyKeys[i],
-                    icon: iconGenerator(propertyValues[i].type)
+                    icon: iconGenerator(propertyValues[i].type),
+                    nodeData: propertyValues[i]
                 }
                 propertiesArray.push(propertyObject)
             } else if (propertyValues[i]["$ref"]){ 
@@ -206,7 +212,11 @@ function TriggerSchemaMapper () {
                                     label: interfaceSchema.name,
                                     icon: 'cube',
                                     isExpanded: true,
-                                    childNodes: processProperties(propertyKeys, propertyValues)
+                                    childNodes: processProperties(propertyKeys, propertyValues),
+                                    nodeData: {
+                                        pathName: parentSchema + "." + propertyKeys[i],
+                                        schema: interfaceSchema
+                                    }
                                 }
                                 propertiesArray.push(parentObject)
     
@@ -216,6 +226,10 @@ function TriggerSchemaMapper () {
                                     label: interfaceSchema.name,
                                     icon: 'cube',
                                     isExpanded: true,
+                                    nodedata: {
+                                        pathName: parentSchema + "." + propertyKeys[i],
+                                        schema: interfaceSchema
+                                    }
                                 }
                                 propertiesArray.push(parentObject)
     
@@ -243,7 +257,8 @@ function TriggerSchemaMapper () {
                     label: propertyKeys[i],
                     icon: 'cube',
                     isExpanded: true,
-                    childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues)
+                    childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues),
+                    nodeData: propertyValues[i]
                 }
                 
                 propertiesArray.push(parentObject)

@@ -71,25 +71,11 @@
 .SchemaMapperParent {
     display: flex;
     flex-direction: row;
-}
-
-.SchemaMapperChild1 {
-    width: 40%;
-    height: 100vh;
-    background-color: rgb(211, 211, 211);
-    text-align: left;
-    color: rgb(0, 0, 0);
-    padding: 100px;
-}
-
-.SchemaMapperChild2 {
-    width: 60%;
-    color: green;
-    height: 100vh;
+    align-items: center;
 }
 
 .TriggerSchemaMapper {
-    width: 50%;
+    width: 30%;
     height: 100vh;
     text-align: left;
     color: rgb(0, 0, 0);
@@ -97,8 +83,24 @@
 }
 
 .ActionSchemaMapper {
-    width: 50%;
+    width: 30%;
     color: green;
     height: 100vh;
     padding: 50px;
+}
+
+
+.SchemaMappingView {
+    display: flex;
+    flex-direction: row;
+
+}
+
+.SchemaMappingOverlayContainer {
+    justify-content: center;
+     align-items: center;
+    width: "100vw";
+    margin: 0 auto;
+    background-color: #d00808;
+
 }
