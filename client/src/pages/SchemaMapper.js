@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "../components/Navigation";
-import { UserContext } from "../context/UserContext"
+import { UserContext } from "../context/UserContext";
 import ReactFlow, {
   addEdge,
   Controls,
@@ -10,6 +10,11 @@ import ReactFlow, {
   useEdgesState
 } from "reactflow";
 import "reactflow/dist/style.css";
+import SchemaMapperHeader from "../components/EditWorkflow/SchemaMapperHeader";
+import TriggerSchemaMapper from "../components/EditWorkflow/TriggerSchemaMapper";
+import SchemaMappingView from "../components/EditWorkflow/SchemaMappingView";
+import ActionStepSchemaMapper from "../components/EditWorkflow/ActionStepSchemaMapper";
+import { UncontrolledTreeEnvironment, Tree, StaticTreeDataProvider } from 'react-complex-tree';
 
 const onInit = (reactFlowInstance) =>
   console.log("flow loaded:", reactFlowInstance);
@@ -49,6 +54,8 @@ const SchemaMapper = () => {
         })
       }, [setUserContext, userContext.token])
 
+   
+
     useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
@@ -61,13 +68,13 @@ const SchemaMapper = () => {
     <div>
         <body>
             <Navigation />
+            <SchemaMapperHeader />
             <div class="Parent">
-                <div class="child1">
-                    <p>Column 1</p>
-                </div>
-                <div class="child2">
-                    <p>Column 2</p>
-                </div>
+              <TriggerSchemaMapper />
+              <div>
+                <SchemaMappingView/>
+              </div>
+              <ActionStepSchemaMapper/>
             </div>
         </body>
   </div>

@@ -170,13 +170,12 @@ function SchemaTree ({ projectId, interfaces, workflow, type}) {
                             interfaceSchemas.forEach((interfaceSchema) => {
                                 interfaceSchema.forEach((schema) => {
                                     if (requestSchema === schema.name) {
-                                        //console.log("Match Found" + schema.name)
+
                                         const parentId = uuidv4();
                                         if (schema.properties) {
                                             var propertyKeys = Object.keys(schema.properties);
                                             var propertyValues = Object.values(schema.properties);
                                             var properties = processProperties(propertyKeys, propertyValues)
-        
                                             const parentObject = {
                                                 id: parentId,
                                                 label: schema.name,
@@ -244,14 +243,14 @@ function SchemaTree ({ projectId, interfaces, workflow, type}) {
         for (var i = 0; i < propertyKeys.length; ++i) {
             const propertyID = uuidv4();
             
-            if (!propertyValues[i]["$ref"]){
+            if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
                 const propertyObject = {
                     id: propertyID,
                     label: propertyKeys[i],
                     icon: iconGenerator(propertyValues[i].type)
                 }
                 propertiesArray.push(propertyObject)
-            } else { 
+            } else if (propertyValues[i]["$ref"]){ 
                 const ref = propertyValues[i]["$ref"]
                 const referenceArray = ref.split("/")
                 var schema = referenceArray[3]
@@ -294,8 +293,27 @@ function SchemaTree ({ projectId, interfaces, workflow, type}) {
             })
                     
                 }
-        
+    
+            } else if (propertyValues[i]["additionalProperties"]) {
 
+                const additionalProperties = {
+                    [propertyValues[i].additionalProperties["x-additionalPropertiesName"]]: {
+                        "$ref": propertyValues[i].additionalProperties["$ref"]
+                    }
+                }
+                const parentId = uuidv4();
+                const additionalPropertyKeys = Object.keys(additionalProperties);
+                const additionalPropertyValues = Object.values(additionalProperties);
+                const parentObject = {
+                    id: parentId,
+                    label: propertyKeys[i],
+                    icon: 'cube',
+                    isExpanded: true,
+                    childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues)
+                }
+                
+                propertiesArray.push(parentObject)
+            
             }
 
         }

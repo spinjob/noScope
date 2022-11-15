@@ -26,7 +26,8 @@ const ManageWorkflow = () => {
     const [project, setProject] = useState(null);
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
- 
+    const navigate = useNavigate();
+
     const fetchUserDetails = useCallback(() => {
         fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
           method: "GET",
@@ -104,6 +105,10 @@ const ManageWorkflow = () => {
             return error
         })
     });
+
+    const schemaMapperButtonHandler = () => {
+        navigate("/projects/" + id + "/workflows/" + workflowId + "/mapper", { state:{workflow: workflow, project: project} })
+    }
       
     const onConnect = useCallback(
         (params) => setEdges((eds) => addEdge(params, eds)),
@@ -176,7 +181,7 @@ const ManageWorkflow = () => {
                 </Card>      
                 </div> 
                 <div class="ManageProjectChild2">
-                <H3 style={{padding:15}}>Schema Preview</H3>   
+                <H3 style={{padding:15}}>Schema Preview</H3> 
                     <Card elevation={3} style={{display: 'flex', margin: 10, height: "100vh"}}>
                         {renderSchemaViewer()}
                     </Card>
