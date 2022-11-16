@@ -329,7 +329,7 @@ const fetchInterfaceSchemas = useCallback(() => {
         if (interfaceSchemas.length === 0) {
           fetchInterfaceSchemas();
         }
-      }, [interfaceSchemas, fetchInterfaceSchemas])   
+      }, [])   
       
       useEffect(() => {
         if (!workflow) {

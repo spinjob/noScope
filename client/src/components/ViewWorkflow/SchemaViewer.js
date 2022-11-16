@@ -63,7 +63,7 @@ function SchemaViewer ({ projectId, interfaces, workflow }) {
         } else {
             setProjectInterfaces(interfaces)
         }
-    }, [projectInterfaces, fetchProjectDetails])
+    }, [])
 
 
     useEffect(() => {
@@ -72,7 +72,7 @@ function SchemaViewer ({ projectId, interfaces, workflow }) {
         } else {
             
         }
-    }, [projectInterfaces, fetchProjectDetails])
+    }, [])
 
     return (
         <div>

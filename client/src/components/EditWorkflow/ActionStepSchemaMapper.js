@@ -36,6 +36,7 @@ function ActionStepSchemaMapper ({selectActionNode}) {
 
     })
 
+
     const handleActionNodeSelect = useCallback((node) => {
         if (node.icon && node.icon === "cube") {} 
         else {
@@ -126,9 +127,6 @@ function ActionStepSchemaMapper ({selectActionNode}) {
                             })
                         }
                     )
-
-                    console.log(treeArray)
-
                     setActionRequestSchemas(treeArray)
 
                 }
@@ -143,8 +141,6 @@ function ActionStepSchemaMapper ({selectActionNode}) {
         const propertiesArray = [];
         const keyArray = [];
 
-        console.log(propertyValues)
-        
         for (var i = 0; i < propertyKeys.length; ++i) {
             const propertyID = uuidv4();
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
@@ -190,7 +186,6 @@ function ActionStepSchemaMapper ({selectActionNode}) {
                                             parentInterface: interfaceSchema.parent_interface_uuid
                                     }
                                 }
-                                console.log(parentObject)
                                 propertiesArray.push(parentObject)
     
                             } else {
@@ -313,7 +308,7 @@ function ActionStepSchemaMapper ({selectActionNode}) {
         if (interfaceSchemas.length === 0) {
           fetchInterfaceSchemas();
         }
-      }, [interfaceSchemas, fetchInterfaceSchemas])   
+      }, [])   
       
       useEffect(() => {
         if (!workflow) {
@@ -327,7 +322,6 @@ function ActionStepSchemaMapper ({selectActionNode}) {
       useEffect(() => {
         if (actionRequestSchemas.length == 0) {
             processActionSchema()
-            console.log("processing action schema")
         } else {
            //console.log(actionRequestSchemas)
         }
