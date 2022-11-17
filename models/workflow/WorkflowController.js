@@ -45,5 +45,13 @@ router.get('/:workflowId/details', function(req,res) {
 });
 
 
+router.put('/:workflowId/map', function(req,res) {
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, { $push: {'steps.0.adaptions': req.body}}, function (err,workflow){
+        if (err) return res.status(500).send(err);
+        res.status(200).send(workflow);
+    });
+});
+
+
 
 module.exports = router;

@@ -11,7 +11,7 @@ import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function ActionStepSchemaMapper ({selectActionNode}) {
+function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
@@ -145,8 +145,6 @@ function ActionStepSchemaMapper ({selectActionNode}) {
 
         for (var i = 0; i < propertyKeys.length; ++i) {
             const propertyID = uuidv4();
-            console.log("Schema Name: " + propertyKeys[i])
-            console.log("Schema Path: " + parentSchema + "." + propertyKeys[i])
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
                 const propertyObject = {
                     id: propertyID,
@@ -161,6 +159,7 @@ function ActionStepSchemaMapper ({selectActionNode}) {
                 }
                 }
                 propertiesArray.push(propertyObject)
+                storeActionSchema(propertyObject)
             } else if (propertyValues[i]["$ref"]){ 
                 const ref = propertyValues[i]["$ref"]
                 const referenceArray = ref.split("/")

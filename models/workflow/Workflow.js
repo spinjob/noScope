@@ -4,7 +4,7 @@ var AdaptionSchema = new mongoose.Schema({
     uuid: String,
     inputSchema: Object,
     outputSchema: Object,
-    mappings: Array
+    formula: String
 });
 
 var WorkflowWebhookTriggerSchema = new mongoose.Schema({

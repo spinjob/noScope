@@ -8,12 +8,13 @@ import SchemaMapperHeader from "../components/EditWorkflow/SchemaMapperHeader";
 import TriggerSchemaMapper from "../components/EditWorkflow/TriggerSchemaMapper";
 import SchemaMappingView from "../components/EditWorkflow/SchemaMappingView";
 import ActionStepSchemaMapper from "../components/EditWorkflow/ActionStepSchemaMapper";
-import FieldMappingOverlay from "../components/EditWorkflow/FieldMappingOverlay";
+import FieldMappingOverlay from "../components/EditWorkflow/AdaptionMenu/FieldMappingOverlay";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
 import axios from "axios";
 
 const SchemaMapper = () => {
+  let { id, workflowId } = useParams();
 
     const emptyNode = {
         label: "",
@@ -30,6 +31,8 @@ const SchemaMapper = () => {
     const [mappingViewOpen, setMappingViewOpen] = useState(false);
     const [mappingDisabled, setMappingDisabled] = useState(true);
     const [interfaceSchema, setInterfaceSchema] = useState(null);
+    const [triggerSchema, setTriggerSchema] = useState([]);
+    const [actionSchema, setActionSchema] = useState([]);
 
     const location = useLocation();
 
@@ -65,6 +68,14 @@ const SchemaMapper = () => {
         })
       }, [setUserContext, userContext.token])
 
+    const storeActionSchema = (schema) => {
+      // console.log(schema)
+      //  setActionSchema([...actionSchema, schema]);
+    }
+
+    const storeTriggerSchema = (schemas) => {
+      setTriggerSchema(schemas);
+    }
 
     const selectTriggerNode = (node, isSelected) => {
 
@@ -143,13 +154,13 @@ const SchemaMapper = () => {
                 canEscapeKeyClose={true} 
                 canOutsideClickClose={true}>
                   <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
-                    <FieldMappingOverlay field1={triggerNode} field2={actionNode}/> 
+                    <FieldMappingOverlay field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
                   </div>  
                 </Overlay>  
             <div class="SchemaMapperParent">
-              <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} />
+              <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
               <SchemaMappingView isActive={mappingDisabled} triggerField={triggerNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema}/>
-              <ActionStepSchemaMapper selectActionNode={selectActionNode} />
+              <ActionStepSchemaMapper selectActionNode={selectActionNode} storeActionSchema={storeActionSchema} actionSchema={actionSchema}/>
             </div>
   </div>
 );

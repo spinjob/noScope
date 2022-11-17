@@ -11,7 +11,7 @@ import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function TriggerSchemaMapper ({selectTriggerNode}) {
+function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
@@ -26,6 +26,7 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
     const [selected, setSelected] = useState(0)
 
     const webhook = workflow.trigger.webhook
+    const fullPropertiesArray = [];
 
     const handleNodeExpand = useCallback((node) => {
         node.isExpanded = true
@@ -130,6 +131,7 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
 
                     })
                     setTriggerRequestSchemas(treeArray)
+
                 }
                 
                 // webhook.responses.forEach((response) => {
@@ -200,6 +202,8 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
                     }
                 }
                 propertiesArray.push(propertyObject)
+                fullPropertiesArray.push(propertyObject)
+                // storeTriggerSchema(propertyObject)
             } else if (propertyValues[i]["$ref"]){ 
                 const ref = propertyValues[i]["$ref"]
                 const referenceArray = ref.split("/")
@@ -282,6 +286,7 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
             }
 
         }
+        storeTriggerSchema(fullPropertiesArray)
         return propertiesArray
     })
 
