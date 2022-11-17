@@ -3,7 +3,7 @@ import { Button, Icon, Intent, Card, Menu, Divider, H1, H2, H3, H4, H5 } from '@
 
 import "reactflow/dist/style.css";
 
-const SchemaMappingView = ({triggerField, actionField, onClick}) => {
+const SchemaMappingView = ({triggerField, actionField, onClick, isActive, interfaceSchema}) => {
 
     const iconGenerator = (type) => {
         switch (type) {
@@ -31,25 +31,23 @@ const SchemaMappingView = ({triggerField, actionField, onClick}) => {
             <Card elevation={3} style={{display: 'flex', alignItems: 'center', margin: 10}}> 
                    <div>
                    <Icon icon={iconGenerator(triggerField.nodeData.type)}/> <H4>{triggerField.label}</H4>
+                   <p>{triggerField.nodeData.description}</p>
                    <Divider/>
-                    <H5>{triggerField.nodeData.type}</H5>
                     <br></br>
-                    <p>{triggerField.nodeData.description}</p>
-                    <p>{triggerField.nodeData.uuid}</p>
+                    <H5>{triggerField.nodeData.fieldPath}</H5>
                     </div>
             </Card>
             <div class="SchemaMappingViewButton">
-                <Button minimal={true} outlined={true} onClick={onClick} text="Map"/>
+                <Button disabled={isActive} minimal={true} outlined={true} onClick={onClick} text="Map"/>
             </div>
             <Card elevation={3} style={{display: 'flex', alignItems: 'center', margin: 10}}> 
                    <div>
                    <Icon icon={iconGenerator(actionField.nodeData.type)}/> 
                    <H4>{actionField.label}</H4>
+                   <p>{actionField.nodeData.description}</p>
                    <Divider/>
-                   <H5>{actionField.nodeData.type}</H5>
                     <br></br>
-                    <p>{actionField.nodeData.description}</p>
-                    <p>{actionField.nodeData.uuid}</p>
+                     <H5>{actionField.nodeData.fieldPath}</H5>
                     </div>
             </Card>
         </div>

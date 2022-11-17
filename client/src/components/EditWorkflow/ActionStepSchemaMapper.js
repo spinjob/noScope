@@ -44,16 +44,18 @@ function ActionStepSchemaMapper ({selectActionNode}) {
                 if (node.isSelected) {
                     node.isSelected = false
                     setSelected(0)
-                    console.log(node.nodePath)
+                    selectActionNode(node, false)
                 } else {
                     node.isSelected = true
                     setSelected(1)
-                    selectActionNode(node)
+                    selectActionNode(node, true)
+                    console.log("selected action node", node)
                 }
             } else {
                 if (node.isSelected) {
                     node.isSelected = false
                     setSelected(0)
+                    selectActionNode(node, false)
                 } else {
                 }
     
@@ -99,7 +101,7 @@ function ActionStepSchemaMapper ({selectActionNode}) {
                                                         type: schema.type,
                                                         description: schema.description,
                                                         uuid: schema.uuid,
-                                                        parentInterface: schema.parent_interface_uuid
+                                                        parentInterface: schema.parent_interface_uuid,
                                                 }
                                             }
         
@@ -143,6 +145,8 @@ function ActionStepSchemaMapper ({selectActionNode}) {
 
         for (var i = 0; i < propertyKeys.length; ++i) {
             const propertyID = uuidv4();
+            console.log("Schema Name: " + propertyKeys[i])
+            console.log("Schema Path: " + parentSchema + "." + propertyKeys[i])
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
                 const propertyObject = {
                     id: propertyID,
@@ -152,7 +156,8 @@ function ActionStepSchemaMapper ({selectActionNode}) {
                         type: propertyValues[i].type,
                         description: propertyValues[i].description,
                         uuid: propertyValues[i].uuid,
-                        parentInterface: propertyValues[i].parent_interface_uuid
+                        parentInterface: propertyValues[i].parent_interface_uuid,
+                        fieldPath: parentSchema + "." + propertyKeys[i]
                 }
                 }
                 propertiesArray.push(propertyObject)
@@ -172,13 +177,14 @@ function ActionStepSchemaMapper ({selectActionNode}) {
     
                                 var propertyKeys = Object.keys(interfaceSchema.properties);
                                 var propertyValues = Object.values(interfaceSchema.properties);
+                                var fieldPath = parentSchema + "." + interfaceSchema.name
                                 
                                 const parentObject = {
                                     id: parentId,
                                     label: interfaceSchema.name,
                                     icon: 'cube',
                                     isExpanded: true,
-                                    childNodes: processProperties(propertyKeys, propertyValues, interfaceSchema.name),
+                                    childNodes: processProperties(propertyKeys, propertyValues, fieldPath),
                                     nodeData: {
                                             type: interfaceSchema.type,
                                             description: interfaceSchema.description,
@@ -224,12 +230,13 @@ function ActionStepSchemaMapper ({selectActionNode}) {
                 const parentId = uuidv4();
                 const additionalPropertyKeys = Object.keys(additionalProperties);
                 const additionalPropertyValues = Object.values(additionalProperties);
+                const fieldPath = parentSchema + "." + propertyKeys[i]
                 const parentObject = {
                     id: parentId,
                     label: propertyKeys[i],
                     icon: 'cube',
                     isExpanded: true,
-                    childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues, parentSchema),
+                    childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues, fieldPath),
                     nodeData: {
                             type: propertyValues[i].type,
                             description: propertyValues[i].description,

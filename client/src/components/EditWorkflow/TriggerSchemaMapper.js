@@ -38,7 +38,7 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
 
     })
 
-    const handleActionNodeSelect = useCallback((node) => {
+    const handleTriggerNodeSelect = useCallback((node) => {
         //console.log(node)
         if (node.icon && node.icon === "cube") {} 
         else {
@@ -46,14 +46,17 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
                 if (node.isSelected) {
                     node.isSelected = false
                     setSelected(0)
+                    selectTriggerNode(node, false)
                 } else {
                     node.isSelected = true
+                    console.log(node)
                     setSelected(1)
-                    selectTriggerNode(node)
+                    selectTriggerNode(node, true)
                 }
             } else {
                 if (node.isSelected) {
                     node.isSelected = false
+                    selectTriggerNode(node, false)
                     setSelected(0)
                 } else {
                 }
@@ -91,6 +94,7 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
                                 if (schema === interfaceSchema.name) {
                                     const parentId = uuidv4();
                                     if (interfaceSchema.properties) {
+                                        console.log(interfaceSchema)
                                         var propertyKeys = Object.keys(interfaceSchema.properties);
                                         var propertyValues = Object.values(interfaceSchema.properties);
                                         var properties = processProperties(propertyKeys, propertyValues, interfaceSchema.name)
@@ -102,7 +106,7 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
                                             childNodes: properties,
                                             isExpanded: true,
                                             nodeData: {
-                                                pathName: interfaceSchema.name,
+                                                fieldPath: interfaceSchema.name,
                                                 schema: interfaceSchema
                                             }
                                         }
@@ -174,20 +178,26 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
        
 
     })
-    const processProperties = useCallback((propertyKeys, propertyValues, parentSchema) => {
+    const processProperties = useCallback((propertyKeys, propertyValues, parentInterfacePath) => {
 
         const propertiesArray = [];
         const keyArray = [];
 
         for (var i = 0; i < propertyKeys.length; ++i) {
             const propertyID = uuidv4();
+            //console.log(propertyKeys[i] + " " + parentInterface)
             
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
                 const propertyObject = {
                     id: propertyID,
                     label: propertyKeys[i],
                     icon: iconGenerator(propertyValues[i].type),
-                    nodeData: propertyValues[i]
+                    nodeData: {
+                        fieldPath: parentInterfacePath + "." + propertyKeys[i],
+                        description: propertyValues[i].description,
+                        type: propertyValues[i].type,
+                        uuid: propertyValues[i].uuid
+                    }
                 }
                 propertiesArray.push(propertyObject)
             } else if (propertyValues[i]["$ref"]){ 
@@ -206,15 +216,15 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
     
                                 var propertyKeys = Object.keys(interfaceSchema.properties);
                                 var propertyValues = Object.values(interfaceSchema.properties);
+                                var propertyPath = parentInterfacePath + "." + interfaceSchema.name
                                 
                                 const parentObject = {
                                     id: parentId,
                                     label: interfaceSchema.name,
                                     icon: 'cube',
                                     isExpanded: true,
-                                    childNodes: processProperties(propertyKeys, propertyValues),
+                                    childNodes: processProperties(propertyKeys, propertyValues, propertyPath),
                                     nodeData: {
-                                        pathName: parentSchema + "." + propertyKeys[i],
                                         schema: interfaceSchema
                                     }
                                 }
@@ -227,7 +237,6 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
                                     icon: 'cube',
                                     isExpanded: true,
                                     nodedata: {
-                                        pathName: parentSchema + "." + propertyKeys[i],
                                         schema: interfaceSchema
                                     }
                                 }
@@ -249,16 +258,23 @@ function TriggerSchemaMapper ({selectTriggerNode}) {
                         "$ref": propertyValues[i].additionalProperties["$ref"]
                     }
                 }
+
                 const parentId = uuidv4();
                 const additionalPropertyKeys = Object.keys(additionalProperties);
                 const additionalPropertyValues = Object.values(additionalProperties);
+                const propertyPath = parentInterfacePath + "." + propertyKeys[i]
                 const parentObject = {
                     id: parentId,
                     label: propertyKeys[i],
                     icon: 'cube',
                     isExpanded: true,
-                    childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues),
-                    nodeData: propertyValues[i]
+                    childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues,propertyPath),
+                    nodeData: {
+                        description: propertyValues[i].description,
+                        type: propertyValues[i].type,
+                        uuid: propertyValues[i].uuid,
+                        fieldPath: propertyPath
+                    }
                 }
                 
                 propertiesArray.push(parentObject)
@@ -374,7 +390,7 @@ return !workflow ? (
             <Tree
                 contents={triggerRequestSchemas}
                 className={Popover2Classes.ELEVATION_0}
-                onNodeClick={handleActionNodeSelect}
+                onNodeClick={handleTriggerNodeSelect}
                 onNodeCollapse={handleNodeCollapse}
                 onNodeExpand={handleNodeExpand}
                 style={{ width: 600 }}

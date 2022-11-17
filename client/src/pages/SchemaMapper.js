@@ -1,7 +1,6 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
 import { Overlay, Card } from '@blueprintjs/core';
-
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import { UserContext } from "../context/UserContext";
 import "reactflow/dist/style.css";
@@ -9,11 +8,12 @@ import SchemaMapperHeader from "../components/EditWorkflow/SchemaMapperHeader";
 import TriggerSchemaMapper from "../components/EditWorkflow/TriggerSchemaMapper";
 import SchemaMappingView from "../components/EditWorkflow/SchemaMappingView";
 import ActionStepSchemaMapper from "../components/EditWorkflow/ActionStepSchemaMapper";
+import FieldMappingOverlay from "../components/EditWorkflow/FieldMappingOverlay";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
+import axios from "axios";
 
 const SchemaMapper = () => {
-    let { id, workflowId } = useParams();
 
     const emptyNode = {
         label: "",
@@ -28,6 +28,12 @@ const SchemaMapper = () => {
     const [actionNode, setActionNode] = useState(emptyNode);
     const [triggerNode, setTriggerNode] = useState(emptyNode);
     const [mappingViewOpen, setMappingViewOpen] = useState(false);
+    const [mappingDisabled, setMappingDisabled] = useState(true);
+    const [interfaceSchema, setInterfaceSchema] = useState(null);
+
+    const location = useLocation();
+
+    const interfaces = location.state.interfaces;
 
     const fetchUserDetails = useCallback(() => {
         fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
@@ -60,26 +66,56 @@ const SchemaMapper = () => {
       }, [setUserContext, userContext.token])
 
 
-    const selectTriggerNode = (node) => {
-      setTriggerNode(node);
-      console.log(node)
-     }
+    const selectTriggerNode = (node, isSelected) => {
+
+      if (isSelected) {
+        setTriggerNode(node);
+        setMappingDisabled(false);
+
+      } else { 
+        setTriggerNode(emptyNode);
+        setMappingDisabled(true);
+      }   
+    }
     
 
-   const selectActionNode = (node) => {
-       setActionNode(node);
-       console.log(node)
+   const selectActionNode = (node, isSelected) => {
+
+        if (isSelected) {
+          setActionNode(node);
+          setMappingDisabled(false);
+
+        } else { 
+          setActionNode(emptyNode);
+          setMappingDisabled(true);
+        }    
    }
 
    const toggleOverlay = () => {
      if (mappingViewOpen)
-      {
-        setMappingViewOpen(false);
-      } else {
-        setMappingViewOpen(true);
-      }
+     {
+      setMappingViewOpen(false);
+    } else {
+      setMappingViewOpen(true);
+    }
     
   }
+
+    const fetchInterfaceSchemas = useCallback(() => {
+
+        interfaces.forEach(element => {
+            axios.get(process.env.REACT_APP_API_ENDPOINT + "/interfaces/" + element + "/objects")
+            .then(response => {
+                setInterfaceSchema(response.data)
+                return(response.data)
+            })
+            .catch(error => {
+                console.log(error);
+                return error
+            })
+        });
+
+    })
 
     useEffect(() => {
         // fetch only when user details are not present
@@ -88,30 +124,31 @@ const SchemaMapper = () => {
         }
       }, [userContext.details, fetchUserDetails])
 
+
+      useEffect(() => {
+        // fetch only when user details are not present
+        if (!interfaceSchema) {
+          fetchInterfaceSchemas()
+        }
+      }, [])
+
   return (
 
     <div style={{justifyContent: 'center',alignItems: 'center'}}>
             <Navigation />
             <SchemaMapperHeader />
-
-              <Overlay
-              isOpen={mappingViewOpen} 
-              onClose={toggleOverlay} 
-              canEscapeKeyClose={true} 
-              canOutsideClickClose={true}>
-                <div 
-                style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
-                <Card elevation={3} style={{alignItems: 'center', margin: 10}}>
-                    <p>Mapping</p>  
-                  </Card> 
-                </div>  
-              </Overlay>
-            
+                <Overlay
+                isOpen={mappingViewOpen} 
+                onClose={toggleOverlay} 
+                canEscapeKeyClose={true} 
+                canOutsideClickClose={true}>
+                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
+                    <FieldMappingOverlay field1={triggerNode} field2={actionNode}/> 
+                  </div>  
+                </Overlay>  
             <div class="SchemaMapperParent">
               <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} />
-              <div>
-                <SchemaMappingView triggerField={triggerNode} actionField={actionNode} onClick={toggleOverlay}/>
-              </div>
+              <SchemaMappingView isActive={mappingDisabled} triggerField={triggerNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema}/>
               <ActionStepSchemaMapper selectActionNode={selectActionNode} />
             </div>
   </div>
