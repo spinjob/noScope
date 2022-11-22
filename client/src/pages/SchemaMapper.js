@@ -21,7 +21,8 @@ const SchemaMapper = () => {
         nodeData: {
             type: "",
             description: "",
-            uuid: ""
+            uuid: "",
+            fieldPath: ""
         }
     }
     const [userContext, setUserContext] = useContext(UserContext)
@@ -33,7 +34,6 @@ const SchemaMapper = () => {
     const [triggerSchema, setTriggerSchema] = useState([]);
     const [actionSchema, setActionSchema] = useState([]);
     const [requiredActionFields, setRequiredActionFields] = useState([]);
-    const [mappedActionFields, setMappedActionFields] = useState([]);
     const [shouldFetchMappings, setShouldFetchMappings] = useState(true);
     const [mappings, setMappings] = useState(null);
     const location = useLocation();
@@ -41,43 +41,51 @@ const SchemaMapper = () => {
     const interfaces = location.state.interfaces;
 
     const fetchUserDetails = useCallback(() => {
-        fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
-          method: "GET",
-          credentials: "include",
-          // Pass authentication token as bearer token in header
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${userContext.token}`,
-          },
-        }).then(async response => {
-          if (response.ok) {
-            const data = await response.json()
-            setUserContext(oldValues => {
-              return { ...oldValues, details: data }
-            })
-          } else {
-            if (response.status === 401) {
-              // Edge case: when the token has expired.
-              // This could happen if the refreshToken calls have failed due to network error or
-              // User has had the tab open from previous day and tries to click on the Fetch button
-              window.location.reload()
-            } else {
+          fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
+            method: "GET",
+            credentials: "include",
+            // Pass authentication token as bearer token in header
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${userContext.token}`,
+            },
+          }).then(async response => {
+            if (response.ok) {
+              const data = await response.json()
               setUserContext(oldValues => {
-                return { ...oldValues, details: null }
+                return { ...oldValues, details: data }
               })
+            } else {
+              if (response.status === 401) {
+                // Edge case: when the token has expired.
+                // This could happen if the refreshToken calls have failed due to network error or
+                // User has had the tab open from previous day and tries to click on the Fetch button
+                window.location.reload()
+              } else {
+                setUserContext(oldValues => {
+                  return { ...oldValues, details: null }
+                })
+              }
             }
-          }
-        })
-      }, [setUserContext, userContext.token])
+          })
+        }, [setUserContext, userContext.token])
 
-   const updateRequiredSchema = (schemas) => {
-      setRequiredActionFields(schemas);
-  }
+    const updateRequiredSchema = (schemas) => {
+        setRequiredActionFields(schemas);
+      }
 
     const storeTriggerSchema = (schemas) => {
       setTriggerSchema(schemas);
     }
 
+    const toggleShouldFetchMappings = (shouldFetch) => {
+        if (shouldFetch === true) {
+          setShouldFetchMappings(true);
+
+        } else { 
+          setShouldFetchMappings(false);
+        }    
+    }
     const selectTriggerNode = (node, isSelected) => {
 
       if (isSelected) {
@@ -91,21 +99,6 @@ const SchemaMapper = () => {
     }
 
 
-   const toggleShouldFetchMappings = (shouldFetch) => {
-
-    if (shouldFetch === true) {
-      setShouldFetchMappings(true);
-
-    } else { 
-      setShouldFetchMappings(false);
-    }    
-}
-
-  const handleMappedNodes = (triggerNode, actionNode) => {
-      console.log("triggerNode", triggerNode);
-      console.log("actionNode", actionNode);
-  }
-
    const selectActionNode = (node, isSelected) => {
 
         if (isSelected) {
@@ -118,14 +111,15 @@ const SchemaMapper = () => {
         }    
    }
 
-   const toggleOverlay = () => {
-     if (mappingViewOpen)
-     {
-      setMappingViewOpen(false);
-    } else {
-      setMappingViewOpen(true);
-    }
-    
+   const toggleOverlay = (mapping) => {
+      //If mapping is provided, then we are editing an existing mapping
+        if (mappingViewOpen)
+        {
+          setMappingViewOpen(false);
+        } else {
+          setMappingViewOpen(true);
+        }
+        
   }
 
     const fetchMappings = useCallback(() => {
@@ -186,18 +180,18 @@ const SchemaMapper = () => {
     <div style={{justifyContent: 'center',alignItems: 'center'}}>
             <Navigation />
             <SchemaMapperHeader mappings= {mappings} requiredActionFields={requiredActionFields}/>
-                <Overlay
-                isOpen={mappingViewOpen} 
-                onClose={toggleOverlay} 
-                canEscapeKeyClose={true} 
-                canOutsideClickClose={true}>
-                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
-                    <FieldMappingOverlay handleMappedNodes={handleMappedNodes} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
-                  </div>  
-                </Overlay>  
+            <Overlay
+              isOpen={mappingViewOpen} 
+              onClose={toggleOverlay} 
+              canEscapeKeyClose={true} 
+              canOutsideClickClose={true}>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
+                  <FieldMappingOverlay toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
+                </div>  
+            </Overlay>  
             <div class="SchemaMapperParent">
               <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
-              <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>
+              <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} selectTriggerNode={selectTriggerNode} selectActionNode={selectActionNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>
               <ActionStepSchemaMapper mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema}/>
             </div>
   </div>

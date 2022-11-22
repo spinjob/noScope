@@ -6,13 +6,33 @@ const SchemaMapperHeader = ({requiredActionFields, mappings}) => {
     const requiredActionFieldsCount = requiredActionFields.length;
     var requiredMappings = mappings;
     var requiredMappingsCount = 0
-    
+    var mappedPercentage = requiredMappingsCount / requiredActionFieldsCount
+
     if (!mappings) {
         console.log("No Mappings")
     } else {
         requiredMappings = requiredMappings.filter(mapping => mapping.outputSchema.nodeData.required);
         requiredMappingsCount = requiredMappings.length;
     } 
+    const intentGenerator = () =>{
+        switch(requiredMappingsCount / requiredActionFieldsCount) {
+            case 0:
+                return "danger"
+            case 1: 
+                return "success"
+            default:
+                return "warning"
+        }
+    }
+
+          
+    useEffect(() => {
+        if (mappings) {
+            requiredMappingsCount = mappings.length
+        } else {
+          
+        }
+      }, [])  
 
     return (
         <div style={{ padding: 30}}>
@@ -22,7 +42,7 @@ const SchemaMapperHeader = ({requiredActionFields, mappings}) => {
                         <H5> {requiredMappingsCount} out of {requiredActionFieldsCount} Required Fields Mapped</H5>
                     </div>
                     <div style={{display: 'block', width: 300, alignContent: 'center', alignItems: 'center'}}>
-                        <ProgressBar intent={'primary'} stripes={false} value={requiredMappingsCount / requiredActionFieldsCount}/>
+                        <ProgressBar intent={intentGenerator()} stripes={false} value={requiredMappingsCount / requiredActionFieldsCount}/>
                     </div>
                 </div>
             </Card>

@@ -47,7 +47,6 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                     node.isSelected = true
                     setSelected(1)
                     selectActionNode(node, true)
-                    console.log("selected action node", node)
                 }
             } else {
                 if (node.isSelected) {
@@ -68,7 +67,6 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
        var isDisabled = false
        var mappedOutputSchema = []
         mappings.forEach((mapping) => {
-            console.log(mapping)
             mappedOutputSchema.push(mapping.outputSchema.nodeData.fieldPath)
         })
 
@@ -158,7 +156,6 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
         const keyArray = [];
 
         for (var i = 0; i < propertyKeys.length; ++i) {
-            console.log(processNodeStatus(parentSchema + "." + propertyKeys[i]))
             const propertyID = uuidv4();
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
                 if (propertyValues[i].required === true) {
@@ -245,7 +242,6 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                                             parentInterface: interfaceSchema.parent_interface_uuid
                                     }
                                 }
-                                console.log(parentObject)
                                 propertiesArray.push(parentObject)
                                
     

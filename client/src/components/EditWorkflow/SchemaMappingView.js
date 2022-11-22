@@ -1,28 +1,44 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
-import { Button, Icon, Intent, Card, Menu, Divider, H1, H2, H3, H4, H5 } from '@blueprintjs/core';
+import { Button, Icon, Card, Divider, H1, H2, H3, H4, H5 } from '@blueprintjs/core';
+import { Popover2, Tooltip2, Classes} from "@blueprintjs/popover2";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import Loader from "../Loader";
 
 import "reactflow/dist/style.css";
 
-const SchemaMappingView = ({triggerField, actionField, onClick, isActive, interfaceSchema, setShouldFetchMappings, mappings}) => {
+const SchemaMappingView = ({triggerField, actionField, onClick, isActive, mappings}) => {
 
     let {id, workflowId} = useParams();
 
+    const onEditClick = (mapping) => {
+
+        triggerField = mapping.inputSchema
+        actionField = mapping.outputSchema
+        onClick(mapping)
+    }
 
     const renderMappingCards = (mappings) => {
         return mappings.map((mapping) => {
             return (
-                <Card>
-                    <div style={{display:'flex', justifyContent: 'center'}}>
-                        <H4 style={{paddingRight: 10}}>{mapping.inputSchema.label}</H4>
-                        <Icon icon="arrow-right" iconSize={20}/>
-                        <H4 style={{paddingLeft: 10}} >{mapping.outputSchema.label}</H4>
-                    </div>
-                    
-                    <p>{mapping.formula}</p>
-                </Card>
+                    <Card>
+                        <div style={{display:'flex', justifyContent: 'right'}}>
+                            <Button icon="edit" minimal={true} onClick={() => onEditClick(mapping)}/>     
+                        </div>
+                        <div style={{display:'flex', justifyContent: 'center'}}>
+                             <Tooltip2  content={mapping.inputSchema.nodeData.fieldPath}>
+                                 <H4 style={{paddingRight: 10}}>{mapping.inputSchema.label}</H4>
+                            </Tooltip2>
+                                
+                            <Tooltip2 className={Classes.TOOLTIP2_INDICATOR} content={mapping.formula}>
+                                <Icon icon="arrow-right" iconSize={20}/>
+                            </Tooltip2> 
+                            <Tooltip2  content={mapping.outputSchema.nodeData.fieldPath}>
+                                <H4 style={{paddingLeft: 10}} >{mapping.outputSchema.label}</H4>
+                            </Tooltip2>
+                            
+                        </div> 
+                    </Card>
             )
         })
     }
@@ -48,8 +64,9 @@ const SchemaMappingView = ({triggerField, actionField, onClick, isActive, interf
     }
 }
 
-
-    return (
+    return !triggerField && !actionField ? (
+        <Loader />
+    ) : (
         <div>
         <div class="SchemaMappingView">
             <Card style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -61,20 +78,20 @@ const SchemaMappingView = ({triggerField, actionField, onClick, isActive, interf
                             <br></br>
                             <H5>{triggerField.nodeData.fieldPath}</H5>
                             </div>
-                    </Card>
-                    <div class="SchemaMappingViewButton">
-                        <Button disabled={isActive} minimal={true} outlined={true} onClick={onClick} text="Map"/>
-                    </div>
-                    <Card elevation={3} style={{display: 'flex', alignItems: 'center', margin: 10}}> 
-                        <div>
+                </Card>
+                <div class="SchemaMappingViewButton">
+                    <Button disabled={isActive} minimal={true} outlined={true} onClick={onClick} text="Map"/>
+                </div>
+                <Card elevation={3} style={{display: 'flex', alignItems: 'center', margin: 10}}> 
+                    <div>
                         <Icon icon={iconGenerator(actionField.nodeData.type)}/> 
                         <H4>{actionField.label}</H4>
                         <p>{actionField.nodeData.description}</p>
                         <Divider/>
-                            <br></br>
-                            <H5>{actionField.nodeData.fieldPath}</H5>
-                            </div>
-                    </Card>
+                        <br></br>
+                        <H5>{actionField.nodeData.fieldPath}</H5>
+                    </div>
+                </Card>
             </Card>
            
         </div>

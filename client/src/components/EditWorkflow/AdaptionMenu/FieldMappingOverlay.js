@@ -8,7 +8,7 @@ import axios from "axios";
 import {v4 as uuidv4} from 'uuid';
 import Loader from "../../Loader";
 
-const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, projectId, toggleOverlay, handleMappedNodes, setShouldFetchMappings}) => {
+const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, projectId, toggleOverlay, selectedMapping, setShouldFetchMappings}) => {
     const [selectedValue, setSelectedValue] = useState("one");
     const [equation, setEquation] = useState("{"+field1.nodeData.fieldPath+"}");
     const [schema, setSchema] = useState("");
@@ -28,7 +28,6 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
         }
 
         const handleMappingSubmit = () => {
-            handleMappedNodes(field1, field2);
             const mappingUuid = uuidv4();
             const formattedEquation = equation + "=" + "{" + field2.nodeData.fieldPath + "}"
             setIsLoading(true);
@@ -39,7 +38,6 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                 formula: formattedEquation
              }
              axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ projectId + "/workflows/" + workflowId +"/map", requestBody).then(response => {
-                handleMappedNodes(field1, field2);
                 setIsLoading(false);
                 setShouldFetchMappings(true);
              }).catch(error => {
@@ -58,7 +56,10 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
     
     ) : ( <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', paddingTop: 500}}>
             <Card elevation={3} style={{display: 'block', alignItems: 'center',margin: 10, padding: 50}}>
-                <H1 style={{alignContent:'center'}}>Mapping Configuration</H1>
+                <div style={{ display: 'flex', justifyContent: 'right'}}>
+                 <Button minimal={true} icon="delete" onClick={toggleOverlay} />
+                </div>
+                <H1 style={{alignContent:'center'}}>Mapping Configuration</H1> 
                     <div class="SchemaMapperParent">
                         <div style={{display: 'block', margin: 10}}>
                             <H4>Input Property</H4>
