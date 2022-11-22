@@ -1,17 +1,16 @@
 import React , {Component,useCallback, useContext, useEffect, useState } from 'react'
 import '@blueprintjs/core/lib/css/blueprint.css';
 import { useParams, useLocation } from "react-router-dom";
-import { Tree, Classes as Popover2Classes, ContextMenu, Tooltip2, H1, H2, H3, H4, H5 } from "@blueprintjs/core";
+import { Tree, Classes as Popover2Classes, Icon, ContextMenu, Tooltip2, H1, H2, H3, H4, H5, } from "@blueprintjs/core";
 import { Select2 } from "@blueprintjs/select";
 import { IconNames } from "@blueprintjs/icons";
 import axios from "axios";
-import '@blueprintjs/core/lib/css/blueprint.css';
 import _ from "lodash";
 import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
+function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSchema}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
@@ -21,8 +20,8 @@ function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
     const [actionRequestSchemas, setActionRequestSchemas] = useState([])
     const [workflow, setWorkflow] = useState(location.state.workflow)
     const [actionResponseSchemas, setActionResponseSchemas] = useState([])
-    const [entityIds, setEntityIds] = useState([])
     const [selected, setSelected] = useState(0)
+    const requiredProperties = [];
 
     const handleNodeExpand = useCallback((node) => {
         node.isExpanded = true
@@ -35,7 +34,6 @@ function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
         setActionRequestSchemas(_.cloneDeep(actionRequestSchemas));
 
     })
-
 
     const handleActionNodeSelect = useCallback((node) => {
         if (node.icon && node.icon === "cube") {} 
@@ -64,7 +62,23 @@ function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
         setActionRequestSchemas(_.cloneDeep(actionRequestSchemas));
 
     })
+    
 
+    const processNodeStatus = useCallback((nodeLabel) => {
+       var isDisabled = false
+       var mappedOutputSchema = []
+        mappings.forEach((mapping) => {
+            console.log(mapping)
+            mappedOutputSchema.push(mapping.outputSchema.nodeData.fieldPath)
+        })
+
+        if (mappedOutputSchema.includes(nodeLabel)) {
+            isDisabled = true
+        } else {
+            isDisabled = false
+        }
+        return isDisabled
+    })
 
     const processActionSchema = useCallback(() => {
         let firstStep = workflow.steps[0]
@@ -144,22 +158,47 @@ function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
         const keyArray = [];
 
         for (var i = 0; i < propertyKeys.length; ++i) {
+            console.log(processNodeStatus(parentSchema + "." + propertyKeys[i]))
             const propertyID = uuidv4();
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
-                const propertyObject = {
-                    id: propertyID,
-                    label: propertyKeys[i],
-                    icon: iconGenerator(propertyValues[i].type),
-                    nodeData: {
-                        type: propertyValues[i].type,
-                        description: propertyValues[i].description,
-                        uuid: propertyValues[i].uuid,
-                        parentInterface: propertyValues[i].parent_interface_uuid,
-                        fieldPath: parentSchema + "." + propertyKeys[i]
+                if (propertyValues[i].required === true) {
+                    //Required Action Property Node
+                    
+                    const propertyObject = {
+                        id: propertyID,
+                        label:propertyKeys[i]  ,
+                        icon: iconGenerator(propertyValues[i].type, propertyValues[i].required),
+                        disabled: processNodeStatus(parentSchema + "." + propertyKeys[i]),
+                        nodeData: {
+                            type: propertyValues[i].type,
+                            description: propertyValues[i].description,
+                            uuid: propertyValues[i].uuid,
+                            parentInterface: propertyValues[i].parent_interface_uuid,
+                            fieldPath: parentSchema + "." + propertyKeys[i],
+                            required: propertyValues[i].required
+                        }   
+                    }
+                    propertiesArray.push(propertyObject)
+                    requiredProperties.push(propertyObject)
+                } else {
+                    //Optional Action Property Node
+                    const propertyObject = {
+                        id: propertyID,
+                        label: propertyKeys[i],
+                        disabled: processNodeStatus(parentSchema + "." + propertyKeys[i]),
+                        icon: iconGenerator(propertyValues[i].type, propertyValues[i].required),
+                        nodeData: {
+                            type: propertyValues[i].type,
+                            description: propertyValues[i].description,
+                            uuid: propertyValues[i].uuid,
+                            parentInterface: propertyValues[i].parent_interface_uuid,
+                            fieldPath: parentSchema + "." + propertyKeys[i],
+                            required: propertyValues[i].required
+                        }   
+                    }
+                    propertiesArray.push(propertyObject)
+
                 }
-                }
-                propertiesArray.push(propertyObject)
-                storeActionSchema(propertyObject)
             } else if (propertyValues[i]["$ref"]){ 
                 const ref = propertyValues[i]["$ref"]
                 const referenceArray = ref.split("/")
@@ -249,34 +288,36 @@ function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
             }
 
         }
+        updateRequiredSchema(requiredProperties)
         return propertiesArray
     })
 
+    const iconGenerator = (type, required) => {
+        var iconColor = 'gray'
 
-
-    const iconGenerator = (type) => {
+        if (required === true) {
+            iconColor = 'red'
+        }
         switch (type) {
             case "string":
-                return "citation"
+                return <Icon icon="citation" color={iconColor} style={{paddingRight: '10'}}/>
             case "integer":
-                return "numerical"
+                return <Icon icon="numerical" color={iconColor}/> 
             case "number":
-                return "numerical" 
+                return <Icon icon="numerical" color={iconColor}/> 
             case "float":
-                return "floating-point"                   
+                return <Icon icon="floating-point" color={iconColor}/>                
             case "boolean":
-                return "segmented-control"
+                return <Icon icon="segmented-control" color={iconColor}/>      
             case "array":
-                return "array"
+                return  <Icon icon="array" color={iconColor}/>   
             case "object":
-                return "cube"
+                return <Icon icon= "cube" color={iconColor}/>   
             default: 
-                return "symbol-circle"
+                return<Icon icon= "symbol-circle" color={iconColor}/>   
+        }
     }
-}
     
-
-   
     const fetchInterfaceSchemas = useCallback(() => {
 
         interfaces.forEach(element => {
@@ -308,8 +349,6 @@ function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
 
     })
 
-  
-
     useEffect(() => {
         if (interfaceSchemas.length === 0) {
           fetchInterfaceSchemas();
@@ -334,7 +373,6 @@ function ActionStepSchemaMapper ({selectActionNode, storeActionSchema}) {
       }, [actionRequestSchemas, processActionSchema])  
 
 
-
 return !workflow ? (
         <Loader />
     )
@@ -357,9 +395,6 @@ return !workflow ? (
             />
         </div>
 
-        // <div>
-        //     Action Step Schema
-        // </div>
  ) 
 
 }

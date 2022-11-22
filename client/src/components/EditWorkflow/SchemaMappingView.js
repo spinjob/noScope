@@ -6,25 +6,9 @@ import Loader from "../Loader";
 
 import "reactflow/dist/style.css";
 
-const SchemaMappingView = ({triggerField, actionField, onClick, isActive, interfaceSchema}) => {
+const SchemaMappingView = ({triggerField, actionField, onClick, isActive, interfaceSchema, setShouldFetchMappings, mappings}) => {
 
-    const [mappings, setMappings] = useState(null);
     let {id, workflowId} = useParams();
-    const [shouldFetchMappings, setShouldFetchMappings] = useState(true);
-
-    const fetchMappings = useCallback(() => {
-        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/details")
-        .then(response => {
-            setMappings(response.data[0].steps[0].adaptions)
-            console.log("fetched mappings")
-            return response
-        })
-        .catch(error => {
-            console.log(error);
-            setShouldFetchMappings(true)
-            return error
-        })
-    })
 
 
     const renderMappingCards = (mappings) => {
@@ -64,15 +48,6 @@ const SchemaMappingView = ({triggerField, actionField, onClick, isActive, interf
     }
 }
 
-    useEffect(() => {
-        // fetch once
-        if (!mappings) {
-            fetchMappings()
-        } else {
-            renderMappingCards(mappings)
-            console.log(mappings)
-        }
-    }, [])
 
     return (
         <div>

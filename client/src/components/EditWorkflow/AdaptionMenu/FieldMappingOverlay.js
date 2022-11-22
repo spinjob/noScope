@@ -8,7 +8,7 @@ import axios from "axios";
 import {v4 as uuidv4} from 'uuid';
 import Loader from "../../Loader";
 
-const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, projectId, toggleOverlay}) => {
+const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, projectId, toggleOverlay, handleMappedNodes, setShouldFetchMappings}) => {
     const [selectedValue, setSelectedValue] = useState("one");
     const [equation, setEquation] = useState("{"+field1.nodeData.fieldPath+"}");
     const [schema, setSchema] = useState("");
@@ -28,6 +28,7 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
         }
 
         const handleMappingSubmit = () => {
+            handleMappedNodes(field1, field2);
             const mappingUuid = uuidv4();
             const formattedEquation = equation + "=" + "{" + field2.nodeData.fieldPath + "}"
             setIsLoading(true);
@@ -38,8 +39,9 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                 formula: formattedEquation
              }
              axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ projectId + "/workflows/" + workflowId +"/map", requestBody).then(response => {
-                console.log(response.data)
+                handleMappedNodes(field1, field2);
                 setIsLoading(false);
+                setShouldFetchMappings(true);
              }).catch(error => {
                 console.log(error);
                 setIsLoading(false);

@@ -24,7 +24,6 @@ const SchemaMapper = () => {
             uuid: ""
         }
     }
-
     const [userContext, setUserContext] = useContext(UserContext)
     const [actionNode, setActionNode] = useState(emptyNode);
     const [triggerNode, setTriggerNode] = useState(emptyNode);
@@ -33,7 +32,10 @@ const SchemaMapper = () => {
     const [interfaceSchema, setInterfaceSchema] = useState(null);
     const [triggerSchema, setTriggerSchema] = useState([]);
     const [actionSchema, setActionSchema] = useState([]);
-
+    const [requiredActionFields, setRequiredActionFields] = useState([]);
+    const [mappedActionFields, setMappedActionFields] = useState([]);
+    const [shouldFetchMappings, setShouldFetchMappings] = useState(true);
+    const [mappings, setMappings] = useState(null);
     const location = useLocation();
 
     const interfaces = location.state.interfaces;
@@ -68,10 +70,9 @@ const SchemaMapper = () => {
         })
       }, [setUserContext, userContext.token])
 
-    const storeActionSchema = (schema) => {
-      // console.log(schema)
-      //  setActionSchema([...actionSchema, schema]);
-    }
+   const updateRequiredSchema = (schemas) => {
+      setRequiredActionFields(schemas);
+  }
 
     const storeTriggerSchema = (schemas) => {
       setTriggerSchema(schemas);
@@ -88,7 +89,22 @@ const SchemaMapper = () => {
         setMappingDisabled(true);
       }   
     }
-    
+
+
+   const toggleShouldFetchMappings = (shouldFetch) => {
+
+    if (shouldFetch === true) {
+      setShouldFetchMappings(true);
+
+    } else { 
+      setShouldFetchMappings(false);
+    }    
+}
+
+  const handleMappedNodes = (triggerNode, actionNode) => {
+      console.log("triggerNode", triggerNode);
+      console.log("actionNode", actionNode);
+  }
 
    const selectActionNode = (node, isSelected) => {
 
@@ -111,6 +127,21 @@ const SchemaMapper = () => {
     }
     
   }
+
+    const fetchMappings = useCallback(() => {
+      axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/details")
+      .then(response => {
+          setMappings(response.data[0].steps[0].adaptions)
+          setShouldFetchMappings(false);
+          console.log("fetched mappings")
+          return response
+      })
+      .catch(error => {
+          console.log(error);
+          setShouldFetchMappings(false);
+          return error
+      })
+  })
 
     const fetchInterfaceSchemas = useCallback(() => {
 
@@ -135,6 +166,13 @@ const SchemaMapper = () => {
         }
       }, [userContext.details, fetchUserDetails])
 
+      useEffect(() => {
+        // fetch only when user details are not present
+        if (shouldFetchMappings) {
+          fetchMappings()
+        }
+      }, [fetchMappings, setMappings])
+
 
       useEffect(() => {
         // fetch only when user details are not present
@@ -147,20 +185,20 @@ const SchemaMapper = () => {
 
     <div style={{justifyContent: 'center',alignItems: 'center'}}>
             <Navigation />
-            <SchemaMapperHeader />
+            <SchemaMapperHeader mappings= {mappings} requiredActionFields={requiredActionFields}/>
                 <Overlay
                 isOpen={mappingViewOpen} 
                 onClose={toggleOverlay} 
                 canEscapeKeyClose={true} 
                 canOutsideClickClose={true}>
                   <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
-                    <FieldMappingOverlay field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
+                    <FieldMappingOverlay handleMappedNodes={handleMappedNodes} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
                   </div>  
                 </Overlay>  
             <div class="SchemaMapperParent">
               <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
-              <SchemaMappingView isActive={mappingDisabled} triggerField={triggerNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema}/>
-              <ActionStepSchemaMapper selectActionNode={selectActionNode} storeActionSchema={storeActionSchema} actionSchema={actionSchema}/>
+              <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>
+              <ActionStepSchemaMapper mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema}/>
             </div>
   </div>
 );

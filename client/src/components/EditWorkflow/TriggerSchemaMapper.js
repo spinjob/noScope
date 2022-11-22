@@ -401,10 +401,6 @@ return !workflow ? (
                 style={{ width: 600 }}
             />
         </div>
-
-        // <div>
-        //     Action Step Schema
-        // </div>
  ) 
 
 }

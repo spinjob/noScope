@@ -84,17 +84,15 @@
 
 .ActionSchemaMapper {
     width: 30%;
-    color: green;
+    color: rgb(0, 0, 0);
     height: 100vh;
     padding: 50px;
 }
 
 
 .SchemaMappingView {
-    display: flex;
+    display: block;
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
 }
 
 .SchemaMappingOverlayContainer {
