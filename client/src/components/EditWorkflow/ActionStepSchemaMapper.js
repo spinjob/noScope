@@ -29,6 +29,11 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
     
     })
 
+   function lowercaseFirstLetter(string) {
+    return string.charAt(0).toLowerCase() + string.slice(1);
+  }
+  
+
     const handleNodeCollapse = useCallback((node) => {
         node.isExpanded = false
         setActionRequestSchemas(_.cloneDeep(actionRequestSchemas));
@@ -105,7 +110,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
         
                                             const parentObject = {
                                                 id: parentId,
-                                                label: schema.name,
+                                                label: lowercaseFirstLetter(schema.name),
                                                 icon: 'cube',
                                                 childNodes: properties,
                                                 isExpanded: true,
@@ -122,7 +127,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
         
                                             const parentObject = {
                                                 id: parentId,
-                                                label: schema.name,
+                                                label: lowercaseFirstLetter(schema.name),
                                                 icon: 'cube',
                                                 nodeData: {
                                                         type: schema.type,
@@ -157,7 +162,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
 
         for (var i = 0; i < propertyKeys.length; ++i) {
             const propertyID = uuidv4();
-            if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
+            if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties && !propertyValues[i].items) {
                 if (propertyValues[i].required === true) {
                     //Required Action Property Node
                     
@@ -171,7 +176,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                             description: propertyValues[i].description,
                             uuid: propertyValues[i].uuid,
                             parentInterface: propertyValues[i].parent_interface_uuid,
-                            fieldPath: parentSchema + "." + propertyKeys[i],
+                            fieldPath: lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i]),
                             required: propertyValues[i].required
                         }   
                     }
@@ -189,7 +194,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                             description: propertyValues[i].description,
                             uuid: propertyValues[i].uuid,
                             parentInterface: propertyValues[i].parent_interface_uuid,
-                            fieldPath: parentSchema + "." + propertyKeys[i],
+                            fieldPath: lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i]),
                             required: propertyValues[i].required
                         }   
                     }
@@ -212,11 +217,11 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
     
                                 var propertyKeys = Object.keys(interfaceSchema.properties);
                                 var propertyValues = Object.values(interfaceSchema.properties);
-                                var fieldPath = parentSchema + "." + interfaceSchema.name
+                                var fieldPath = lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(interfaceSchema.name)
                                 
                                 const parentObject = {
                                     id: parentId,
-                                    label: interfaceSchema.name,
+                                    label: lowercaseFirstLetter(interfaceSchema.name),
                                     icon: 'cube',
                                     isExpanded: true,
                                     childNodes: processProperties(propertyKeys, propertyValues, fieldPath),
@@ -232,7 +237,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                             } else {
                                 const parentObject = {
                                     id: parentId,
-                                    label: interfaceSchema.name,
+                                    label: lowercaseFirstLetter(interfaceSchema.name),
                                     icon: 'cube',
                                     isExpanded: true,
                                     nodeData: {
@@ -264,10 +269,10 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                 const parentId = uuidv4();
                 const additionalPropertyKeys = Object.keys(additionalProperties);
                 const additionalPropertyValues = Object.values(additionalProperties);
-                const fieldPath = parentSchema + "." + propertyKeys[i]
+                const fieldPath = lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i])
                 const parentObject = {
                     id: parentId,
-                    label: propertyKeys[i],
+                    label: lowercaseFirstLetter(propertyKeys[i]),
                     icon: 'cube',
                     isExpanded: true,
                     childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues, fieldPath),
@@ -281,7 +286,148 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                 
                 propertiesArray.push(parentObject)
             
-            }
+            } else if (propertyValues[i]["items"]) {
+                //Processing Array Properties
+                // First check is if the items property is a reference to another schema
+                // If it is, we need to find the schema and process it's properties
+                // If it is not, we need to process the items property as an "inline" schema...which will be named as such.
+                console.log(propertyValues[i])
+                   if (propertyValues[i]["items"]["$ref"]) {
+                       const arrayItemSchema = propertyValues[i].items
+                       const parentId = uuidv4();
+                       const itemsKey = Object.keys(arrayItemSchema);
+                       const itemsValue = Object.values(arrayItemSchema);
+                       var refArray = itemsValue[0].split("/")
+                       var refSchema = refArray[refArray.length-1]
+                       const propertyPath = lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i])
+                       const arrayItems = []
+                      
+                       interfaceSchemas[0].forEach((interfaceSchema) => {
+                           var properties = []
+   
+                           if (refSchema === interfaceSchema.name) {
+                               if (!interfaceSchema.properties) {
+                                   console.log("No properties")
+                                   const arrayItem = {
+                                       id: parentId,
+                                       description: interfaceSchema.description,
+                                       label: lowercaseFirstLetter(interfaceSchema.name),
+                                       icon: iconGenerator(interfaceSchema.type),
+                                       childNodes: properties,
+                                       isExpanded: true,
+                                       nodeData: {
+                                           type: interfaceSchema.type,
+                                           uuid: propertyValues[i].uuid,
+                                           fieldPath: propertyPath
+                                       }
+                                   }
+                                   arrayItems.push(arrayItem)
+                               } else if (interfaceSchema.name == "ItemModifier") {
+                                   const arrayItem = {
+                                       id: parentId,
+                                       description: interfaceSchema.description,
+                                       label: lowercaseFirstLetter(interfaceSchema.name),
+                                       icon: iconGenerator(interfaceSchema.type),
+                                       isExpanded: true,
+                                       nodeData: {
+                                           type: interfaceSchema.type,
+                                          // uuid: propertyValues[i].uuid,
+                                           fieldPath: propertyPath
+                                       }
+                                   }
+                                   arrayItems.push(arrayItem)
+   
+                               } else {
+                                   var propertyKeys = Object.keys(interfaceSchema.properties);
+                                   var propertyValues = Object.values(interfaceSchema.properties);
+                                   console.log(propertyKeys, propertyValues)
+                                   const arrayItem = {
+                                       id: parentId,
+                                       description: interfaceSchema.description,
+                                       label: lowercaseFirstLetter(interfaceSchema.name),
+                                       icon: iconGenerator(interfaceSchema.type),
+                                       childNodes: processProperties(propertyKeys, propertyValues, interfaceSchema.name),
+                                       isExpanded: true,
+                                       nodeData: {
+                                           type: interfaceSchema.type,
+                                           fieldPath: propertyPath
+                                       }
+                                   }
+                                   arrayItems.push(arrayItem)
+                               }
+                           
+                               
+                           }
+                           else {}
+                       })
+   
+                           const parentObject = {
+                               id: parentId,
+                               label: lowercaseFirstLetter(propertyKeys[i]),
+                               icon: iconGenerator(propertyValues[i].type),
+                               isExpanded: true,
+                               childNodes: arrayItems,
+                               nodeData: {
+                                   description: propertyValues[i].description,
+                                   type: propertyValues[i].type,
+                                   uuid: propertyValues[i].uuid,
+                                   fieldPath: propertyPath,
+                                   items: arrayItems
+                               }
+                           }
+                           propertiesArray.push(parentObject)
+                 
+                   } else if (propertyValues[i]["items"]["properties"]) {
+                       const parentId = uuidv4();
+                       const propertyPath = lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i])
+                       const parentObject = {
+                           id: parentId,
+                           label:lowercaseFirstLetter(propertyKeys[i]),
+                           icon: iconGenerator(propertyValues[i].type),
+                           isExpanded: true,
+                           nodeData: {
+                               description: propertyValues[i].description,
+                               type: propertyValues[i].type,
+                               uuid: propertyValues[i].uuid,
+                               fieldPath: propertyPath,
+                               items: propertyValues[i].items
+                           }
+                       }
+                       propertiesArray.push(parentObject)
+   
+                   } else {
+                       const parentId = uuidv4();
+                       const propertyPath = lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i])
+                       const childNode = {
+                           id: uuidv4(),
+                           label: "inlineSchema",
+                           icon: iconGenerator(propertyValues[i].items.type),
+                           nodeData: {
+                               description: propertyValues[i].items.description,
+                               type: propertyValues[i].items.type,
+                               uuid: propertyValues[i].uuid,
+                               fieldPath: propertyPath
+                           }
+                       }
+                       const childNodes = [childNode]
+                       const parentObject = {
+                           id: parentId,
+                           label: lowercaseFirstLetter(propertyKeys[i]),
+                           icon: iconGenerator(propertyValues[i].type),
+                           isExpanded: true,
+                           childNodes: childNodes,
+                           nodeData: {
+                               description: propertyValues[i].description,
+                               type: propertyValues[i].type,
+                               uuid: propertyValues[i].uuid,
+                               fieldPath: propertyPath,
+                               items: propertyValues[i].items
+                           }
+                       }
+                       propertiesArray.push(parentObject)
+                   }
+                   
+               }
 
         }
         updateRequiredSchema(requiredProperties)

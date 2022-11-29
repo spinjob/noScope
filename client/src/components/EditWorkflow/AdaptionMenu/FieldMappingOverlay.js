@@ -17,8 +17,22 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
 
         const handleRadioChange = (e) => {
             setSelectedValue(e.target.value)
+            if(e.target.value === "three"){
+                constructForLoopLiquidTemplate(field1, field2)
         }
-
+    }
+        const constructForLoopLiquidTemplate = (field1, field2) => {
+            console.log(field1, field2)
+           if (field1.nodeData.type == "array" && field2.nodeData.type == "array"){
+                    setEquation(`{%- for ${field1.nodeData.items[0].label} in ${field1.nodeData.fieldPath} %}
+                        {{${field2.nodeData.items[0].label}}}               
+                        {% endfor %}`)
+         } else if (field1.nodeData.type == "array" && field2.nodeData.type != "array"){
+                setEquation(`{%- for ${field1.nodeData.items[0].label} in ${field1.nodeData.fieldPath} %}
+                {{${field2.nodeData.fieldPath}}}}                
+                {% endfor %}`)
+            }
+        }
         const displayAdaptionStudio = () => {
             if (selectedValue === "one") {
                 return "none"
@@ -26,6 +40,7 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                 return "block"
             }
         }
+    
 
         const handleMappingSubmit = () => {
             const mappingUuid = uuidv4();
@@ -47,7 +62,16 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
         }
 
         const handleFieldAddition = (schema) => {
-            setEquation(equation + "{" + schema.nodeData.fieldPath + "}")
+            setEquation(equation + "{{" + schema.nodeData.fieldPath + "}}")
+        }
+        
+        const isIterable = (field1) => {
+            if (field1.nodeData.type === "array") {
+                return "block"
+            } else {
+                console.log("not iterable")
+                return "none"
+            }
         }
 
     return isLoading ? (
@@ -77,11 +101,11 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                         <Icon icon="arrow-right" iconSize={50}/>
                         <div style={{display: 'block', margin: 10}}>
                             <Card elevation={3} style={{display: 'block', alignItems: 'center', margin: 10}}> 
-                            
                                 <div>
                                     <RadioGroup label="Select an adaption type" onChange={handleRadioChange} selectedValue={selectedValue}>
                                         <Radio label="No changes to input" value="one" />
                                         <Radio label="Write a formula" value="two" />
+                                        <Radio label="For Each" value="three" style={{display: isIterable(field1)}} />
                                     </RadioGroup>
                                 </div>
                             </Card>

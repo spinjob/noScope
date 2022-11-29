@@ -97,16 +97,16 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                                     if (interfaceSchema.properties) {
                                         var propertyKeys = Object.keys(interfaceSchema.properties);
                                         var propertyValues = Object.values(interfaceSchema.properties);
-                                        var properties = processProperties(propertyKeys, propertyValues, interfaceSchema.name)
+                                        var properties = processProperties(propertyKeys, propertyValues, lowercaseFirstLetter(interfaceSchema.name))
     
                                         const parentObject = {
                                             id: parentId,
-                                            label: interfaceSchema.name,
+                                            label: lowercaseFirstLetter(interfaceSchema.name),
                                             icon: 'cube',
                                             childNodes: properties,
                                             isExpanded: true,
                                             nodeData: {
-                                                fieldPath: interfaceSchema.name,
+                                                fieldPath: lowercaseFirstLetter(interfaceSchema.name),
                                                 schema: interfaceSchema
                                             }
                                         }
@@ -116,7 +116,7 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
     
                                         const parentObject = {
                                             id: parentId,
-                                            label: interfaceSchema.name,
+                                            label: lowercaseFirstLetter(interfaceSchema.name),
                                             icon: 'cube'
                                         }
                                         treeArray.push(parentObject)
@@ -191,10 +191,10 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties && !propertyValues[i].items) {
                 const propertyObject = {
                     id: propertyID,
-                    label: propertyKeys[i],
+                    label: lowercaseFirstLetter(propertyKeys[i]),
                     icon: iconGenerator(propertyValues[i].type),
                     nodeData: {
-                        fieldPath: parentInterfacePath + "." + propertyKeys[i],
+                        fieldPath: parentInterfacePath + "." + lowercaseFirstLetter(propertyKeys[i]),
                         description: propertyValues[i].description,
                         type: propertyValues[i].type,
                         uuid: propertyValues[i].uuid
@@ -219,11 +219,11 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
     
                                 var propertyKeys = Object.keys(interfaceSchema.properties);
                                 var propertyValues = Object.values(interfaceSchema.properties);
-                                var propertyPath = parentInterfacePath + "." + interfaceSchema.name
+                                var propertyPath = lowercaseFirstLetter(parentInterfacePath) + "." + lowercaseFirstLetter(interfaceSchema.name)
                                 
                                 const parentObject = {
                                     id: parentId,
-                                    label: interfaceSchema.name,
+                                    label: lowercaseFirstLetter(interfaceSchema.name),
                                     icon: 'cube',
                                     isExpanded: true,
                                     childNodes: processProperties(propertyKeys, propertyValues, propertyPath),
@@ -236,7 +236,7 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                             } else {
                                 const parentObject = {
                                     id: parentId,
-                                    label: interfaceSchema.name,
+                                    label: lowercaseFirstLetter(interfaceSchema.name),
                                     icon: 'cube',
                                     isExpanded: true,
                                     nodedata: {
@@ -264,10 +264,10 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                 const parentId = uuidv4();
                 const additionalPropertyKeys = Object.keys(additionalProperties);
                 const additionalPropertyValues = Object.values(additionalProperties);
-                const propertyPath = parentInterfacePath + "." + propertyKeys[i]
+                const propertyPath = lowercaseFirstLetter(parentInterfacePath) + "." + lowercaseFirstLetter(propertyKeys[i])
                 const parentObject = {
                     id: parentId,
-                    label: propertyKeys[i],
+                    label: lowercaseFirstLetter(propertyKeys[i]),
                     icon: 'cube',
                     isExpanded: true,
                     childNodes: processProperties(additionalPropertyKeys, additionalPropertyValues,propertyPath),
@@ -294,7 +294,7 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                     const itemsValue = Object.values(arrayItemSchema);
                     var refArray = itemsValue[0].split("/")
                     var refSchema = refArray[refArray.length-1]
-                    const propertyPath = parentInterfacePath + "." + propertyKeys[i]
+                    const propertyPath = lowercaseFirstLetter(parentInterfacePath) + "." + (propertyKeys[i])
                     const arrayItems = []
                    
                     interfaceSchemas[0].forEach((interfaceSchema) => {
@@ -302,11 +302,10 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
 
                         if (refSchema === interfaceSchema.name) {
                             if (!interfaceSchema.properties) {
-                                console.log("No properties")
                                 const arrayItem = {
                                     id: parentId,
                                     description: interfaceSchema.description,
-                                    label: interfaceSchema.name,
+                                    label: lowercaseFirstLetter(interfaceSchema.name),
                                     icon: iconGenerator(interfaceSchema.type),
                                     childNodes: properties,
                                     isExpanded: true,
@@ -318,31 +317,29 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                                 }
                                 arrayItems.push(arrayItem)
                             } else if (interfaceSchema.name == "ItemModifier") {
-                                // const arrayItem = {
-                                //     id: parentId,
-                                //     description: interfaceSchema.description,
-                                //     label: interfaceSchema.name,
-                                //     icon: iconGenerator(interfaceSchema.type),
-                                //     childNodes: properties,
-                                //     isExpanded: true,
-                                //     nodeData: {
-                                //         type: interfaceSchema.type,
-                                //         uuid: propertyValues[i].uuid,
-                                //         fieldPath: propertyPath
-                                //     }
-                                // }
-                                // arrayItems.push(arrayItem)
+                                const arrayItem = {
+                                    id: parentId,
+                                    description: interfaceSchema.description,
+                                    label: lowercaseFirstLetter(interfaceSchema.name),
+                                    icon: iconGenerator(interfaceSchema.type),
+                                    isExpanded: true,
+                                    nodeData: {
+                                        type: interfaceSchema.type,
+                                       // uuid: propertyValues[i].uuid,
+                                        fieldPath: propertyPath
+                                    }
+                                }
+                                arrayItems.push(arrayItem)
 
                             } else {
                                 var propertyKeys = Object.keys(interfaceSchema.properties);
                                 var propertyValues = Object.values(interfaceSchema.properties);
-                                console.log(propertyKeys, propertyValues)
                                 const arrayItem = {
                                     id: parentId,
                                     description: interfaceSchema.description,
-                                    label: interfaceSchema.name,
+                                    label: lowercaseFirstLetter(interfaceSchema.name),
                                     icon: iconGenerator(interfaceSchema.type),
-                                    childNodes: processProperties(propertyKeys, propertyValues, interfaceSchema.name),
+                                    childNodes: processProperties(propertyKeys, propertyValues, lowercaseFirstLetter(interfaceSchema.name)),
                                     isExpanded: true,
                                     nodeData: {
                                         type: interfaceSchema.type,
@@ -359,7 +356,7 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
 
                         const parentObject = {
                             id: parentId,
-                            label: propertyKeys[i],
+                            label: lowercaseFirstLetter(propertyKeys[i]),
                             icon: iconGenerator(propertyValues[i].type),
                             isExpanded: true,
                             childNodes: arrayItems,
@@ -367,7 +364,8 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                                 description: propertyValues[i].description,
                                 type: propertyValues[i].type,
                                 uuid: propertyValues[i].uuid,
-                                fieldPath: propertyPath
+                                fieldPath: propertyPath,
+                                items: arrayItems
                             }
                         }
                         propertiesArray.push(parentObject)
@@ -380,14 +378,15 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                     const propertyPath = parentInterfacePath + "." + propertyKeys[i]
                     const parentObject = {
                         id: parentId,
-                        label: propertyKeys[i],
+                        label: lowercaseFirstLetter(propertyKeys[i]),
                         icon: iconGenerator(propertyValues[i].type),
                         isExpanded: true,
                         nodeData: {
                             description: propertyValues[i].description,
                             type: propertyValues[i].type,
                             uuid: propertyValues[i].uuid,
-                            fieldPath: propertyPath
+                            fieldPath: propertyPath,
+                            items: propertyValues[i].items
                         }
                     }
                     propertiesArray.push(parentObject)
@@ -409,7 +408,7 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                     const childNodes = [childNode]
                     const parentObject = {
                         id: parentId,
-                        label: propertyKeys[i],
+                        label: lowercaseFirstLetter(propertyKeys[i]),
                         icon: iconGenerator(propertyValues[i].type),
                         isExpanded: true,
                         childNodes: childNodes,
@@ -417,7 +416,8 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                             description: propertyValues[i].description,
                             type: propertyValues[i].type,
                             uuid: propertyValues[i].uuid,
-                            fieldPath: propertyPath
+                            fieldPath: propertyPath,
+                            items: propertyValues[i].items
                         }
                     }
                     propertiesArray.push(parentObject)
@@ -452,7 +452,12 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                 return "symbol-circle"
     }
 }
-    
+
+
+function lowercaseFirstLetter(string) {
+    return string.charAt(0).toLowerCase() + string.slice(1);
+  }
+
 
    
 const fetchInterfaceSchemas = useCallback(() => {

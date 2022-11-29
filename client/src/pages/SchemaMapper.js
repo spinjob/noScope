@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
-import { Overlay, Card, Drawer, Button} from '@blueprintjs/core';
+import { Overlay, Card, Drawer, Button, Classes} from '@blueprintjs/core';
 import { useParams, useLocation } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import { UserContext } from "../context/UserContext";
@@ -129,14 +129,19 @@ const SchemaMapper = () => {
       var jsonLiquidTemplate = {}
       if (adaptions.length > 0) {
         adaptions.forEach(adaption => {
-          var path = adaption.outputSchema.nodeData.fieldPath
-          var value = adaption.formula.split("=")[0]
+          var path = lowercaseFirstLetter(adaption.outputSchema.nodeData.fieldPath)
+          var value = lowercaseFirstLetter(adaption.formula.split("=")[0])
           stringToObj(path, value, jsonLiquidTemplate)
         })
         setLiquidTemplate(JSON.stringify(jsonLiquidTemplate, null, "\t"));
       }
     
    }
+
+   function lowercaseFirstLetter(string) {
+    return string.charAt(0).toLowerCase() + string.slice(1);
+  }
+  
 
    const stringToObj = (path,value,obj) => {
       var parts = path.split("."), part;
@@ -188,6 +193,21 @@ const SchemaMapper = () => {
         }
     }
 
+    const onLiquidTemplateSave = () => {
+
+      axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/steps/0", {"fullFormula": `${liquidTemplate}`})
+        .then(response => {
+          console.log(response);
+          onDrawerClose()
+          return response
+        })
+        .catch(error => {
+          console.log(error);
+          return error
+        })
+ 
+    }
+
     useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
@@ -222,9 +242,14 @@ const SchemaMapper = () => {
               title="Liquid Template for Adaption"
               onClose={onDrawerClose}
               isOpen={drawerViewOpen}>
-                <div style={{display: 'flex',justifyContent: 'center'}}> 
-                  <JSONPretty id="json-pretty" data={liquidTemplate}></JSONPretty>
+                <div className={Classes.DRAWER_BODY}>
+                  <div className={Classes.DIALOG_BODY}>
+                      <JSONPretty id="json-pretty" data={liquidTemplate}></JSONPretty>
+                    </div>
                 </div>
+                  <div className={Classes.DRAWER_FOOTER}>
+                    <Button onClick={onLiquidTemplateSave}>Save</Button>
+                  </div>
             </Drawer>
             <Overlay
               isOpen={mappingViewOpen} 
