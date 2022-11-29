@@ -39,6 +39,7 @@ var WorkflowStepSchema = new mongoose.Schema({
     sequence: Number,
     type: String,
     parent_workflow_uuid: String,
+    full_formula: String,
     adaptions: [AdaptionSchema],
     request: WorkflowStepRequestSchema
 

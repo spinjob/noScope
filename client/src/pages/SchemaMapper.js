@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
-import { Overlay, Card } from '@blueprintjs/core';
+import { Overlay, Card, Drawer, Button} from '@blueprintjs/core';
 import { useParams, useLocation } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import { UserContext } from "../context/UserContext";
@@ -12,6 +12,7 @@ import FieldMappingOverlay from "../components/EditWorkflow/AdaptionMenu/FieldMa
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
 import axios from "axios";
+import JSONPretty from 'react-json-pretty';
 
 const SchemaMapper = () => {
   let { id, workflowId } = useParams();
@@ -28,6 +29,7 @@ const SchemaMapper = () => {
     const [userContext, setUserContext] = useContext(UserContext)
     const [actionNode, setActionNode] = useState(emptyNode);
     const [triggerNode, setTriggerNode] = useState(emptyNode);
+    const [drawerViewOpen, setDrawerViewOpen] = useState(false);
     const [mappingViewOpen, setMappingViewOpen] = useState(false);
     const [mappingDisabled, setMappingDisabled] = useState(true);
     const [interfaceSchema, setInterfaceSchema] = useState(null);
@@ -35,6 +37,7 @@ const SchemaMapper = () => {
     const [actionSchema, setActionSchema] = useState([]);
     const [requiredActionFields, setRequiredActionFields] = useState([]);
     const [shouldFetchMappings, setShouldFetchMappings] = useState(true);
+    const [liquidTemplate, setLiquidTemplate] = useState("");
     const [mappings, setMappings] = useState(null);
     const location = useLocation();
 
@@ -86,6 +89,7 @@ const SchemaMapper = () => {
           setShouldFetchMappings(false);
         }    
     }
+    
     const selectTriggerNode = (node, isSelected) => {
 
       if (isSelected) {
@@ -97,7 +101,6 @@ const SchemaMapper = () => {
         setMappingDisabled(true);
       }   
     }
-
 
    const selectActionNode = (node, isSelected) => {
 
@@ -120,12 +123,36 @@ const SchemaMapper = () => {
           setMappingViewOpen(true);
         }
         
+   }
+
+   const updateLiquidTemplate = (adaptions) => {
+      var jsonLiquidTemplate = {}
+      if (adaptions.length > 0) {
+        adaptions.forEach(adaption => {
+          var path = adaption.outputSchema.nodeData.fieldPath
+          var value = adaption.formula.split("=")[0]
+          stringToObj(path, value, jsonLiquidTemplate)
+        })
+        setLiquidTemplate(JSON.stringify(jsonLiquidTemplate, null, "\t"));
+      }
+    
+   }
+
+   const stringToObj = (path,value,obj) => {
+      var parts = path.split("."), part;
+      var last = parts.pop();
+      while(part = parts.shift()) {
+      if( typeof obj[part] != "object") obj[part] = {};
+      obj = obj[part]; // update "pointer"
+      }
+    obj[last] = value;
   }
 
     const fetchMappings = useCallback(() => {
       axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/details")
       .then(response => {
           setMappings(response.data[0].steps[0].adaptions)
+          updateLiquidTemplate(response.data[0].steps[0].adaptions)
           setShouldFetchMappings(false);
           console.log("fetched mappings")
           return response
@@ -153,6 +180,14 @@ const SchemaMapper = () => {
 
     })
 
+    const onDrawerClose = () => {
+        if (drawerViewOpen) {
+          setDrawerViewOpen(false);
+        } else {
+          setDrawerViewOpen(true);
+        }
+    }
+
     useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
@@ -179,7 +214,18 @@ const SchemaMapper = () => {
 
     <div style={{justifyContent: 'center',alignItems: 'center'}}>
             <Navigation />
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right',paddingRight: 190}}>
+              <Button onClick={onDrawerClose}> View Liquid Template </Button>
+            </div>
             <SchemaMapperHeader mappings= {mappings} requiredActionFields={requiredActionFields}/>
+            <Drawer 
+              title="Liquid Template for Adaption"
+              onClose={onDrawerClose}
+              isOpen={drawerViewOpen}>
+                <div style={{display: 'flex',justifyContent: 'center'}}> 
+                  <JSONPretty id="json-pretty" data={liquidTemplate}></JSONPretty>
+                </div>
+            </Drawer>
             <Overlay
               isOpen={mappingViewOpen} 
               onClose={toggleOverlay} 
@@ -189,6 +235,7 @@ const SchemaMapper = () => {
                   <FieldMappingOverlay toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
                 </div>  
             </Overlay>  
+            
             <div class="SchemaMapperParent">
               <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
               <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} selectTriggerNode={selectTriggerNode} selectActionNode={selectActionNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>

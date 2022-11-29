@@ -11,7 +11,8 @@ router.post('/', function(req,res) {
         name: req.body.name,
         description: req.body.description,
         type: req.body.type,
-        children_entities: req.body.children_entities
+        children_entities: req.body.children_entities,
+        items: req.body.items
     },
     function (err,interface) {
         if (err) return res.status(500).send("There was a problem adding the information to the database.");

@@ -6,7 +6,8 @@ var InterfaceEntitySchema = new mongoose.Schema({
     description: String,
     type: String,
     example: Array,
-    properties: Object
+    properties: Object,
+    items: Object
 });
 
 mongoose.model('InterfaceEntity', InterfaceEntitySchema);

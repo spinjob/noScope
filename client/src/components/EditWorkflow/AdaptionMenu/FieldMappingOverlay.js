@@ -10,7 +10,7 @@ import Loader from "../../Loader";
 
 const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, projectId, toggleOverlay, selectedMapping, setShouldFetchMappings}) => {
     const [selectedValue, setSelectedValue] = useState("one");
-    const [equation, setEquation] = useState("{"+field1.nodeData.fieldPath+"}");
+    const [equation, setEquation] = useState("{{"+field1.nodeData.fieldPath+"}}");
     const [schema, setSchema] = useState("");
     const [schemaIntent, setSchemaIntent] = useState("");
     const [isLoading, setIsLoading] = useState(false);

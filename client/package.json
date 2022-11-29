@@ -20,6 +20,7 @@
     "react-complex-tree": "^1.1.11",
     "react-dom": "^18.2.0",
     "react-icons": "^4.6.0",
+    "react-json-pretty": "^2.2.0",
     "react-router-dom": "^6.4.2",
     "react-scripts": "5.0.1",
     "reactflow": "^11.1.2",

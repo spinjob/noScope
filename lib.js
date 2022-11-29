@@ -41,7 +41,7 @@ function processOpenApiV3(json, userId) {
                     return; 
                 }
                 console.log("Interface Created with ID: " + interface.uuid);
-                processSchema(schemaKeys, schemaValues, interfaceUUID);
+                processSchema(schemaKeys, schemaValues, interfaceUUID, json.components.schemas);
                 processPathActions(pathKeys,pathValues,interfaceUUID);
                 processParameters(parameterKeys,parameterValues,interfaceUUID);
                 processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
@@ -52,13 +52,12 @@ function processOpenApiV3(json, userId) {
 }
 
 
-function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
+function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMap) {
 
     for (var i = 0; i < schemaKeys.length; ++i) {
         
         var entityUUID = crypto.randomUUID();
 
-        
         if (schemaValues[i].required && schemaValues[i].properties) {
             InterfaceEntity.create({
                 uuid: entityUUID,
@@ -111,15 +110,13 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid) {
                        
             });
         }
-       
         
         if (schemaValues[i]["properties"] !== undefined) {
-            createPropertyEntities(schemaValues[i]["properties"],entityUUID,parent_interface_uuid);
+            createPropertyEntities(schemaValues[i]["properties"],entityUUID,parent_interface_uuid, schemaMap);
         } else {
             
         }
-        
-        
+    
     }
 
     return
@@ -146,8 +143,23 @@ function processProperties(properties, required){
 
 }
 
+function processArrayItemsReferences(items, schemaMap) {
+ var itemsKey = Object.keys(items);
+ var itemsValue = Object.values(items);
+ var schemaObject = {}
 
-function createPropertyEntities(propertyValues, parent_object_uuid, parent_interface_uuid) {
+    if (itemsKey[0] === "$ref") {
+        var refArray = itemsValue[0].split("/")
+        var refSchema = refArray[refArray.length-1]
+        schemaObject[refSchema] = schemaMap[refSchema]
+        return schemaObject
+    } else {
+        schemaObject["inlineSchema"] = items
+        return schemaObject
+    }
+}
+
+function createPropertyEntities(propertyValues, parent_object_uuid, parent_interface_uuid, schemaMap) {
 
     //console.log(Object.keys(propertyValues));
     var propertyNames = Object.keys(propertyValues);
@@ -156,52 +168,102 @@ function createPropertyEntities(propertyValues, parent_object_uuid, parent_inter
     for (var i = 0; i < propertyNames.length; ++i) {
         var entityUUID = crypto.randomUUID();
         
-        InterfaceEntity.create({
-            uuid: entityUUID,
-            parent_interface_uuid: parent_interface_uuid,
-            name: propertyNames[i],
-            description: propertyAttributes[i].description,
-            type: propertyAttributes[i].type
-        },
-            function(err,interfaceEntity){
-                if (err) {
-                    console.log(err);
-                    return; 
-                }
-                var propertyPath = "properties."+ interfaceEntity.name+ ".uuid";
-
-                InterfaceEntity.findOneAndUpdate({uuid: parent_object_uuid},
-                    {$set: {[propertyPath]: interfaceEntity.uuid}}, 
-                    
-                    function(err, interfaceEntity) {
-                        if (err) {
-                            console.log(err);
-                            return; 
-                        } else {
-                        }
-                        
-                        return;
+        if (propertyAttributes[i].type === "array") {
+            console.log(propertyNames[i]);
+            InterfaceEntity.create({
+                uuid: entityUUID,
+                parent_interface_uuid: parent_interface_uuid,
+                name: propertyNames[i],
+                description: propertyAttributes[i].description,
+                type: propertyAttributes[i].type,
+                items: processArrayItemsReferences(propertyAttributes[i].items, schemaMap)
+            },
+                function(err,interfaceEntity){
+                    if (err) {
+                        console.log(err);
+                        return; 
                     }
-                )
+                    console.log(interfaceEntity)
+                    var propertyPath = "properties."+ interfaceEntity.name+ ".uuid";
 
-
-                //console.log("Interface Entity for Property Created "+ interfaceEntity._id);
-                var propertyUUID = crypto.randomUUID();
-
-                InterfaceProperty.create({
-                    uuid: propertyUUID,
-                    parent_interface_uuid: parent_interface_uuid,
-                    interface_entity_uuid: entityUUID,
-                    parent_entity: parent_object_uuid
-                },
-                    function(err,interfaceProperty){
-                        if (err) {
-                            console.log(err);
+                    InterfaceEntity.findOneAndUpdate({uuid: parent_object_uuid},
+                        {$set: {[propertyPath]: interfaceEntity.uuid}}, 
+                        
+                        function(err, interfaceEntity) {
+                            if (err) {
+                                console.log(err);
+                                return; 
+                            } else {
+                            }
+                            
+                            return;
                         }
-                        //console.log("Interface Property Created with ID: " + interfaceProperty._id);
-                        return;
-                });
-        });
+                    )
+                    //console.log("Interface Entity for Property Created "+ interfaceEntity._id);
+                    var propertyUUID = crypto.randomUUID();
+
+                    InterfaceProperty.create({
+                        uuid: propertyUUID,
+                        parent_interface_uuid: parent_interface_uuid,
+                        interface_entity_uuid: entityUUID,
+                        parent_entity: parent_object_uuid
+                    },
+                        function(err,interfaceProperty){
+                            if (err) {
+                                console.log(err);
+                            }
+                            //console.log("Interface Property Created with ID: " + interfaceProperty._id);
+                            return;
+                    });
+            });
+        } else {
+            InterfaceEntity.create({
+                uuid: entityUUID,
+                parent_interface_uuid: parent_interface_uuid,
+                name: propertyNames[i],
+                description: propertyAttributes[i].description,
+                type: propertyAttributes[i].type
+            },
+                function(err,interfaceEntity){
+                    if (err) {
+                        console.log(err);
+                        return; 
+                    }
+                    var propertyPath = "properties."+ interfaceEntity.name+ ".uuid";
+
+                    InterfaceEntity.findOneAndUpdate({uuid: parent_object_uuid},
+                        {$set: {[propertyPath]: interfaceEntity.uuid}}, 
+                        
+                        function(err, interfaceEntity) {
+                            if (err) {
+                                console.log(err);
+                                return; 
+                            } else {
+                            }
+                            
+                            return;
+                        }
+                    )
+                    //console.log("Interface Entity for Property Created "+ interfaceEntity._id);
+                    var propertyUUID = crypto.randomUUID();
+
+                    InterfaceProperty.create({
+                        uuid: propertyUUID,
+                        parent_interface_uuid: parent_interface_uuid,
+                        interface_entity_uuid: entityUUID,
+                        parent_entity: parent_object_uuid
+                    },
+                        function(err,interfaceProperty){
+                            if (err) {
+                                console.log(err);
+                            }
+                            //console.log("Interface Property Created with ID: " + interfaceProperty._id);
+                            return;
+                    });
+            });
+
+        }
+           
     
     }
     

@@ -6,7 +6,6 @@ const SchemaMapperHeader = ({requiredActionFields, mappings}) => {
     const requiredActionFieldsCount = requiredActionFields.length;
     var requiredMappings = mappings;
     var requiredMappingsCount = 0
-    var mappedPercentage = requiredMappingsCount / requiredActionFieldsCount
 
     if (!mappings) {
         console.log("No Mappings")

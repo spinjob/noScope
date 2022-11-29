@@ -95,7 +95,6 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                                 if (schema === interfaceSchema.name) {
                                     const parentId = uuidv4();
                                     if (interfaceSchema.properties) {
-                                        console.log(interfaceSchema)
                                         var propertyKeys = Object.keys(interfaceSchema.properties);
                                         var propertyValues = Object.values(interfaceSchema.properties);
                                         var properties = processProperties(propertyKeys, propertyValues, interfaceSchema.name)
@@ -189,7 +188,7 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
             const propertyID = uuidv4();
             //console.log(propertyKeys[i] + " " + parentInterface)
             
-            if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties) {
+            if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties && !propertyValues[i].items) {
                 const propertyObject = {
                     id: propertyID,
                     label: propertyKeys[i],
@@ -256,7 +255,6 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                 }
     
             } else if (propertyValues[i]["additionalProperties"]) {
-
                 const additionalProperties = {
                     [propertyValues[i].additionalProperties["x-additionalPropertiesName"]]: {
                         "$ref": propertyValues[i].additionalProperties["$ref"]
@@ -283,6 +281,148 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
                 
                 propertiesArray.push(parentObject)
             
+            } else if (propertyValues[i]["items"]) {
+             //Processing Array Properties
+             // First check is if the items property is a reference to another schema
+             // If it is, we need to find the schema and process it's properties
+             // If it is not, we need to process the items property as an "inline" schema...which will be named as such.
+
+                if (propertyValues[i]["items"]["$ref"]) {
+                    const arrayItemSchema = propertyValues[i].items
+                    const parentId = uuidv4();
+                    const itemsKey = Object.keys(arrayItemSchema);
+                    const itemsValue = Object.values(arrayItemSchema);
+                    var refArray = itemsValue[0].split("/")
+                    var refSchema = refArray[refArray.length-1]
+                    const propertyPath = parentInterfacePath + "." + propertyKeys[i]
+                    const arrayItems = []
+                   
+                    interfaceSchemas[0].forEach((interfaceSchema) => {
+                        var properties = []
+
+                        if (refSchema === interfaceSchema.name) {
+                            if (!interfaceSchema.properties) {
+                                console.log("No properties")
+                                const arrayItem = {
+                                    id: parentId,
+                                    description: interfaceSchema.description,
+                                    label: interfaceSchema.name,
+                                    icon: iconGenerator(interfaceSchema.type),
+                                    childNodes: properties,
+                                    isExpanded: true,
+                                    nodeData: {
+                                        type: interfaceSchema.type,
+                                        uuid: propertyValues[i].uuid,
+                                        fieldPath: propertyPath
+                                    }
+                                }
+                                arrayItems.push(arrayItem)
+                            } else if (interfaceSchema.name == "ItemModifier") {
+                                // const arrayItem = {
+                                //     id: parentId,
+                                //     description: interfaceSchema.description,
+                                //     label: interfaceSchema.name,
+                                //     icon: iconGenerator(interfaceSchema.type),
+                                //     childNodes: properties,
+                                //     isExpanded: true,
+                                //     nodeData: {
+                                //         type: interfaceSchema.type,
+                                //         uuid: propertyValues[i].uuid,
+                                //         fieldPath: propertyPath
+                                //     }
+                                // }
+                                // arrayItems.push(arrayItem)
+
+                            } else {
+                                var propertyKeys = Object.keys(interfaceSchema.properties);
+                                var propertyValues = Object.values(interfaceSchema.properties);
+                                console.log(propertyKeys, propertyValues)
+                                const arrayItem = {
+                                    id: parentId,
+                                    description: interfaceSchema.description,
+                                    label: interfaceSchema.name,
+                                    icon: iconGenerator(interfaceSchema.type),
+                                    childNodes: processProperties(propertyKeys, propertyValues, interfaceSchema.name),
+                                    isExpanded: true,
+                                    nodeData: {
+                                        type: interfaceSchema.type,
+                                        fieldPath: propertyPath
+                                    }
+                                }
+                                arrayItems.push(arrayItem)
+                            }
+                        
+                            
+                        }
+                        else {}
+                    })
+
+                        const parentObject = {
+                            id: parentId,
+                            label: propertyKeys[i],
+                            icon: iconGenerator(propertyValues[i].type),
+                            isExpanded: true,
+                            childNodes: arrayItems,
+                            nodeData: {
+                                description: propertyValues[i].description,
+                                type: propertyValues[i].type,
+                                uuid: propertyValues[i].uuid,
+                                fieldPath: propertyPath
+                            }
+                        }
+                        propertiesArray.push(parentObject)
+              
+                   
+
+                } else if (propertyValues[i]["items"]["properties"]) {
+                    const arrayItemSchema = propertyValues[i].items.properties
+                    const parentId = uuidv4();
+                    const propertyPath = parentInterfacePath + "." + propertyKeys[i]
+                    const parentObject = {
+                        id: parentId,
+                        label: propertyKeys[i],
+                        icon: iconGenerator(propertyValues[i].type),
+                        isExpanded: true,
+                        nodeData: {
+                            description: propertyValues[i].description,
+                            type: propertyValues[i].type,
+                            uuid: propertyValues[i].uuid,
+                            fieldPath: propertyPath
+                        }
+                    }
+                    propertiesArray.push(parentObject)
+
+                } else {
+                    const parentId = uuidv4();
+                    const propertyPath = parentInterfacePath + "." + propertyKeys[i]
+                    const childNode = {
+                        id: uuidv4(),
+                        label: "inlineSchema",
+                        icon: iconGenerator(propertyValues[i].items.type),
+                        nodeData: {
+                            description: propertyValues[i].items.description,
+                            type: propertyValues[i].items.type,
+                            uuid: propertyValues[i].uuid,
+                            fieldPath: propertyPath
+                        }
+                    }
+                    const childNodes = [childNode]
+                    const parentObject = {
+                        id: parentId,
+                        label: propertyKeys[i],
+                        icon: iconGenerator(propertyValues[i].type),
+                        isExpanded: true,
+                        childNodes: childNodes,
+                        nodeData: {
+                            description: propertyValues[i].description,
+                            type: propertyValues[i].type,
+                            uuid: propertyValues[i].uuid,
+                            fieldPath: propertyPath
+                        }
+                    }
+                    propertiesArray.push(parentObject)
+                }
+                
             }
 
         }
