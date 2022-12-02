@@ -78,9 +78,9 @@ const MyProjects = () => {
       ) : (
         <div style={{display: 'block', width: 500, padding: 30}}>
             <Navigation />
-            <H1>My Projects</H1>
-            <div style={{alignItems: 'left', display: 'block', padding: 20}}>
-            <Button text="New Project" onClick={() => navigate("/projects/new")}> </Button>
+            <H1>MY PROJECTS</H1>
+            <div style={{alignItems: 'left', display: 'block', paddingTop: 20}}>
+            <Button minimal={true} outlined={true} text="NEW PROJECT" onClick={() => navigate("/projects/new")}> </Button>
             </div>
             <MyProjectsTable />
        </div>     

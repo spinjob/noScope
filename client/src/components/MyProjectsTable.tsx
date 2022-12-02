@@ -69,12 +69,21 @@ export default function MyProjectsTable() {
       {/* <Table2 numRows={projects.length} getCellClipboardData={getCellData}>
         {columns}
       </Table2> */}
-      <div>
+       <div style={{paddingTop:20, width: '100%'}}>
         {projects.map((project, index) => (
-
             <Card>
-              <H3>{project[0]}</H3>
-              <Button text="Details" onClick={() => navigate("/projects/" + project[2])}> </Button>
+                <div style={{display:"flex"}}>
+                    <div style={{display:"block"}}>
+                        <H3>
+                             {project[0]}
+                         </H3> 
+                    </div>
+                    <div style={{display:"block", marginLeft:"auto"}}>
+                         <Button minimal={true} outlined={true} onClick={() => navigate("/projects/" + project[2])} >
+                                    View Details
+                          </Button>
+                    </div>
+                </div>
             </Card>
 
         ))}

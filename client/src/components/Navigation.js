@@ -3,8 +3,9 @@ import React, { useCallback, useContext, useEffect } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "./Loader"
 import { useNavigate } from "react-router-dom";
+import SideBar from "./SideBar";
 
-const Navigation = () => {
+const Navigation = ({toggleSideBar}) => {
 
   const navigate = useNavigate();
   const [userContext, setUserContext] = useContext(UserContext)
@@ -97,6 +98,10 @@ const Navigation = () => {
     navigate("/");
   }
 
+  const myInterfacesHandler = () => {
+    navigate("/interfaces");
+  }
+
   return userContext.details === null ? (
     "Error Loading User details"
   ) : !userContext.details ? (
@@ -105,10 +110,12 @@ const Navigation = () => {
     <div style={{display: 'block', width: 500, padding: 30}}>
         <Navbar fixedToTop>
             <NavbarGroup align={'left'}>
+                <Button icon={'menu'} onClick={toggleSideBar} minimal={true} paddingRight={3}/>
                 <NavbarHeading>NoScope</NavbarHeading>
                     <NavbarDivider />
-                        <Button icon="home" text="Home" onClick={homeHandler} />
-                        <Button icon="user" text="My Projects" onClick={projectHandler}/>
+                        <Button icon="home" text="Home" minimal={true} onClick={homeHandler} />
+                        <Button icon="user" text="My Projects"  minimal={true} onClick={projectHandler} />
+                        <Button icon="user" text="My APIs"  minimal={true} onClick={myInterfacesHandler}/>
                     <NavbarDivider />
                         <FileInput text={'Select an OpenAPI v3 file'} buttonText={'Upload'} onChange={uploadHandler}/>
             </NavbarGroup>

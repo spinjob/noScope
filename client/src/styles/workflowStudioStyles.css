@@ -67,6 +67,29 @@
     padding: 40px;
 }
 
+.ManageInterfacesParent {
+    display: flex;
+    flex-direction: row;
+}
+
+.ManageInterfacesChild1{
+    width: 35%;
+    height: 100vh;
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    color: rgb(0, 0, 0);
+    padding: 40px;
+}
+
+.ManageInterfacesChild2{
+    width: 100%;
+    height: 100vh;
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    color: rgb(0, 0, 0);
+    padding: 40px;
+}
+
 
 .SchemaMapperParent {
     display: flex;
@@ -97,9 +120,24 @@
 
 .SchemaMappingOverlayContainer {
     justify-content: center;
-     align-items: center;
+    align-items: center;
     width: "100vw";
     margin: 0 auto;
     background-color: #d00808;
 
+}
+
+.SideBarMenuItem { 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+    background-color: #d00808;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
 }

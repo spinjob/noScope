@@ -1,12 +1,14 @@
 import { Button, Card} from "@blueprintjs/core"
-import React, { useCallback, useContext, useEffect } from "react"
+import React, { useCallback, useContext, useEffect, useState } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import {useNavigate } from "react-router-dom";
+import SideBar from "../components/SideBar";
 
 const Home = () => {
   const [userContext, setUserContext] = useContext(UserContext)
+  const [isSideBarOpen, setIsSideBarOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchUserDetails = useCallback(() => {
@@ -50,7 +52,9 @@ const Home = () => {
     navigate('/projects/new');
   }
 
-
+  const toggleSideBar = () => {
+    setIsSideBarOpen(!isSideBarOpen);
+  }
 
   return userContext.details === null ? (
     "Error Loading User details"
@@ -58,7 +62,8 @@ const Home = () => {
     <Loader />
   ) : (
     <div style={{display: 'block', width: 500, padding: 30}}>
-        <Navigation />
+        <Navigation toggleSideBar={toggleSideBar} />
+        <SideBar isOpen={isSideBarOpen} setIsSideBarOpen={setIsSideBarOpen}/>
         <body style={{padding: 30, align: 'left'}}>
             <Card elevation="1">
                 <div className="user-details">
@@ -71,12 +76,6 @@ const Home = () => {
                             " " + userContext.details.lastName}
                         </strong>!
                     </p>
-                    <p>
-                        Your reward points: <strong>{userContext.details.points}</strong>
-                    </p>
-                    </div>
-                    <div className="user-actions">
-                         <Button text="New Project" intent="primary" onClick={newProjectHandler} />
                     </div>
                 </div>
             </Card>
