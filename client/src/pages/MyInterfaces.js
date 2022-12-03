@@ -12,6 +12,9 @@ const MyInterfaces = () => {
 
     const [myInterfaces, setInterfaces] = useState([]);
     const [selectedInterfaceObjects, setSelectedInterfaceObjects] = useState([]);
+    const [selectedInterfaceActions, setSelectedInterfaceActions] = useState([]);
+    const [selectedInterfaceWebhooks, setSelectedInterfaceWebhooks] = useState([]);
+    const [selectedInterfaceSecurityScheme, setSelectedInterfaceSecurityScheme] = useState([]);
     const [userContext, setUserContext] = useContext(UserContext)
     const [selectedInterface, setSelectedInterface] = useState(myInterfaces[0]);
     const [isLoading, setIsLoading] = useState(true);
@@ -68,15 +71,62 @@ const MyInterfaces = () => {
 
       const selectInterface = (selectedInterface) => {
         setSelectedInterface(selectedInterface);
-        console.log(selectedInterface.uuid);
         setIsLoading(true);
+        console.log(selectedInterface.uuid)
         fetchInterfaceObjects(selectedInterface.uuid)
+        fetchInterfaceActions(selectedInterface.uuid)
+        fetchInterfaceWebhooks(selectedInterface.uuid)
+        fetchInterfaceSecuritySchemes(selectedInterface.uuid)
       }
 
       const fetchInterfaceObjects = async(uuid) => { 
         axios.get(process.env.REACT_APP_API_ENDPOINT + "/interfaces/" + uuid + "/objects")
         .then(response => {
             setSelectedInterfaceObjects(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
+            setIsLoading(false)
+            return response
+        }
+        )
+        .catch(error => {
+            console.log(error);
+            return error
+        })
+    };
+
+    const fetchInterfaceSecuritySchemes = async(uuid) => { 
+        axios.post(process.env.REACT_APP_API_ENDPOINT + "/interfaces/security",{"interfaces":[uuid]})
+        .then(response => {
+            setSelectedInterfaceSecurityScheme(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
+            console.log(response.data)
+            setIsLoading(false)
+            return response
+        }
+        )
+        .catch(error => {
+            console.log(error);
+            return error
+        })
+    };
+
+    const fetchInterfaceActions = async(uuid) => { 
+        axios.post(process.env.REACT_APP_API_ENDPOINT + "/interfaces/actions",{"interfaces":[uuid]})
+        .then(response => {
+            setSelectedInterfaceActions(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
+            console.log(response.data)
+            setIsLoading(false)
+            return response
+        }
+        )
+        .catch(error => {
+            console.log(error);
+            return error
+        })
+    };
+
+    const fetchInterfaceWebhooks = async(uuid) => { 
+        axios.post(process.env.REACT_APP_API_ENDPOINT + "/interfaces/webhooks",{"interfaces":[uuid]})
+        .then(response => {
+            setSelectedInterfaceWebhooks(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
             console.log(response.data)
             setIsLoading(false)
             return response
@@ -129,7 +179,9 @@ const MyInterfaces = () => {
 
       useEffect(() => {
         if (selectedInterface && isLoading) {
-           fetchInterfaceObjects()
+           fetchInterfaceObjects(selectedInterface.uuid)
+           fetchInterfaceActions(selectedInterface.uuid)
+           fetchInterfaceWebhooks(selectedInterface.uuid)
         } else {
 
         }
@@ -160,7 +212,7 @@ const MyInterfaces = () => {
             </div>
             <div class="ManageInterfacesChild2">
                 <Card elevation={3}>
-                        <InterfacePreview isLoading={isLoading} selectedInterfaceObjects={selectedInterfaceObjects} setIsLoading={setIsLoading} interfaceSelected={selectedInterface} />
+                        <InterfacePreview isLoading={isLoading} selectedInterfaceSecurityScheme={selectedInterfaceSecurityScheme} selectedInterfaceWebhooks={selectedInterfaceWebhooks} selectedInterfaceActions={selectedInterfaceActions} selectedInterfaceObjects={selectedInterfaceObjects} setIsLoading={setIsLoading} interfaceSelected={selectedInterface} />
                 </Card>
             </div>
         </div>

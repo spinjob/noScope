@@ -1,16 +1,17 @@
 
 import React, { useCallback, useState, useContext, useEffect } from "react";
-import { Button, Icon, Intent, Card, RadioGroup, ButtonGroup, Overlay, Menu, Divider, H1, H2, H3, H4, H5, H6, Radio, TextArea, Tag, TagInput } from '@blueprintjs/core';
-import { Popover2 } from "@blueprintjs/popover2";
+import { Button, Icon,  Intent, Card, RadioGroup, ButtonGroup, Overlay, Menu, Divider, H1, H2, H3, H4, H5, H6, Radio, TextArea, Tag, TagInput } from '@blueprintjs/core';
+import { Popover2, MenuItem2 } from "@blueprintjs/popover2";
 import "reactflow/dist/style.css";
 import SelectSchema from "./SelectSchema/SelectSchema";
 import axios from "axios";
 import {v4 as uuidv4} from 'uuid';
 import Loader from "../../Loader";
+import SelectOperators from "./SelectOperators/SelectOperators";
 
 const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, projectId, toggleOverlay, selectedMapping, setShouldFetchMappings}) => {
     const [selectedValue, setSelectedValue] = useState("one");
-    const [equation, setEquation] = useState("{{"+field1.nodeData.fieldPath+"}}");
+    const [equation, setEquation] = useState(field1.nodeData.fieldPath);
     const [schema, setSchema] = useState("");
     const [schemaIntent, setSchemaIntent] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -40,11 +41,37 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                 return "block"
             }
         }
-    
 
+        const returnTypedOperators = (type) => {
+            
+            if (type==="string"){
+                console.log("string")
+                return ( 
+                <Menu>
+                    <MenuItem2 text="Append" icon="unresolve" onClick={handleOperatorAddition}/>
+                    <MenuItem2 text="Prepend" icon="unresolve" onClick={handleOperatorAddition}/>
+                    <MenuItem2 text= "Split" icon="flow-review" onClick={handleOperatorAddition}/>
+                    <MenuItem2 text="Truncate" icon="cut" onClick={handleOperatorAddition}/>
+                    <MenuItem2 text="Slice" icon="cut" onClick={handleOperatorAddition}/>
+                    <MenuItem2 text= "Strip Whitespace" icon="dot" onClick={handleOperatorAddition}/>
+                </Menu>
+            )
+            } if (type==="float" || type==="integer" || type==="number"){
+                console.log("number")
+                return  (
+                <Menu>
+                    <MenuItem2 text= "Add" icon="plus" onClick={handleOperatorAddition}/>
+                    <MenuItem2 text= "Subtract" icon="minus" onClick={handleOperatorAddition} />
+                    <MenuItem2 text= "Divide" icon="divide" onClick={handleOperatorAddition}/>
+                    <MenuItem2 text="Multiply" icon="cross" onClick={handleOperatorAddition}/>
+                </Menu>
+                )
+            }
+        }
+    
         const handleMappingSubmit = () => {
             const mappingUuid = uuidv4();
-            const formattedEquation = equation + "=" + "{" + field2.nodeData.fieldPath + "}"
+            const formattedEquation = "{{"+ equation + "}}" + "=" + "{" + field2.nodeData.fieldPath + "}"
             setIsLoading(true);
             const requestBody =  {
                 uuid: mappingUuid,
@@ -62,8 +89,34 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
         }
 
         const handleFieldAddition = (schema) => {
-            setEquation(equation + "{{" + schema.nodeData.fieldPath + "}}")
+            setEquation(equation + " "+ schema.nodeData.fieldPath)
         }
+
+        const handleOperatorAddition = (operatorSlug) => {
+            console.log(operatorSlug.target.innerText)
+            if (operatorSlug.target.innerText === "Add"){
+                setEquation(equation + " | plus: ")
+            } else if (operatorSlug.target.innerText === "Subtract"){
+                setEquation(equation + " | minus: ")
+            } else if (operatorSlug.target.innerText === "Divide"){
+                setEquation(equation + " | divided_by: ")
+            } else if (operatorSlug.target.innerText === "Multiply"){
+                setEquation(equation + " | times: ")
+            } else if (operatorSlug.target.innerText=="Append"){
+                setEquation(equation + " | append: ")
+            } else if (operatorSlug.target.innerText=="Prepend"){
+                setEquation(equation + " | prepend: ")
+            } else if (operatorSlug.target.innerText=="Split"){
+                setEquation(equation + " | split: ','")
+            } else if (operatorSlug.target.innerText=="Truncate"){
+                setEquation(equation + " | truncate: ")
+            } else if (operatorSlug.target.innerText=="Slice"){
+                setEquation(equation + " | slice: ")
+            } else if (operatorSlug.target.innerText=="Strip Whitespace"){
+                setEquation(equation + " | strip")
+            }
+        }
+        
         
         const isIterable = (field1) => {
             if (field1.nodeData.type === "array") {
@@ -127,19 +180,23 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                     </div>
                     <div style={{display: displayAdaptionStudio(), alignItems: 'center', justifyContent: 'center', margin: 10}}>
                         <H3>Adaption Studio</H3>
-                        <H6>Write a formula to adapt the input property. Field variables will be in curly brackets.</H6>
-                        <ButtonGroup>
-                                <SelectSchema
-                                    schemas={triggerSchema.map((m, index) => ({ ...m, rank: index + 1 }))}
-                                    style={{ padding: 10}}
-                                    intent={schemaIntent}
-                                    onChange={e => setSchema(schema)}
-                                    value={schema}
-                                    setSchema={schema => {
-                                    setSchema(schema);
-                                    handleFieldAddition(schema);
-                                }}/>
+                        <H6>Using <a href="https://shopify.github.io/liquid/">LiquidJS syntax</a>, we can create a formula template that can be used to generate the output field's value. </H6>
+                        <ButtonGroup fill={true} style={{display: 'flex', width: 350}}>
+                                    <Popover2 content={returnTypedOperators(field1.nodeData.type)}>
+                                            <Button minimal={true} outlined={true} icon="menu">Operators</Button>
+                                    </Popover2>
+                                    <SelectSchema
+                                                schemas={triggerSchema.map((m, index) => ({ ...m, rank: index + 1 }))}
+                                                style={{ padding: 10}}
+                                                intent={schemaIntent}
+                                                onChange={e => setSchema(schema)}
+                                                value={schema}
+                                                setSchema={schema => {
+                                                setSchema(schema);
+                                                handleFieldAddition(schema);
+                                    }}/>
                         </ButtonGroup>
+
                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left',paddingTop: 10}}>
                                 <TextArea style={{ width: 500, height: 100}} placeholder="Equation" value={equation} onChange={(e) => setEquation(e.target.value)}/>
                                 <div style={{width: 30}} />

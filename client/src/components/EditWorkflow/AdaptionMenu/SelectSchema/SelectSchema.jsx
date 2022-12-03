@@ -48,6 +48,8 @@ class SelectSchema extends React.PureComponent {
             text={buttonText}
             rightIcon="caret-down"
             icon={IconNames.CODE}
+            minimal={true}
+            outlined={true}
           />
         </Select2>
       </div>

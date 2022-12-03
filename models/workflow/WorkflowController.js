@@ -59,7 +59,12 @@ router.put('/:workflowId/steps/0', function(req,res) {
     });
 });
 
-
+router.post('/:workflowId/trigger/:triggerId', function(req,res) {
+    Workflow.findOne({uuid: req.params.workflowId}, function(err,workflow){
+        if (err) return res.status(500).send(err);
+        res.status(200).send("Workflow Triggered: " + req.params.triggerId);
+    });
+});s
 
 
 module.exports = router;

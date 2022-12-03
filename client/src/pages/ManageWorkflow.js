@@ -125,6 +125,10 @@ const ManageWorkflow = () => {
         }
       }
 
+      const constructTriggerUrl = () => {
+        return process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/trigger/" + workflow.trigger.uuid
+      }
+
     useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
@@ -160,7 +164,13 @@ const ManageWorkflow = () => {
                 <H2 >Manage Workflow</H2>
             </div>
             <Divider />  
-            <H2 style={{padding:40}}>{workflow.name}</H2>        
+            <div style={{padding:40}}>
+              <H2 style={{paddingBottom: 40}}>{workflow.name}</H2>
+              <H4>Trigger URL</H4>
+              <body>{process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/trigger"}</body> 
+                  
+            </div>
+          
             <div class="ManageProjectParent" >
                 <div class="ManageProjectChild1">
                 <H3 style={{padding:15}}>Workflow Diagram</H3>   

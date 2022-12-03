@@ -1,16 +1,17 @@
-import { H1, Card, H3, H4, Button, Divider } from "@blueprintjs/core"
+import { H1, Card, H3, H4, H5, Button, Divider } from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect, useRef } from "react"
 import { UserContext } from "../../context/UserContext"
 import Loader from "../Loader"
+import ReactMarkdown from "react-markdown"
 import Navigation from "../Navigation"
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 
-const InterfacePreview = ({interfaceSelected, selectedInterfaceObjects, isLoading, setIsLoading}) => {
+const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, selectedInterfaceActions, selectedInterfaceWebhooks, selectedInterfaceObjects, isLoading, setIsLoading}) => {
    
     const [userContext, setUserContext] = useContext(UserContext)
-    console.log(selectedInterfaceObjects)
-    console.log(selectedInterfaceObjects[0])
+
+    console.log(selectedInterfaceSecurityScheme[0])
     return interfaceSelected && isLoading ? (
         <Loader />
       ) : selectedInterfaceObjects.length == 0 ? (
@@ -20,9 +21,23 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceObjects, isLoadin
       ) 
       : (
             <div className="container" style={{padding:40}}>
+                <div>
+                    <H1>{interfaceSelected.name}</H1>
+                    <H3>{interfaceSelected.description}</H3>
+                    <Card>
+                        <H5># of Schema: {selectedInterfaceObjects.length}</H5>
+                        <H5># of Actions: {selectedInterfaceActions.length}</H5>
+                        <H5># of Webhooks: {selectedInterfaceWebhooks.length}</H5>
+                    </Card>
+
+                </div>
+                <Divider />
                 <Card>
-                    <H3>{selectedInterfaceObjects[0].parent_interface_uuid}</H3>
-                    <H3># of Schema: {selectedInterfaceObjects.length}</H3>
+                    <H4>Security Scheme</H4>
+                    <H5>Name: {selectedInterfaceSecurityScheme[0].name}</H5>
+                    <H5>Type: {selectedInterfaceSecurityScheme[0].type}</H5>
+                    <ReactMarkdown>{selectedInterfaceSecurityScheme[0].description}</ReactMarkdown>
+                   
                 </Card>
             </div>
 
