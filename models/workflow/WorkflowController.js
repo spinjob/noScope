@@ -4,7 +4,9 @@ router.use(express.urlencoded({extended: true}));
 router.use(express.json());
 const crypto = require('crypto');
 const Workflow = require('../workflow/Workflow');
+const Interface = require('../interface/Interface');
 const {verifyUser} = require('../../authenticate.js');
+const {runWorkflow} = require('../../lib.js');
 
 // CREATE A WORKFLOW
 router.post('/', function(req,res) {
@@ -59,10 +61,17 @@ router.put('/:workflowId/steps/0', function(req,res) {
     });
 });
 
-router.post('/:workflowId/trigger/:triggerId', function(req,res) {
+router.post('/:workflowId/trigger', function(req,res) {
     Workflow.findOne({uuid: req.params.workflowId}, function(err,workflow){
         if (err) return res.status(500).send(err);
-        res.status(200).send("Workflow Triggered: " + req.params.triggerId);
+        res.status(200).send(workflow);
+        var actionInterfaceUuid = workflow.steps[0].request.parent_interface_uuid
+        
+        Interface.findOne({uuid: actionInterfaceUuid}, function(err,interface){
+            if (err) return res.status(500).send(err);
+            var actionInterface = interface;
+            runWorkflow(workflow, actionInterface, "sandbox", req.body);
+        })
     });
 });
 

@@ -7,6 +7,9 @@ const InterfaceAction = require('./models/interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
 const { castObject } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
+const Liquid = require('liquid');
+const engine = new Liquid.Engine()
+const axios = require('axios');
 
 function processOpenApiV3(json, userId) {
 
@@ -773,6 +776,50 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid){
     
 }
 
+function runWorkflow(workflow, actionInterface, environment, inputJSON){
+    const liquidTemplate = JSON.parse(workflow.trigger.translation)
+    const stringifiedTemplate = JSON.stringify(liquidTemplate)
+    const nextStep = workflow.steps[0]
+    const nextStepSandboxUrl = actionInterface.sandbox_server + nextStep.request.url
+    const nextStepProductionUrl = actionInterface.production_server + nextStep.request.url
+
+    if (nextStep.type === 'httpRequest') {
+        if (environment == "sandbox") {
+
+            //Apply Trigger's Liquid Template to Input JSON
+            engine.parseAndRender(stringifiedTemplate, inputJSON).then((result) => {
+                console.log(result)
+
+                //Use the result of the Liquid Template to make the HTTP Request
+                //TO DO: Create Workflow in MongoDB with a 'running' status
+                //TO DO: Update Workflow in MongoDB with a 'completed' or 'failed' status 
+
+                    // const nextStepUrl = nextStepSandboxUrl + nextStep.request.path
+                    // if (nextStep.request.method === 'post') {
+                    //     axios.post(nextStepUrl, result).then((response) => {
+                    //         console.log(response.data)
+                    //     }).catch((error) => {
+                    //         console.log(error)
+                    //     })
+                    // } else if (nextStep.request.method === 'put'){
+                    //     const nextStepRequestBody = Liquid.parse(liquidTemplate).render(inputJSON)
+                    //     axios.put(nextStepUrl, result).then((response) => {
+                    //         console.log(response.data)
+                    //     }).catch((error) => {
+                    //         console.log(error)
+                    //     })
+                    // }
+
+            }).catch((err) => {
+                console.log(err);
+            })
+
+            
+
+        } 
+    }
+}
+
 function retrieveInterfaces(userId){
 
     Interface.find({created_by: userId}, function(err, interfaces) {
@@ -785,4 +832,4 @@ function retrieveInterfaces(userId){
 
 }
 
-module.exports = { processOpenApiV3, retrieveInterfaces };
+module.exports = { processOpenApiV3, retrieveInterfaces, runWorkflow };
