@@ -26,7 +26,7 @@ function processOpenApiV3(json, userId) {
         Interface.create({
             uuid: interfaceUUID,
             name: json.info.title,
-            description: json.info.description,
+            description: json.info.description, 
             version: json.info.version,
             created_by: userId,
             created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),

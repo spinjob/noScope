@@ -64,7 +64,8 @@ router.post('/:workflowId/trigger/:triggerId', function(req,res) {
         if (err) return res.status(500).send(err);
         res.status(200).send("Workflow Triggered: " + req.params.triggerId);
     });
-});s
+});
+
 
 
 module.exports = router;
