@@ -11,7 +11,7 @@ import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
+function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
@@ -24,6 +24,7 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
     const [actionRequestSchemas, setActionRequestSchemas] = useState([])
     const [workflow, setWorkflow] = useState(location.state.workflow)
     const [selected, setSelected] = useState(0)
+    const requiredProperties = [];
 
     const webhook = workflow.trigger.webhook
     const fullPropertiesArray = [];
@@ -189,20 +190,47 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
             //console.log(propertyKeys[i] + " " + parentInterface)
             
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties && !propertyValues[i].items) {
-                const propertyObject = {
-                    id: propertyID,
-                    label: lowercaseFirstLetter(propertyKeys[i]),
-                    icon: iconGenerator(propertyValues[i].type),
-                    nodeData: {
-                        fieldPath: parentInterfacePath + "." + lowercaseFirstLetter(propertyKeys[i]),
-                        description: propertyValues[i].description,
-                        type: propertyValues[i].type,
-                        uuid: propertyValues[i].uuid
+
+                if (propertyValues[i].required === true) {
+                    //Required Trigger Property Node
+                    
+                    const propertyObject = {
+                        id: propertyID,
+                        label:propertyKeys[i]  ,
+                        icon: iconGenerator(propertyValues[i].type, propertyValues[i].required),
+                        disabled: processNodeStatus(parentInterfacePath + "." + propertyKeys[i]),
+                        nodeData: {
+                            type: propertyValues[i].type,
+                            description: propertyValues[i].description,
+                            uuid: propertyValues[i].uuid,
+                            parentInterface: propertyValues[i].parent_interface_uuid,
+                            fieldPath: lowercaseFirstLetter(parentInterfacePath) + "." + lowercaseFirstLetter(propertyKeys[i]),
+                            required: propertyValues[i].required
+                        }   
                     }
+                    propertiesArray.push(propertyObject)
+                    fullPropertiesArray.push(propertyObject)
+                    requiredProperties.push(propertyObject)
+                } else {
+                    //Optional Trigger Property Node
+                    const propertyObject = {
+                        id: propertyID,
+                        label: propertyKeys[i],
+                        disabled: processNodeStatus(parentInterfacePath + "." + propertyKeys[i]),
+                        icon: iconGenerator(propertyValues[i].type, propertyValues[i].required),
+                        nodeData: {
+                            type: propertyValues[i].type,
+                            description: propertyValues[i].description,
+                            uuid: propertyValues[i].uuid,
+                            parentInterface: propertyValues[i].parent_interface_uuid,
+                            fieldPath: lowercaseFirstLetter(parentInterfacePath) + "." + lowercaseFirstLetter(propertyKeys[i]),
+                            required: propertyValues[i].required
+                        }   
+                    }
+                    propertiesArray.push(propertyObject)
+                    fullPropertiesArray.push(propertyObject)
+
                 }
-                propertiesArray.push(propertyObject)
-                fullPropertiesArray.push(propertyObject)
-                // storeTriggerSchema(propertyObject)
             } else if (propertyValues[i]["$ref"]){ 
                 const ref = propertyValues[i]["$ref"]
                 const referenceArray = ref.split("/")
@@ -430,7 +458,20 @@ function TriggerSchemaMapper ({selectTriggerNode, storeTriggerSchema}) {
         return propertiesArray
     })
 
-
+    const processNodeStatus = useCallback((nodeLabel) => {
+        var isDisabled = false
+        var mappedOutputSchema = []
+         mappings.forEach((mapping) => {
+             mappedOutputSchema.push(mapping.inputSchema.nodeData.fieldPath)
+         })
+ 
+         if (mappedOutputSchema.includes(nodeLabel)) {
+             isDisabled = true
+         } else {
+             isDisabled = false
+         }
+         return isDisabled
+     })
 
     const iconGenerator = (type) => {
         switch (type) {

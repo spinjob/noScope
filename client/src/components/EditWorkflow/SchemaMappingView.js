@@ -30,7 +30,7 @@ const SchemaMappingView = ({triggerField, actionField, onClick, isActive, mappin
                                  <H4 style={{paddingRight: 10}}>{mapping.inputSchema.label}</H4>
                             </Tooltip2>
                                 
-                            <Tooltip2 className={Classes.TOOLTIP2_INDICATOR} content={mapping.formula}>
+                            <Tooltip2 className={Classes.TOOLTIP2_INDICATOR} content={mapping.formula.fullFormula}>
                                 <Icon icon="arrow-right" iconSize={20}/>
                             </Tooltip2> 
                             <Tooltip2  content={mapping.outputSchema.nodeData.fieldPath}>

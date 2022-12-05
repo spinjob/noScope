@@ -93,6 +93,7 @@ const SchemaMapper = () => {
     const selectTriggerNode = (node, isSelected) => {
 
       if (isSelected) {
+        console.log("Selected trigger node: ", node);
         setTriggerNode(node);
         setMappingDisabled(false);
 
@@ -105,6 +106,7 @@ const SchemaMapper = () => {
    const selectActionNode = (node, isSelected) => {
 
         if (isSelected) {
+          console.log("Selected action node: ", node);
           setActionNode(node);
           setMappingDisabled(false);
 
@@ -130,8 +132,9 @@ const SchemaMapper = () => {
       if (adaptions.length > 0) {
         adaptions.forEach(adaption => {
           var path = lowercaseFirstLetter(adaption.outputSchema.nodeData.fieldPath)
-          var value = lowercaseFirstLetter(adaption.formula.split("=")[0])
+          var value = lowercaseFirstLetter(adaption.formula.inputFormula)
           stringToObj(path, value, jsonLiquidTemplate)
+          console.log(jsonLiquidTemplate)
         })
         setLiquidTemplate(JSON.stringify(jsonLiquidTemplate, null, "\t"));
       }
@@ -170,7 +173,6 @@ const SchemaMapper = () => {
   })
 
     const fetchInterfaceSchemas = useCallback(() => {
-
         interfaces.forEach(element => {
             axios.get(process.env.REACT_APP_API_ENDPOINT + "/interfaces/" + element + "/objects")
             .then(response => {
@@ -262,7 +264,7 @@ const SchemaMapper = () => {
             </Overlay>  
             
             <div class="SchemaMapperParent">
-              <TriggerSchemaMapper selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
+              <TriggerSchemaMapper mappings={mappings} selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
               <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} selectTriggerNode={selectTriggerNode} selectActionNode={selectActionNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>
               <ActionStepSchemaMapper mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema}/>
             </div>

@@ -71,13 +71,41 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
     
         const handleMappingSubmit = () => {
             const mappingUuid = uuidv4();
-            const formattedEquation = "{{"+ equation + "}}" + "=" + "{" + field2.nodeData.fieldPath + "}"
+            var inputFormula = ""
+            var outputFormula = ""
+            var formattedEquation = ""
+            ///Need to add a check to add an IF statement to the Liquid Template if the trigger field is optional (i.e. if the field may not always be provided) to remove the template field if null.
+            if (field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
+                inputFormula = "{{"+ equation + " | plus: 0}}"
+                outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                formattedEquation = inputFormula + "=" + outputFormula
+            } else if (field1.nodeData.required && field2.nodeData.type == "string") {
+                inputFormula = "{{"+ equation + "}}"
+                outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                formattedEquation = inputFormula + "=" + outputFormula
+            }
+            else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
+                inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + " | plus: 0}} {% endif %}"
+                outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                formattedEquation = inputFormula + "=" + outputFormula
+            }
+            else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "string"){
+                inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + "}} {% endif %}"
+                outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                formattedEquation = inputFormula + "=" + outputFormula
+            }
+            
+            
             setIsLoading(true);
             const requestBody =  {
                 uuid: mappingUuid,
                 inputSchema: field1,
                 outputSchema: field2,
-                formula: formattedEquation
+                formula: {
+                    fullFormula: formattedEquation,
+                    inputFormula: inputFormula,
+                    outputFormula: outputFormula
+                } 
              }
              axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ projectId + "/workflows/" + workflowId +"/map", requestBody).then(response => {
                 setIsLoading(false);
