@@ -13,6 +13,10 @@ import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
 import axios from "axios";
 import JSONPretty from 'react-json-pretty';
+import {Configuration, OpenAIApi} from "openai"
+import {CopyBlock, dracula} from "react-code-blocks";
+import prettier from "prettier/standalone";
+import parserBabel from "prettier/parser-babel";
 
 const SchemaMapper = () => {
   let { id, workflowId } = useParams();
@@ -38,11 +42,52 @@ const SchemaMapper = () => {
     const [requiredActionFields, setRequiredActionFields] = useState([]);
     const [shouldFetchMappings, setShouldFetchMappings] = useState(true);
     const [liquidTemplate, setLiquidTemplate] = useState("");
+    const [generatedFunction, setGeneratedFunction] = useState("");
+    const [formattedPrompt, setFormattedPrompt] = useState("");
     const [mappings, setMappings] = useState(null);
     const location = useLocation();
 
     const interfaces = location.state.interfaces;
+    
+    //Open AI Functions 
+    const generatePrompt = () => {
+      const promptPrefix = "Convert the following LiquidJS JSON property logic into a Javascript function that outputs a new translated object. Include the parent object's name in the function name:"
+      console.log(promptPrefix + JSON.stringify(liquidTemplate))
+      setFormattedPrompt(promptPrefix + JSON.stringify(liquidTemplate))
+      return promptPrefix + liquidTemplate
+    }
 
+    const fetchGeneratedCode = useCallback(() => {
+      const configuration = new Configuration({
+        apiKey: process.env.REACT_APP_OPENAPI_API_KEY,
+        organization: process.env.REACT_APP_OPENAPI_ORGANIZATION_ID
+      })
+      
+      const openai = new OpenAIApi(configuration);
+
+      const promptPrefix = "Convert the following LiquidJS JSON property logic into a Javascript function that takes in a requestBody and outputs a new translated object. Include the parent object's name in the function name:"
+      const promptX = promptPrefix + JSON.stringify(liquidTemplate)
+
+      openai.createCompletion(
+        {
+          model:"text-davinci-003",
+          prompt: promptX,
+          max_tokens: 1000,
+          temperature: 0,
+          top_p: 1,
+          stream: false,
+          logprobs: null,
+          n: 1
+      }).then((response) => {
+        console.log(response.data)
+        var formattedFunction = response.data.choices[0].text.replace(/(\r\n|\n|\r)/gm, "");
+        var prettyFunction = prettier.format(formattedFunction, { parser: 'babel', plugins: [parserBabel] });
+        setGeneratedFunction(prettyFunction);
+      });
+
+    })
+  
+    
     const fetchUserDetails = useCallback(() => {
           fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
             method: "GET",
@@ -137,6 +182,7 @@ const SchemaMapper = () => {
           console.log(jsonLiquidTemplate)
         })
         setLiquidTemplate(JSON.stringify(jsonLiquidTemplate, null, "\t"));
+        generatePrompt();
       }
     
    }
@@ -161,6 +207,7 @@ const SchemaMapper = () => {
       .then(response => {
           setMappings(response.data[0].steps[0].adaptions)
           updateLiquidTemplate(response.data[0].steps[0].adaptions)
+          setGeneratedFunction(response.data[0].trigger.function)
           setShouldFetchMappings(false);
           console.log("fetched mappings")
           return response
@@ -197,7 +244,7 @@ const SchemaMapper = () => {
 
     const onLiquidTemplateSave = () => {
 
-      axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/steps/0", {"fullFormula": `${liquidTemplate}`})
+      axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/steps/0", {"fullFormula": `${liquidTemplate}`, "function": `${generatedFunction}`})
         .then(response => {
           console.log(response);
           onDrawerClose()
@@ -241,16 +288,27 @@ const SchemaMapper = () => {
             </div>
             <SchemaMapperHeader mappings= {mappings} requiredActionFields={requiredActionFields}/>
             <Drawer 
-              title="Liquid Template for Adaption"
+              title="Generations from Mappings"
               onClose={onDrawerClose}
               isOpen={drawerViewOpen}>
                 <div className={Classes.DRAWER_BODY}>
                   <div className={Classes.DIALOG_BODY}>
+                    <h3> Liquid Template</h3>
                       <JSONPretty id="json-pretty" data={liquidTemplate}></JSONPretty>
-                    </div>
+                  </div>
+                  <div className={Classes.DIALOG_BODY}>
+                    <h3> Javascript Function</h3>
+                      <CopyBlock 
+                        text={generatedFunction}
+                        language={"javascript"}
+                        showLineNumbers={true}
+                        theme={dracula}
+                       />
+                  </div>
                 </div>
                   <div className={Classes.DRAWER_FOOTER}>
-                    <Button onClick={onLiquidTemplateSave}>Save</Button>
+                    <Button onClick={onLiquidTemplateSave}>Save Liquid Template</Button>
+                    <Button icon="code" onClick={fetchGeneratedCode}>Generate Javascript</Button>
                   </div>
             </Drawer>
             <Overlay
