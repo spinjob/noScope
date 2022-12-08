@@ -18,6 +18,7 @@ const InterfaceActionController = require('../models/interface_action/InterfaceA
 const WorkflowController = require('../models/workflow/WorkflowController');
 const TransformerController = require('../models/transformer/TransformerController');
 const InterfaceSecuritySchemeController = require('../models/interface_security_scheme/InterfaceSecuritySchemeController');
+const InterfaceParameterController = require('../models/interface_parameter/InterfaceParameterController');
 
 if (process.env.NODE_ENV !== "production") {
     // Load environment variables from .env file in non prod environments
@@ -49,6 +50,7 @@ app.use(passport.initialize());
 app.use('/users', UserController);
 app.use('/interfaces', InterfaceController);
 app.use('/interfaces', InterfaceEntityController);
+app.use('/interfaces', InterfaceParameterController);
 app.use('/projects', ProjectController);
 app.use('/interfaces', InterfaceWebhookController);
 app.use('/interfaces/actions', InterfaceActionController);

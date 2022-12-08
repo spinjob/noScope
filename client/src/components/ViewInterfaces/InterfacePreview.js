@@ -23,7 +23,7 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
             <div className="container" style={{padding:40}}>
                 <div>
                     <H1>{interfaceSelected.name}</H1>
-                    <H3>{interfaceSelected.description}</H3>
+                    <ReactMarkdown>{interfaceSelected.description}</ReactMarkdown>
                     <Card>
                         <H5># of Schema: {selectedInterfaceObjects.length}</H5>
                         <H5># of Actions: {selectedInterfaceActions.length}</H5>
