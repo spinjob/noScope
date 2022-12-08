@@ -207,7 +207,7 @@ const SchemaMapper = () => {
       .then(response => {
           setMappings(response.data[0].steps[0].adaptions)
           updateLiquidTemplate(response.data[0].steps[0].adaptions)
-          setGeneratedFunction(response.data[0].trigger.function)
+          response.data[0].trigger.function ? setGeneratedFunction(response.data[0].trigger.function) : setGeneratedFunction("")
           setShouldFetchMappings(false);
           console.log("fetched mappings")
           return response
@@ -235,6 +235,7 @@ const SchemaMapper = () => {
     })
 
     const onDrawerClose = () => {
+      console.log(liquidTemplate)
         if (drawerViewOpen) {
           setDrawerViewOpen(false);
         } else {
