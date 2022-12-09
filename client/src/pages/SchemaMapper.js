@@ -14,9 +14,10 @@ import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
 import axios from "axios";
 import JSONPretty from 'react-json-pretty';
 import {Configuration, OpenAIApi} from "openai"
-import {CopyBlock, dracula} from "react-code-blocks";
+import {CopyBlock, monoBlue} from "react-code-blocks";
 import prettier from "prettier/standalone";
 import parserBabel from "prettier/parser-babel";
+import Loader from "../components/Loader";
 
 const SchemaMapper = () => {
   let { id, workflowId } = useParams();
@@ -45,17 +46,13 @@ const SchemaMapper = () => {
     const [generatedFunction, setGeneratedFunction] = useState("");
     const [formattedPrompt, setFormattedPrompt] = useState("");
     const [mappings, setMappings] = useState(null);
+    const [workflow, setWorkflow] = useState({});
     const location = useLocation();
+    const [codeGenerationLoading, setCodeGenerationLoading] = useState(false);
 
     const interfaces = location.state.interfaces;
     
     //Open AI Functions 
-    const generatePrompt = () => {
-      const promptPrefix = "Convert the following LiquidJS JSON property logic into a Javascript function that outputs a new translated object. Include the parent object's name in the function name:"
-      console.log(promptPrefix + JSON.stringify(liquidTemplate))
-      setFormattedPrompt(promptPrefix + JSON.stringify(liquidTemplate))
-      return promptPrefix + liquidTemplate
-    }
 
     const fetchGeneratedCode = useCallback(() => {
       const configuration = new Configuration({
@@ -63,11 +60,15 @@ const SchemaMapper = () => {
         organization: process.env.REACT_APP_OPENAPI_ORGANIZATION_ID
       })
       
+      setCodeGenerationLoading(true);
       const openai = new OpenAIApi(configuration);
 
-      const promptPrefix = "Convert the following LiquidJS JSON property logic into a Javascript function that takes in a requestBody and outputs a new translated object. Include the parent object's name in the function name:"
-      const promptX = promptPrefix + JSON.stringify(liquidTemplate)
-
+      const prompt1 = "In Javascript implement a function that translates an input (triggerRequestBody) into the headers and body of HTTP request using the logic described by a LiquidJS template. Convert this LiquidJS template into Javascript logic:" 
+      const prompt2 = JSON.stringify(liquidTemplate)
+      const prompt3 = "Next, implement a server that listens for an HTTP request and sends the body of that request to the function.  Finally, after the the function has translated the input, make an HTTP request using the translated headers, request body, and the HTTP method and path provided below. Do not use annotations in your response if they are not in Javascript:"
+      const actionURL = process.env.REACT_APP_API_ENDPOINT+ workflow.steps[0].request.path
+      const promptX = prompt1 + prompt2 + prompt3 + "Action Request URL Path:" + actionURL + " Action Request HTML Method:" + workflow.steps[0].request.method
+      console.log(promptX)
       openai.createCompletion(
         {
           model:"text-davinci-003",
@@ -79,10 +80,10 @@ const SchemaMapper = () => {
           logprobs: null,
           n: 1
       }).then((response) => {
-        console.log(response.data)
-        var formattedFunction = response.data.choices[0].text.replace(/(\r\n|\n|\r)/gm, "");
-        var prettyFunction = prettier.format(formattedFunction, { parser: 'babel', plugins: [parserBabel] });
+        //var formattedFunction = response.data.choices[0].text.replace(/(\r\n|\n|\r)/gm, "");
+        var prettyFunction = prettier.format(response.data.choices[0].text, { parser: 'babel', plugins: [parserBabel] });
         setGeneratedFunction(prettyFunction);
+        setCodeGenerationLoading(false);
       });
 
     })
@@ -182,7 +183,6 @@ const SchemaMapper = () => {
           console.log(jsonLiquidTemplate)
         })
         setLiquidTemplate(JSON.stringify(jsonLiquidTemplate, null, "\t"));
-        generatePrompt();
       }
     
    }
@@ -206,6 +206,7 @@ const SchemaMapper = () => {
       axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/details")
       .then(response => {
           setMappings(response.data[0].steps[0].adaptions)
+          setWorkflow(response.data[0])
           updateLiquidTemplate(response.data[0].steps[0].adaptions)
           response.data[0].trigger.function ? setGeneratedFunction(response.data[0].trigger.function) : setGeneratedFunction("")
           setShouldFetchMappings(false);
@@ -258,6 +259,19 @@ const SchemaMapper = () => {
  
     }
 
+    const renderCodeBlock = () => {
+      return codeGenerationLoading ? (
+        <Loader />
+    )
+    : (
+        <CopyBlock 
+            text={generatedFunction}
+            language={"javascript"}
+            showLineNumbers={true}
+            theme={monoBlue}
+        />
+      );
+    }
     useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
@@ -299,12 +313,13 @@ const SchemaMapper = () => {
                   </div>
                   <div className={Classes.DIALOG_BODY}>
                     <h3> Javascript Function</h3>
-                      <CopyBlock 
+                    {renderCodeBlock()}
+                      {/* <CopyBlock 
                         text={generatedFunction}
                         language={"javascript"}
                         showLineNumbers={true}
                         theme={dracula}
-                       />
+                       /> */}
                   </div>
                 </div>
                   <div className={Classes.DRAWER_FOOTER}>

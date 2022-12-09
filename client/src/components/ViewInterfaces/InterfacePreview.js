@@ -10,8 +10,7 @@ import { useNavigate } from "react-router-dom";
 const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, selectedInterfaceActions, selectedInterfaceWebhooks, selectedInterfaceObjects, isLoading, setIsLoading}) => {
    
     const [userContext, setUserContext] = useContext(UserContext)
-
-    console.log(selectedInterfaceSecurityScheme[0])
+    
     return interfaceSelected && isLoading ? (
         <Loader />
       ) : selectedInterfaceObjects.length == 0 ? (
