@@ -67,6 +67,31 @@
     padding: 40px;
 }
 
+.ManageProjectConfigurationParent{
+    display: flex;
+    flex-direction: row;
+}
+.ManageProjectConfigurationFooter{
+    display: flex;
+    flex-direction: row;
+    text-align: right;
+}
+.ManageProjectConfigurationChild1{
+    width: 50%;
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    color: rgb(0, 0, 0);
+    /* padding: 40px; */
+}
+
+.ManageProjectConfigurationChild2{
+    width: 50%;
+    background-color: rgb(255, 255, 255);
+    text-align: right;
+    color: rgb(0, 0, 0);
+    /* padding: 40px; */
+}
+
 .ManageInterfacesParent {
     display: flex;
     flex-direction: row;

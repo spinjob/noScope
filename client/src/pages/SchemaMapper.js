@@ -40,6 +40,7 @@ const SchemaMapper = () => {
     const [interfaceSchema, setInterfaceSchema] = useState(null);
     const [triggerSchema, setTriggerSchema] = useState([]);
     const [actionSchema, setActionSchema] = useState([]);
+    const [project, setProject] = useState(null);
     const [requiredActionFields, setRequiredActionFields] = useState([]);
     const [shouldFetchMappings, setShouldFetchMappings] = useState(true);
     const [liquidTemplate, setLiquidTemplate] = useState("");
@@ -48,6 +49,7 @@ const SchemaMapper = () => {
     const [mappings, setMappings] = useState(null);
     const [workflow, setWorkflow] = useState({});
     const location = useLocation();
+    
     const [codeGenerationLoading, setCodeGenerationLoading] = useState(false);
 
     const interfaces = location.state.interfaces;
@@ -221,6 +223,7 @@ const SchemaMapper = () => {
   })
 
     const fetchInterfaceSchemas = useCallback(() => {
+      if (interfaces.length > 0) {
         interfaces.forEach(element => {
             axios.get(process.env.REACT_APP_API_ENDPOINT + "/interfaces/" + element + "/objects")
             .then(response => {
@@ -232,8 +235,17 @@ const SchemaMapper = () => {
                 return error
             })
         });
+  
+        } else {}})
 
-    })
+    const fetchProject = () => {
+          axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ id + "/details").then(response => {
+              setProject(response.data[0]);
+              console.log(response.data[0])
+          }).catch(error => {
+              console.log(error);
+          })
+      }
 
     const onDrawerClose = () => {
       console.log(liquidTemplate)
@@ -272,6 +284,13 @@ const SchemaMapper = () => {
         />
       );
     }
+
+    useEffect(() => {
+      if(!project){
+          fetchProject();
+      }
+      }, [])
+  
     useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
@@ -333,7 +352,7 @@ const SchemaMapper = () => {
               canEscapeKeyClose={true} 
               canOutsideClickClose={true}>
                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
-                  <FieldMappingOverlay toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
+                  <FieldMappingOverlay project={project} toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
                 </div>  
             </Overlay>  
             

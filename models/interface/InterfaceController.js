@@ -98,5 +98,14 @@ router.put('/:id', function(req,res){
     });
 });
 
+// UPDATE AN INTERFACE'S SERVERS
+router.put('/:id/servers', function(req,res){ 
+  Interface.findOneAndUpdate({uuid: req.params.id}, {"sandbox_server": req.body.sandboxServer, "production_server": req.body.productionServer}, {new: true}, function(err,interface) {
+      if (err) return res.status(500).send("There was a problem updating the interface's servers.");
+      res.status(200).send(interface);
+  });
+});
+
+
 
 module.exports = router;

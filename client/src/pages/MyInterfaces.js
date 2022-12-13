@@ -72,7 +72,6 @@ const MyInterfaces = () => {
       const selectInterface = (selectedInterface) => {
         setSelectedInterface(selectedInterface);
         setIsLoading(true);
-        console.log(selectedInterface.uuid)
         fetchInterfaceObjects(selectedInterface.uuid)
         fetchInterfaceActions(selectedInterface.uuid)
         fetchInterfaceWebhooks(selectedInterface.uuid)
@@ -97,7 +96,6 @@ const MyInterfaces = () => {
         axios.post(process.env.REACT_APP_API_ENDPOINT + "/interfaces/security",{"interfaces":[uuid]})
         .then(response => {
             setSelectedInterfaceSecurityScheme(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
-            console.log(response.data)
             setIsLoading(false)
             return response
         }
@@ -112,7 +110,6 @@ const MyInterfaces = () => {
         axios.post(process.env.REACT_APP_API_ENDPOINT + "/interfaces/actions",{"interfaces":[uuid]})
         .then(response => {
             setSelectedInterfaceActions(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
-            console.log(response.data)
             setIsLoading(false)
             return response
         }
@@ -127,7 +124,6 @@ const MyInterfaces = () => {
         axios.post(process.env.REACT_APP_API_ENDPOINT + "/interfaces/webhooks",{"interfaces":[uuid]})
         .then(response => {
             setSelectedInterfaceWebhooks(response.data.map((m, index) => ({ ...m, rank: index + 1 })))
-            console.log(response.data)
             setIsLoading(false)
             return response
         }

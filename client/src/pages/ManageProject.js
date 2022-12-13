@@ -6,6 +6,7 @@ import Navigation from "../components/Navigation"
 import axios from 'axios';
 import ProjectWorkflows from "../components/ViewProject/ProjectWorkflows"
 import ProjectInterfaces from "../components/ViewProject/ProjectInterfaces"
+import ProjectConfigurations from "../components/ViewProject/ProjectConfigurations"
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import "../styles/workflowStudioStyles.css";
 
@@ -13,7 +14,9 @@ import "../styles/workflowStudioStyles.css";
 const ManageProject = () => {
 
     const [project, setProject] = useState({});
+    const [interfaces, setInterfaces] = useState([]);
     const [userContext, setUserContext] = useContext(UserContext)
+    const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
 
     let { id } = useParams();
@@ -62,6 +65,39 @@ const ManageProject = () => {
         })
     });
 
+    const fetchInterfaceDetails = useCallback(() => { 
+      axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/interfaces", {"interfaces": project.interfaces})
+      
+      .then(response => {
+          setInterfaces(response.data)
+          console.log(response.data)
+          return response
+      }
+      )
+      .catch(error => {
+          console.log(error);
+          return error
+      })
+  });
+
+    const handleEdit = () => {
+      console.log(isEditing)
+        if (isEditing == true) {
+          setIsEditing(false)
+        } else if (isEditing == false) {
+          setIsEditing(true)
+        }
+      
+    }
+
+    const handleEditIcon = () => {
+      if(isEditing == true) {
+        return "cross"
+      } else if (isEditing == false) {
+        return "edit"
+      }
+  }
+
     useEffect(() => {
         // fetch only when user details are not present
         if (!userContext.details) {
@@ -74,6 +110,12 @@ const ManageProject = () => {
             fetchProjectDetails()
         }
       }, [project, fetchProjectDetails])
+
+    useEffect(() => {
+        if(project._id && interfaces.length == 0) {
+          fetchInterfaceDetails()
+        }
+      }, [interfaces, fetchInterfaceDetails])
 
 
       return userContext.details === null ? (
@@ -95,14 +137,26 @@ const ManageProject = () => {
                 <Card elevation={3}>
                  <H3>APIs</H3>
                     <ProjectInterfaces project={project}/>
-                </Card>      
+                </Card> 
+                <div style={{paddingTop: 30}}/>
+                <Card elevation={3}>
+                  <div class="ManageProjectConfigurationParent">
+                    <div class="ManageProjectConfigurationChild1">
+                        <H3>Configurations</H3>
+                    </div>
+                    <div class="ManageProjectConfigurationChild2">
+                       <Button icon={handleEditIcon()} onClick={handleEdit} minimal={true}/>
+                    </div>
+                  </div>
+                    <ProjectConfigurations interfaces={project.interfaces} project={project} isEditing={isEditing} /> 
+                </Card>  
                 </div>
                 <div class="ManageProjectChild2">
                 <Card elevation={3}>
                     <H3>Workflows</H3>
                         <Button text="New Workflow" onClick={() => navigate("/projects/"+project.uuid+"/workflows/new")}> </Button>
                         <ProjectWorkflows projectId={id} />
-                    </Card>
+                  </Card>
                 </div>
             </div>
         </div>

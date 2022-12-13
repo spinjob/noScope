@@ -70,6 +70,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
     const processNodeStatus = useCallback((nodeLabel) => {
        var isDisabled = false
        var mappedOutputSchema = []
+       if (mappings) {
         mappings.forEach((mapping) => {
             mappedOutputSchema.push(mapping.outputSchema.nodeData.fieldPath)
         })
@@ -80,40 +81,72 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
             isDisabled = false
         }
         return isDisabled
+       }
+     
     })
     
     const processActionPathParameters = useCallback(() => {
         let firstStep = workflow.steps[0]
         if (!firstStep) {
             console.log("No first step")
+
         } else {
             
-            if(firstStep.request.parameters || firstStep.request.parameters.length > 0) {
+            if(firstStep.request.parameters) {
                 const interfaceActionParameters = [];
                 firstStep.request.parameters.forEach((parameter) => {
+                    
                     interfaceParameters.forEach((interfaceParameter) => {
-                        if (parameter === interfaceParameter.name) {
-                            
-                            const parameterObject = {
-                                id: interfaceParameter.uuid,
-                                label: lowercaseFirstLetter(interfaceParameter.name),
-                                icon: iconGenerator(interfaceParameter.type),
-                                nodeData: {
-                                        type: interfaceParameter.type,
-                                        description: interfaceParameter.description,
-                                        uuid: interfaceParameter.uuid,
-                                        parentInterface: interfaceParameter.parent_interface_uuid,
-                                        parameter_type: interfaceParameter.parameter_type,
-                                        required: interfaceParameter.required,
-                                        fieldPath: "header."+ interfaceParameter.name,
+                        console.log(interfaceParameter)
+                        console.log("Parameter: " + parameter)
+                        if (parameter === interfaceParameter.parameter_name) {
+                            if (!interfaceParameter.schemaReference){
+                                const parameterObject = {
+                                    id: interfaceParameter.uuid,
+                                    label: lowercaseFirstLetter(interfaceParameter.name),
+                                    icon: iconGenerator(interfaceParameter.type),
+                                    nodeData: {
+                                            type: interfaceParameter.type,
+                                            description: interfaceParameter.description,
+                                            uuid: interfaceParameter.uuid,
+                                            parentInterface: interfaceParameter.parent_interface_uuid,
+                                            parameter_type: interfaceParameter.parameter_type,
+                                            required: interfaceParameter.required,
+                                            fieldPath: interfaceParameter.parameter_type + "." + interfaceParameter.name,
+                                    }
                                 }
+                                interfaceActionParameters.push(parameterObject)
+                            } else {
+                                interfaceSchemas.forEach((interfaceSchema) => {
+                                    console.log("Schema reference for parameter: ")
+                                    console.log(interfaceParameters)
+                                    if (interfaceParameter.schemaReference === interfaceSchema.name) {
+                                        console.log("Schema reference for parameter match found: ")
+                                        console.log(interfaceParameter)
+                                        const parameterObject = {
+                                            id: interfaceParameter.uuid,
+                                            label: lowercaseFirstLetter(interfaceParameter.name),
+                                            icon: iconGenerator(interfaceParameter.type),
+                                            nodeData: {
+                                                    type: interfaceSchema.type,
+                                                    description: interfaceParameter.description,
+                                                    uuid: interfaceParameter.uuid,
+                                                    parentInterface: interfaceParameter.parent_interface_uuid,
+                                                    parameter_type: interfaceParameter.parameter_type,
+                                                    required: interfaceParameter.required,
+                                                    fieldPath: interfaceParameter.parameter_type + "." + interfaceParameter.name,
+                                            }
+                                        }
+                                        interfaceActionParameters.push(parameterObject)
+                                    }
+                                })
+                                
                             }
-                            interfaceActionParameters.push(parameterObject)
-                        }
+                           
+                        } 
                     })
                 })
                 setActionParameters(interfaceActionParameters)
-                console.log(interfaceActionParameters)
             }
         }   
     })
@@ -132,10 +165,11 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                 if (firstStep.request.request_body.schema.length > 0) {
                         const treeArray = [];
                         firstStep.request.request_body.schema.forEach((requestSchema) => {
+                            //console.log(requestSchema)
                             interfaceSchemas.forEach((interfaceSchema) => {
+                                //console.log(interfaceSchema)
                                 interfaceSchema.forEach((schema) => {
                                     if (requestSchema === schema.name) {
-                                        //console.log("Match Found" + schema.name)
                                         const parentId = uuidv4();
                                         if (schema.properties) {
                                             var propertyKeys = Object.keys(schema.properties);
@@ -494,18 +528,19 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
     }
     
     const fetchInterfaceSchemas = useCallback(() => {
-
-        interfaces.forEach(element => {
-            axios.get(process.env.REACT_APP_API_ENDPOINT + "/interfaces/" + element + "/objects")
-            .then(response => {
-                setInterfaceSchemas([...interfaceSchemas, response.data])
-                return(response.data)
-            })
-            .catch(error => {
-                console.log(error);
-                return error
-            })
-        });
+        if (interfaces) {
+            interfaces.forEach(element => {
+                axios.get(process.env.REACT_APP_API_ENDPOINT + "/interfaces/" + element + "/objects")
+                .then(response => {
+                    setInterfaceSchemas([...interfaceSchemas, response.data])
+                    return(response.data)
+                })
+                .catch(error => {
+                    console.log(error);
+                    return error
+                })
+            });
+        }
 
     })
 
@@ -514,7 +549,6 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
         axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/details")
         .then(response => {
             setWorkflow(response.data[0])
-            console.log(response.data[0].steps[0].request.parent_interface_uuid)
             fetchInterfaceParameters(response.data[0].steps[0].request.parent_interface_uuid)
             processActionSchema()
             return(response.data)
@@ -541,8 +575,11 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
     })
 
     const renderRequestBodyTree = useCallback(() => {
-        
-        return actionRequestSchemas.length == 0 ? (
+    
+        if (actionRequestSchemas) {
+            
+        }
+        return !actionRequestSchemas ? (
             <div>
                 <H5>Request Body Schema</H5>
                 <Card>
@@ -573,48 +610,78 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
     const renderParameterTree = useCallback((type) => {
         var nodes = [];
         var capitalizedType = type.charAt(0).toUpperCase() + type.slice(1)
-        actionParameters.forEach(node => {
-            if (node.nodeData.parameter_type == type) {
-                nodes.push(node)
-            }
-        })
-        return nodes.length == 0 ? (
-            <div>
-                <H5>{capitalizedType} Parameters</H5>
-                <Card> 
-                    <body style={{color: "grey"}}>
-                        No {capitalizedType} Parameters
-                    </body>
-                </Card>
-            </div>
-        )
-        : (
-            <div>
-                <H5>Header Parameters</H5>
-                <Tree
-                    contents={nodes}
-                    className={Popover2Classes.ELEVATION_0}
-                    onNodeClick={handleActionNodeSelect}
-                    onNodeCollapse={handleNodeCollapse}
-                    onNodeExpand={handleNodeExpand}
-                    style={{ width: 600 }}
-                />
-            </div>
-            
-        )
+        if (actionParameters) {
+            actionParameters.forEach(node => {
+                if (node.nodeData.parameter_type == type) {
+                    nodes.push(node)
+                }
+            })
+        }
+        if (type == "header") {
+
+            return nodes.length == 0 ? (
+                <div>
+                    <H5>{capitalizedType} Parameters</H5>
+                    <Card> 
+                        <body style={{color: "grey"}}>
+                            No {capitalizedType} Parameters
+                        </body>
+                    </Card>
+                </div>
+            )
+            : (
+                <div>
+                    <H5>Header Parameters</H5>
+                    <Tree
+                        contents={nodes}
+                        className={Popover2Classes.ELEVATION_0}
+                        onNodeClick={handleActionNodeSelect}
+                        onNodeCollapse={handleNodeCollapse}
+                        onNodeExpand={handleNodeExpand}
+                        style={{ width: 600 }}
+                    />
+                </div>
+                
+            )
+        } else if (type == "path") {
+            return nodes.length == 0 ? (
+                <div>
+                    <H5>{capitalizedType} Parameters</H5>
+                    <Card> 
+                        <body style={{color: "grey"}}>
+                            No {capitalizedType} Parameters
+                        </body>
+                    </Card>
+                </div>
+            )
+            : (
+                <div>
+                    <H5>Path Parameters</H5>
+                    <Tree
+                        contents={nodes}
+                        className={Popover2Classes.ELEVATION_0}
+                        onNodeClick={handleActionNodeSelect}
+                        onNodeCollapse={handleNodeCollapse}
+                        onNodeExpand={handleNodeExpand}
+                        style={{ width: 600 }}
+                    />
+                </div>
+                
+            )
+        }
+
         
     })
 
     useEffect(() => {
-        if (interfaceSchemas.length === 0) {
+        if (interfaceSchemas.length == 0 && interfaces) {
           fetchInterfaceSchemas();
-        }
-      }, [])   
+        } 
+      }, [])  
       
       useEffect(() => {
         if (!workflow) {
             fetchWorkflow();
-            console.log("fetching workflow")
         } else {
             fetchInterfaceParameters(workflow.steps[0].request.parent_interface_uuid)
         }
@@ -640,7 +707,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
 return !workflow ? (
         <Loader />
     )
-    : workflow.steps.length == 0 ? (
+    : !workflow.steps ? (
         <Loader />
     )
     : actionRequestSchemas.length == 0 && actionParameters.length == 0 ? (

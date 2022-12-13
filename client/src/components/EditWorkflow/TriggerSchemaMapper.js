@@ -85,11 +85,12 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
 
             } else if (webhook.request_body && webhook.responses) {
                 //console.log("Webhook Request and Response Schema")
-                if (webhook.request_body.schema.length > 0) {
+                if (webhook.request_body.schema) {
                     const treeArray = [];
 
                     webhook.request_body.schema.forEach((schema) => {
                         if (interfaceSchemas.length == 0 && haveFetchInterfaceSchemas == false) {
+                            console.log()
                             // fetchInterfaceSchemas();
                         } else {
                             interfaceSchemas[0].forEach((interfaceSchema) => {
@@ -111,7 +112,6 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
                                                 schema: interfaceSchema
                                             }
                                         }
-    
                                         treeArray.push(parentObject)
                                     } else {
     
@@ -134,47 +134,6 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
 
                 }
                 
-                // webhook.responses.forEach((response) => {
-        
-                //     if (response.schema.length > 0) {
-                //         response.schema.forEach((schema) => {
-                //             interfaceSchemas.forEach((interfaceSchema) => {
-                //                 if (schema === interfaceSchema.name) {
-                //                     const parentId = uuidv4();
-
-                //                     if (interfaceSchema.properties !== undefined) {
-
-                //                         var propertyKeys = Object.keys(interfaceSchema.properties);
-                //                         var propertyValues = Object.values(interfaceSchema.properties);
-                                        
-                //                         const parentObject = {
-                //                             id: parentId,
-                //                             label: interfaceSchema.name,
-                //                             icon: 'cube',
-                //                             isExpanded: false,
-                //                             childNodes: processProperties(propertyKeys, propertyValues)
-                //                         }
-                //                         setTriggerResponseSchemas([...triggerResponseSchemas, parentObject])
-    
-                //                     } else {
-                //                         const parentObject = {
-                //                             id: parentId,
-                //                             label: interfaceSchema.name,
-                //                             icon: 'cube',
-                //                             isExpanded: false,
-                //                         }
-
-                //                         setTriggerResponseSchemas([...triggerResponseSchemas, parentObject])
-    
-                //                     }
-
-                //                 }
-                //                 else {}
-                //             })
-                //         })
-                        
-                //     }
-                // })
             }
         }
        
@@ -237,7 +196,7 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
                 var schema = referenceArray[3]
                 if (keyArray.includes(schema)) {
                     //duplicate schema skipped
-                } else {
+                } else if (interfaceSchemas[0].length > 0) {
                     keyArray.push(schema)
                     interfaceSchemas[0].forEach((interfaceSchema) => {
                         if (schema === interfaceSchema.name) {
@@ -461,16 +420,19 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
     const processNodeStatus = useCallback((nodeLabel) => {
         var isDisabled = false
         var mappedOutputSchema = []
-         mappings.forEach((mapping) => {
-             mappedOutputSchema.push(mapping.inputSchema.nodeData.fieldPath)
-         })
- 
-         if (mappedOutputSchema.includes(nodeLabel)) {
-             isDisabled = true
-         } else {
-             isDisabled = false
-         }
-         return isDisabled
+        if (mappings) {
+            mappings.forEach((mapping) => {
+                mappedOutputSchema.push(mapping.inputSchema.nodeData.fieldPath)
+            })
+    
+            if (mappedOutputSchema.includes(nodeLabel)) {
+                isDisabled = true
+            } else {
+                isDisabled = false
+            }
+            return isDisabled
+        }
+        
      })
 
     const iconGenerator = (type) => {
@@ -498,7 +460,6 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
 function lowercaseFirstLetter(string) {
     return string.charAt(0).toLowerCase() + string.slice(1);
   }
-
 
    
 const fetchInterfaceSchemas = useCallback(() => {
@@ -533,9 +494,9 @@ const fetchInterfaceSchemas = useCallback(() => {
     })
 
     useEffect(() => {
-        if (interfaceSchemas.length === 0) {
+        if (interfaceSchemas.length === 0 && interfaces.length > 0) {
           fetchInterfaceSchemas();
-        }
+        } 
       }, [])   
       
       useEffect(() => {
@@ -545,16 +506,8 @@ const fetchInterfaceSchemas = useCallback(() => {
         } else {
             //console.log(workflow)
         }
-      }, [workflow, fetchWorkflow])  
+      }, [])  
 
-    //   useEffect(() => {
-    //     if (actionRequestSchemas.length == 0) {
-    //         processActionSchema()
-    //         console.log("processing action schema")
-    //     } else {
-    //        //console.log(actionRequestSchemas)
-    //     }
-    //   }, [actionRequestSchemas, processActionSchema])  
 
       useEffect(() => {
         if (triggerRequestSchemas.length == 0) {

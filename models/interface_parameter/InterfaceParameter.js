@@ -7,6 +7,8 @@ var InterfaceParameterSchema = new mongoose.Schema({
     name: String,
     description: String,
     example: String,
+    schemaReference: String,
+    parameter_name: String,
     required: Boolean
 });
 

@@ -86,7 +86,7 @@
       "x-displayName": "Ping Webhooks"
     }
   ],
-  "webhooks": {
+  "x-webhooks": {
     "orderCreate": {
       "post": {
         "tags": [

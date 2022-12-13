@@ -21,8 +21,8 @@ function processOpenApiV3(json, userId) {
     var parameterValues = Object.values(json.components.parameters);
     var securitySchemeKeys = Object.keys(json.components.securitySchemes);
     var securitySchemeValues = Object.values(json.components.securitySchemes);
-    var webhookKeys = Object.keys(json.webhooks)
-    var webhookValues = Object.values(json.webhooks)
+    var webhookKeys = Object.keys(json["x-webhooks"])
+    var webhookValues = Object.values(json["x-webhooks"])
 
     var interfaceUUID = crypto.randomUUID();
 
@@ -172,7 +172,6 @@ function createPropertyEntities(propertyValues, parent_object_uuid, parent_inter
         var entityUUID = crypto.randomUUID();
         
         if (propertyAttributes[i].type === "array") {
-            console.log(propertyNames[i]);
             InterfaceEntity.create({
                 uuid: entityUUID,
                 parent_interface_uuid: parent_interface_uuid,
@@ -186,7 +185,6 @@ function createPropertyEntities(propertyValues, parent_object_uuid, parent_inter
                         console.log(err);
                         return; 
                     }
-                    console.log(interfaceEntity)
                     var propertyPath = "properties."+ interfaceEntity.name+ ".uuid";
 
                     InterfaceEntity.findOneAndUpdate({uuid: parent_object_uuid},
@@ -559,24 +557,47 @@ function processParameters(parameterKeys, parameterValues,parent_interface_uuid)
     for (var i = 0; i < parameterNames.length; ++i) {
         var parameterUUID = crypto.randomUUID();
 
-        InterfaceParameter.create({
-            uuid: parameterUUID,
-            parent_interface_uuid: parent_interface_uuid,
-            parameter_type: parameterAttributes[i].in,
-            type: parameterAttributes[i].schema.type,
-            name: parameterKeys[i],
-            description: parameterAttributes[i].schema.description,
-            example: parameterAttributes[i].schema.example,
-            required: parameterAttributes[i].required,
-        },
-            function(err,interfaceParameter){
-                if (err) {
-                    console.log(err);
-                    return; 
-                }
-                //console.log("Interface Parameter Created "+ interfaceParameter._id);
-        });
-    
+        if (!parameterAttributes[i].schema["$ref"]) {
+            InterfaceParameter.create({
+                uuid: parameterUUID,
+                parent_interface_uuid: parent_interface_uuid,
+                parameter_type: parameterAttributes[i].in,
+                type: parameterAttributes[i].schema.type,
+                name: parameterAttributes[i].name,
+                description: parameterAttributes[i].schema.description,
+                example: parameterAttributes[i].schema.example,
+                parameter_name: parameterKeys[i],
+                required: parameterAttributes[i].required
+            },
+                function(err,interfaceParameter){
+                    if (err) {
+                        console.log(err);
+                        return; 
+                    }
+                    //console.log("Interface Parameter Created "+ interfaceParameter._id);
+            });
+        } else {
+            InterfaceParameter.create({
+                uuid: parameterUUID,
+                parent_interface_uuid: parent_interface_uuid,
+                parameter_type: parameterAttributes[i].in,
+                type: parameterAttributes[i].schema.type,
+                name: parameterAttributes[i].name,
+                description: parameterAttributes[i].schema.description,
+                example: parameterAttributes[i].schema.example,
+                required: parameterAttributes[i].required,
+                parameter_name: parameterKeys[i],
+                schemaReference: processReferences([parameterAttributes[i].schema])[0]
+            },
+                function(err,interfaceParameter){
+                    console.log(interfaceParameter)
+                    if (err) {
+                        console.log(err);
+                        return; 
+                    }
+                    //console.log("Interface Parameter Created "+ interfaceParameter._id);
+            });
+        }
     }
     
     return;  

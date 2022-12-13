@@ -9,7 +9,7 @@ import {v4 as uuidv4} from 'uuid';
 import Loader from "../../Loader";
 import SelectOperators from "./SelectOperators/SelectOperators";
 
-const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, projectId, toggleOverlay, selectedMapping, setShouldFetchMappings}) => {
+const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId, projectId, toggleOverlay, selectedMapping, setShouldFetchMappings}) => {
     const [selectedValue, setSelectedValue] = useState("one");
     const [equation, setEquation] = useState(field1.nodeData.fieldPath);
     const [schema, setSchema] = useState("");
@@ -17,13 +17,12 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
     const [isLoading, setIsLoading] = useState(false);
 
         const handleRadioChange = (e) => {
-            setSelectedValue(e.target.value)
-            if(e.target.value === "three"){
-                constructForLoopLiquidTemplate(field1, field2)
+                setSelectedValue(e.target.value)
+                if(e.target.value === "three"){
+                    constructForLoopLiquidTemplate(field1, field2)
+            }
         }
-    }
         const constructForLoopLiquidTemplate = (field1, field2) => {
-            console.log(field1, field2)
            if (field1.nodeData.type == "array" && field2.nodeData.type == "array"){
                     setEquation(`{%- for ${field1.nodeData.items[0].label} in ${field1.nodeData.fieldPath} %}
                         {{${field2.nodeData.items[0].label}}}               
@@ -39,6 +38,35 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                 return "none"
             } else {
                 return "block"
+            }
+        }
+
+        const displayConfigurationMenu = () => {
+            if (selectedValue === "three") {
+                return "block"
+            } else {
+                return "none"
+            }
+        }
+
+        const renderConfigurationMenu = () => {
+            return (
+                <Menu>
+                    {renderConfigurationItems()}
+                </Menu>
+            )
+        }
+
+        const renderConfigurationItems = () => {
+            if(!project.configuration) {
+                    console.log("no configurations")
+            } else {
+                var configurationKeys = Object.keys(project.configuration)
+                var configurationValues = Object.values(project.configuration)
+                return configurationKeys.map((key, index) => {
+                    return <MenuItem2 text={key +" : "+configurationValues[index]} icon="cog" onClick={handleFieldAddition}/>
+                })
+
             }
         }
 
@@ -116,9 +144,14 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
              })
         }
 
-        const handleFieldAddition = (schema) => {
+        const handleFieldAddition = (config) => {
+            setEquation(equation + " " + config.target.innerText.split(" : ")[1])
+        }
+
+        const handleConfigurationSelection = (schema) => {
             setEquation(equation + " "+ schema.nodeData.fieldPath)
         }
+
 
         const handleOperatorAddition = (operatorSlug) => {
             console.log(operatorSlug.target.innerText)
@@ -154,6 +187,8 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                 return "none"
             }
         }
+
+
 
     return isLoading ? (
     
@@ -223,6 +258,9 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                                                 setSchema(schema);
                                                 handleFieldAddition(schema);
                                     }}/>
+                                    <Popover2 style={{width: '30%'}} content={renderConfigurationMenu()}>
+                                            <Button style={{width: '30%'}} minimal={true} outlined={true} icon="cog">Configurations</Button>
+                                    </Popover2>
                         </ButtonGroup>
 
                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left',paddingTop: 10}}>
@@ -231,7 +269,7 @@ const FieldMappingOverlay = ({field1, field2, triggerSchema, workflowId, project
                                 <p style={{padding: 10}}>{"= " +field2.nodeData.fieldPath}</p> 
                             </div>
                         <br/>
-                    </div> 
+                    </div>
                     <div style={{margin: 10}}>
                             <Button onClick={handleMappingSubmit} >Submit Mapping</Button>
                     </div>

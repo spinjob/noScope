@@ -79,10 +79,10 @@ function SchemaViewer ({ projectId, interfaces, workflow }) {
             <H5>Schema Viewer</H5>
             <p>View the schema for your workflow.</p>
             <Button text="Start Mapping" onClick={schemaMapperButtonHandler}/>
-            <Tabs id="SchemaPreviewTabs" selectedTabId={currentTab} style={{height:"100vh"}} onChange={handleTabChange}>
+            {/* <Tabs id="SchemaPreviewTabs" selectedTabId={currentTab} style={{height:"100vh"}} onChange={handleTabChange}>
                 <Tab id="1" title= {workflow.trigger.webhook.name} panel={<SchemaTree interfaces={projectInterfaces} workflow={workflow} type="trigger"/>}/>
                 <Tab id="2" title={fetchActionName(workflow.steps[0].request.method, workflow.steps[0].request.path)} panel={<SchemaTree interfaces={projectInterfaces} workflow={workflow} type="action"/>}/>
-            </Tabs>
+            </Tabs> */}
         </div>
     )
 
