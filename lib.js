@@ -5,6 +5,7 @@ const InterfaceProperty = require('./models/interface_property/InterfaceProperty
 const InterfaceParameter = require('./models/interface_parameter/InterfaceParameter');
 const InterfaceAction = require('./models/interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
+const WorkflowLog = require('./models/workflow_log/WorkflowLog');
 const { castObject } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
 const Liquid = require('liquid');
@@ -798,47 +799,89 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid){
 }
 
 function runWorkflow(workflow, actionInterface, environment, inputJSON){
-    const liquidTemplate = JSON.parse(workflow.trigger.translation)
-    const stringifiedTemplate = JSON.stringify(liquidTemplate)
-    const nextStep = workflow.steps[0]
-    const nextStepSandboxUrl = actionInterface.sandbox_server + nextStep.request.url
-    const nextStepProductionUrl = actionInterface.production_server + nextStep.request.url
+    
+    //Check the workflow's status
+    if (workflow.status == "needs_mapping") {
+        return {
+            error: "Action requires further work.  All required fields for the request are not mapped."
+        }
+    } else if (workflow.status == "disabled") {
+        return {
+            error: "Workflow has been disabled."
+        }
+    } else if (workflow.status === "active") {
+        //Continue
 
-    if (nextStep.type === 'httpRequest') {
-        if (environment == "sandbox") {
+        const header = JSON.parse(workflow.trigger.translation).header
+        const stringifiedHeaderTemplate = JSON.stringify(header)
+        const requestBodyTemplate = JSON.parse(workflow.trigger.translation)
+        delete requestBodyTemplate["header"]
+        const stringifiedTemplate = JSON.stringify(requestBodyTemplate)
+        const nextStep = workflow.steps[0]
+        const nextStepSandboxUrl = actionInterface.sandbox_server + nextStep.request.path
+        const nextStepProductionUrl = actionInterface.production_server + nextStep.request.path
 
-            //Apply Trigger's Liquid Template to Input JSON
-            engine.parseAndRender(stringifiedTemplate, inputJSON).then((result) => {
-                console.log(result)
-
-                //Use the result of the Liquid Template to make the HTTP Request
+        if (nextStep.type === 'httpRequest') {
+            if (environment == "sandbox") {
+                //Apply Trigger's Liquid Template to Input JSON
                 //TO DO: Create Workflow in MongoDB with a 'running' status
                 //TO DO: Update Workflow in MongoDB with a 'completed' or 'failed' status 
+                engine.parseAndRender(stringifiedTemplate, inputJSON).then((result) => {
+                    
+                        const requestBody = JSON.parse(result)
+                        engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
 
-                    // const nextStepUrl = nextStepSandboxUrl + nextStep.request.path
-                    // if (nextStep.request.method === 'post') {
-                    //     axios.post(nextStepUrl, result).then((response) => {
-                    //         console.log(response.data)
-                    //     }).catch((error) => {
-                    //         console.log(error)
-                    //     })
-                    // } else if (nextStep.request.method === 'put'){
-                    //     const nextStepRequestBody = Liquid.parse(liquidTemplate).render(inputJSON)
-                    //     axios.put(nextStepUrl, result).then((response) => {
-                    //         console.log(response.data)
-                    //     }).catch((error) => {
-                    //         console.log(error)
-                    //     })
-                    // }
+                            const translatedHeader = JSON.parse(result)
 
-            }).catch((err) => {
-                console.log(err);
-            })
+                            if (nextStep.request.method === 'post') {
+                            
+                                axios.post(nextStepUrl, requestBody,{headers: translatedHeader}).then((response) => {
+                                    console.log(response.data)
+                                    WorkflowLog.create({
+                                        uuid: crypto.randomUUID(),
+                                        created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                                        message: response.data,
+                                        level: "info",
+                                        workflow_uuid: workflow.uuid
+                                    },
+                                        function(err,workflowLog){
+                                            if (err) {
+                                                console.log(err);
+                                                return;
+                                            }
+                                        })
 
-            
+                                }).catch((error) => {
+                                    console.log(error)
+                                    WorkflowLog.create({
+                                        uuid: crypto.randomUUID(),
+                                        created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                                        message: error,
+                                        level: "error",
+                                        workflow_uuid: workflow.uuid
+                                    },
+                                        function(err,workflowLog){
+                                            if (err) {
+                                                console.log(err);
+                                                return;
+                                            }
+                                        })
+                                })
+    
+                            } 
 
+                        }).catch((err) => {})
+                        const nextStepUrl = nextStepSandboxUrl + nextStep.request.path
+
+                     
+                }).catch((err) => {
+                    console.log(err);
+                })
         } 
     }
+
+    }
+       
 }
 
 function retrieveInterfaces(userId){

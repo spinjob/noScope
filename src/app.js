@@ -19,6 +19,7 @@ const WorkflowController = require('../models/workflow/WorkflowController');
 const TransformerController = require('../models/transformer/TransformerController');
 const InterfaceSecuritySchemeController = require('../models/interface_security_scheme/InterfaceSecuritySchemeController');
 const InterfaceParameterController = require('../models/interface_parameter/InterfaceParameterController');
+const WorkflowLogController = require('../models/workflow_log/WorkflowLogController');
 
 if (process.env.NODE_ENV !== "production") {
     // Load environment variables from .env file in non prod environments
@@ -55,6 +56,7 @@ app.use('/projects', ProjectController);
 app.use('/interfaces', InterfaceWebhookController);
 app.use('/interfaces/actions', InterfaceActionController);
 app.use('/projects/:id/workflows',WorkflowController);
+app.use('/workflows', WorkflowLogController);
 app.use('/interfaces', InterfaceSecuritySchemeController);
 app.use('/transform', TransformerController);
 
