@@ -88,6 +88,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
     
     const processActionPathParameters = useCallback(() => {
         let firstStep = workflow.steps[0]
+        let requiredParameters = [];
         if (!firstStep) {
             console.log("No first step")
 
@@ -98,6 +99,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                 firstStep.request.parameters.forEach((parameter) => {
                     
                     interfaceParameters.forEach((interfaceParameter) => {
+                    
                         if (parameter === interfaceParameter.parameter_name) {
                             if (!interfaceParameter.schemaReference){
                                 const parameterObject = {
@@ -113,6 +115,9 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                                             required: interfaceParameter.required,
                                             fieldPath: interfaceParameter.parameter_type + "." + interfaceParameter.name,
                                     }
+                                }
+                                if (interfaceParameter.required) {
+                                    requiredParameters.push(parameterObject)
                                 }
                                 interfaceActionParameters.push(parameterObject)
                             } else {
@@ -132,6 +137,9 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                                                     fieldPath: interfaceParameter.parameter_type + "." + interfaceParameter.name,
                                             }
                                         }
+                                        if (interfaceParameter.required) {
+                                            requiredParameters.push(parameterObject)
+                                        }
                                         interfaceActionParameters.push(parameterObject)
                                     }
                                 })
@@ -142,6 +150,8 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                     })
                 })
                 setActionParameters(interfaceActionParameters)
+                console.log(requiredParameters)
+                updateRequiredSchema(requiredParameters)
             }
         }   
     })
@@ -229,7 +239,6 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
             if (!propertyValues[i]["$ref"] && !propertyValues[i].additionalProperties && !propertyValues[i].items) {
                 if (propertyValues[i].required === true) {
                     //Required Action Property Node
-                    
                     const propertyObject = {
                         id: propertyID,
                         label:propertyKeys[i]  ,
@@ -241,7 +250,8 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                             uuid: propertyValues[i].uuid,
                             parentInterface: propertyValues[i].parent_interface_uuid,
                             fieldPath: lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i]),
-                            required: propertyValues[i].required
+                            required: propertyValues[i].required,
+                            enum: propertyValues[i].enum ? propertyValues[i].enum : null
                         }   
                     }
                     propertiesArray.push(propertyObject)
@@ -259,7 +269,8 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                             uuid: propertyValues[i].uuid,
                             parentInterface: propertyValues[i].parent_interface_uuid,
                             fieldPath: lowercaseFirstLetter(parentSchema) + "." + lowercaseFirstLetter(propertyKeys[i]),
-                            required: propertyValues[i].required
+                            required: propertyValues[i].required,
+                            enum: propertyValues[i].enum ? propertyValues[i].enum : null
                         }   
                     }
                     propertiesArray.push(propertyObject)

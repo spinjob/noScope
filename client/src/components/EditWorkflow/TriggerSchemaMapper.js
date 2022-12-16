@@ -25,7 +25,6 @@ function TriggerSchemaMapper ({mappings, schemaTree, selectTriggerNode, storeTri
     const [workflow, setWorkflow] = useState(location.state.workflow)
     const [selected, setSelected] = useState(0)
     const requiredProperties = [];
-
     const webhook = workflow.trigger.webhook
     const fullPropertiesArray = [];
 
@@ -531,7 +530,10 @@ return !workflow ? (
     )
     :(
         <div class="TriggerSchemaMapper">
-            <H3>Webhook Schema</H3>
+            <div style={{paddingBottom: 20}}>
+                <H3>Webhook Schema</H3>
+                <H4>{workflow.trigger.webhook.name}</H4>
+            </div>
             <Tree
                 contents={triggerRequestSchemas}
                 className={Popover2Classes.ELEVATION_0}

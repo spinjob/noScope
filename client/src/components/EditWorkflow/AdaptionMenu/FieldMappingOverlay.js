@@ -15,7 +15,6 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
     const [schema, setSchema] = useState("");
     const [schemaIntent, setSchemaIntent] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-
         const handleRadioChange = (e) => {
                 setSelectedValue(e.target.value)
                 if(e.target.value === "three"){
@@ -70,6 +69,36 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
             }
         }
 
+        const shouldDisplayEnumMenu = () => {
+            if(!field2.nodeData.enum) {
+                return 
+            } else {
+                return (
+                    <Popover2 style={{width: '30%'}} content={renderEnumMenu()}>
+                         <Button style={{width: '30%'}} minimal={true} outlined={true} icon="th-list">Enumerations</Button>
+                     </Popover2>
+                )
+            }
+        }
+        
+        const renderEnumMenu = () => {
+            return (
+                <Menu>
+                    {renderEnumMenuItems()}
+                </Menu>
+            )
+        }
+        const renderEnumMenuItems = () => {
+            if(!field2.nodeData.enum) {
+                    console.log("no configurations")
+            } else {
+                return field2.nodeData.enum.map((key, index) => {
+                    return <MenuItem2 text={key} icon="citation" onClick={handleEnumerationAddition}/>
+                })
+
+            }
+        }
+
         const returnTypedOperators = (type) => {
             
             if (type==="string"){
@@ -94,35 +123,46 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
                     <MenuItem2 text="Multiply" icon="cross" onClick={handleOperatorAddition}/>
                 </Menu>
                 )
+            } else {
+                console.log("no input field")
             }
         }
     
         const handleMappingSubmit = () => {
+            console.log("Field 1")
+            console.log(field1)
+            console.log("Field 2")
+            console.log(field2)
             const mappingUuid = uuidv4();
             var inputFormula = ""
             var outputFormula = ""
             var formattedEquation = ""
             ///Need to add a check to add an IF statement to the Liquid Template if the trigger field is optional (i.e. if the field may not always be provided) to remove the template field if null.
-            if (field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
-                inputFormula = "{{"+ equation + " | plus: 0}}"
-                outputFormula = "{" + field2.nodeData.fieldPath + "}"
-                formattedEquation = inputFormula + "=" + outputFormula
-            } else if (field1.nodeData.required && field2.nodeData.type == "string") {
-                inputFormula = "{{"+ equation + "}}"
+            if (field1.nodeData.fieldPath.length > 0) {
+                if (field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
+                    inputFormula = "{{"+ equation + " | plus: 0}}"
+                    outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                    formattedEquation = inputFormula + "=" + outputFormula
+                } else if (field1.nodeData.required && field2.nodeData.type == "string") {
+                    inputFormula = "{{"+ equation + "}}"
+                    outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                    formattedEquation = inputFormula + "=" + outputFormula
+                }
+                else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
+                    inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + " | plus: 0}} {% endif %}"
+                    outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                    formattedEquation = inputFormula + "=" + outputFormula
+                }
+                else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "string"){
+                    inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + "}} {% endif %}"
+                    outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                    formattedEquation = inputFormula + "=" + outputFormula
+                } 
+            } else if (field1.nodeData.fieldPath.length == 0){
+                inputFormula = "{{ "+ equation + "}}"
                 outputFormula = "{" + field2.nodeData.fieldPath + "}"
                 formattedEquation = inputFormula + "=" + outputFormula
             }
-            else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
-                inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + " | plus: 0}} {% endif %}"
-                outputFormula = "{" + field2.nodeData.fieldPath + "}"
-                formattedEquation = inputFormula + "=" + outputFormula
-            }
-            else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "string"){
-                inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + "}} {% endif %}"
-                outputFormula = "{" + field2.nodeData.fieldPath + "}"
-                formattedEquation = inputFormula + "=" + outputFormula
-            }
-            
             
             setIsLoading(true);
             const requestBody =  {
@@ -135,6 +175,7 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
                     outputFormula: outputFormula
                 } 
              }
+
              axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ projectId + "/workflows/" + workflowId +"/map", requestBody).then(response => {
                 setIsLoading(false);
                 setShouldFetchMappings(true);
@@ -146,6 +187,15 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
 
         const handleFieldAddition = (config) => {
             setEquation(equation + " " + config.target.innerText.split(" : ")[1])
+        }
+
+        const handleEnumerationAddition = (value) => {
+            if (equation.length > 0){
+                setEquation(equation + " " + "'"+ value.target.innerText + "'")
+            } else {
+                setEquation(equation + "'"+ value.target.innerText + "'")
+            }
+          
         }
 
         const handleConfigurationSelection = (schema) => {
@@ -261,6 +311,8 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
                                     <Popover2 style={{width: '30%'}} content={renderConfigurationMenu()}>
                                             <Button style={{width: '30%'}} minimal={true} outlined={true} icon="cog">Configurations</Button>
                                     </Popover2>
+                                    {shouldDisplayEnumMenu()}
+                                
                         </ButtonGroup>
 
                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left',paddingTop: 10}}>

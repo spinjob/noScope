@@ -8,7 +8,7 @@ const SchemaMapperHeader = ({saveSchemaTrees, requiredActionFields, mappings}) =
     var requiredMappingsCount = 0
 
     if (!mappings) {
-        console.log("No Mappings")
+        
     } else {
         requiredMappings = requiredMappings.filter(mapping => mapping.outputSchema.nodeData.required);
         requiredMappingsCount = requiredMappings.length;

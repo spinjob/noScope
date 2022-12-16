@@ -91,8 +91,6 @@ const SchemaMapper = () => {
 
     })
   
-
-    
     const fetchUserDetails = useCallback(() => {
           fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
             method: "GET",
@@ -146,7 +144,7 @@ const SchemaMapper = () => {
 
     })
     const updateRequiredSchema = (schemas) => {
-        setRequiredActionFields(schemas);
+        setRequiredActionFields([...requiredActionFields ,...schemas])
       }
 
     const storeTriggerSchema = (schemas) => {
