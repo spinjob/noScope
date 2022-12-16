@@ -15,8 +15,12 @@ class SelectAction extends React.PureComponent {
     this.state = {
      action: {name: "", uuid: ""},
      actions: [],
-     projectId: props.projectId
+     projectId: props.projectId,
+     interfaces: props.interfaces
     };
+
+    console.log("SelectAction.jsx")
+    console.log(this.props.interfaces)
   }
 
   componentDidMount(){
@@ -33,7 +37,18 @@ class SelectAction extends React.PureComponent {
         response => {
             this.setState(
                 { 
-                    actions: response.data.map((m, index) => ({ ...m, rank: index + 1 }))
+                    // actions: response.data.map((m, index) => ({ ...m, rank: index + 1 }))
+                    actions: response.data.map((m, index) => (
+                      { ...m, 
+                        rank: index + 1, 
+                        interface_name: this.props.interfaces.length > 0 ? (this.props.interfaces.filter(
+                            function(api) {
+                              return api.uuid == m.parent_interface_uuid
+                            }
+                          )[0].name) : ("")
+                      }
+                    )
+                  )
                 }
             )
            //console.log(response)

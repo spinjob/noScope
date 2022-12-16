@@ -10,7 +10,7 @@ import {
 } from "@blueprintjs/core";
 import SelectAction from "./SelectAction/SelectAction";
 
-function CreateActionForm({ prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
+function CreateActionForm({ interfaces, prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
 
     const [action, setAction] = useState("");
     const [actionIntent, setActionIntent] = useState("");
@@ -45,6 +45,7 @@ function CreateActionForm({ prevStep, projectId, handleNewNode, nextStep, isDisa
                     projectId={projectId}
                     style={{ padding: 10}}
                     intent={actionIntent}
+                    interfaces={interfaces}
                     onChange={e => setAction(action)}
                     value={action}
                     isDisabled={isDisabled}

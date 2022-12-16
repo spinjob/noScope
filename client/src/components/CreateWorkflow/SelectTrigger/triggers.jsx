@@ -22,7 +22,7 @@ export const renderTriggers = (interfaceTrigger, { handleClick, modifiers, query
     <MenuItem
       active={modifiers.active}
       disabled={modifiers.disabled}
-      label={interfaceTrigger.method}
+      label={interfaceTrigger.interface_name}
       key={interfaceTrigger.rank}
       onClick={handleClick}
       text={highlightText(text, query)}

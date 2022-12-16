@@ -10,19 +10,20 @@ import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSchema}) {
+function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, updateRequiredSchema, storeSchemaTree}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
 
     const [interfaces, setInterfaces] = useState(location.state.interfaces)
     const [interfaceSchemas, setInterfaceSchemas] = useState([])
-    const [actionRequestSchemas, setActionRequestSchemas] = useState([])
+    const [actionRequestSchemas, setActionRequestSchemas] = useState(schemaTree)
     const [workflow, setWorkflow] = useState(location.state.workflow)
     const [interfaceParameters, setInterfaceParameters] = useState([]);
     const [actionParameters, setActionParameters] = useState([]);
     const [selected, setSelected] = useState(0)
     const requiredProperties = [];
+
     const handleNodeExpand = useCallback((node) => {
         node.isExpanded = true
         setActionRequestSchemas(_.cloneDeep(actionRequestSchemas));
@@ -97,8 +98,6 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                 firstStep.request.parameters.forEach((parameter) => {
                     
                     interfaceParameters.forEach((interfaceParameter) => {
-                        console.log(interfaceParameter)
-                        console.log("Parameter: " + parameter)
                         if (parameter === interfaceParameter.parameter_name) {
                             if (!interfaceParameter.schemaReference){
                                 const parameterObject = {
@@ -118,11 +117,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                                 interfaceActionParameters.push(parameterObject)
                             } else {
                                 interfaceSchemas.forEach((interfaceSchema) => {
-                                    console.log("Schema reference for parameter: ")
-                                    console.log(interfaceParameters)
                                     if (interfaceParameter.schemaReference === interfaceSchema.name) {
-                                        console.log("Schema reference for parameter match found: ")
-                                        console.log(interfaceParameter)
                                         const parameterObject = {
                                             id: interfaceParameter.uuid,
                                             label: lowercaseFirstLetter(interfaceParameter.name),
@@ -216,7 +211,7 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
                         }
                     )
                     setActionRequestSchemas(treeArray)
-
+                    // storeSchemaTree("action", treeArray)
                 }
 
             } 
@@ -691,9 +686,8 @@ function ActionStepSchemaMapper ({mappings, selectActionNode, updateRequiredSche
         if (actionRequestSchemas.length == 0) {
             processActionSchema()
         } else {
-           //console.log(actionRequestSchemas)
         }
-      }, [actionRequestSchemas, processActionSchema])  
+      }, [actionRequestSchemas])  
 
       useEffect(() => {
         if (actionParameters.length == 0) {

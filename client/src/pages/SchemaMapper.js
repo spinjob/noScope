@@ -39,6 +39,8 @@ const SchemaMapper = () => {
     const [mappingDisabled, setMappingDisabled] = useState(true);
     const [interfaceSchema, setInterfaceSchema] = useState(null);
     const [triggerSchema, setTriggerSchema] = useState([]);
+    const [triggerTree, setTriggerTree] = useState([]);
+    const [actionTree, setActionTree] = useState([]);
     const [actionSchema, setActionSchema] = useState([]);
     const [project, setProject] = useState(null);
     const [requiredActionFields, setRequiredActionFields] = useState([]);
@@ -49,12 +51,11 @@ const SchemaMapper = () => {
     const [mappings, setMappings] = useState(null);
     const [workflow, setWorkflow] = useState({});
     const location = useLocation();
-    
     const [codeGenerationLoading, setCodeGenerationLoading] = useState(false);
 
     const interfaces = location.state.interfaces;
     
-    //Open AI Functions 
+    //Open AI Functions
 
     const fetchGeneratedCode = useCallback(() => {
       const configuration = new Configuration({
@@ -90,6 +91,7 @@ const SchemaMapper = () => {
 
     })
   
+
     
     const fetchUserDetails = useCallback(() => {
           fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
@@ -121,6 +123,28 @@ const SchemaMapper = () => {
           })
         }, [setUserContext, userContext.token])
 
+    
+    const saveSchemaTrees = useCallback(() => {
+      saveTriggerTree();
+      saveActionTree();
+    })
+
+    const saveTriggerTree = useCallback(() => {
+      axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/steps/0", {schemaTree: triggerTree}).then((response) => {
+        console.log(response.data);
+      }).catch((error) => {
+        console.log(error);
+      })
+
+    })
+    const saveActionTree = useCallback(() => {
+      axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/steps/1", {schemaTree: actionTree}).then((response) => {
+        console.log(response.data);
+      }).catch((error) => {
+        console.log(error);
+      })
+
+    })
     const updateRequiredSchema = (schemas) => {
         setRequiredActionFields(schemas);
       }
@@ -129,6 +153,16 @@ const SchemaMapper = () => {
       setTriggerSchema(schemas);
     }
 
+      const storeSchemaTree = (type, treeArray) => {
+        console.log("Storing schema tree:")
+        if(type=="trigger") {
+          setTriggerTree(treeArray);
+        } else if(type=="action"){
+          setActionTree(treeArray);
+        }
+      }
+
+      
     const toggleShouldFetchMappings = (shouldFetch) => {
         if (shouldFetch === true) {
           setShouldFetchMappings(true);
@@ -182,7 +216,6 @@ const SchemaMapper = () => {
           var path = lowercaseFirstLetter(adaption.outputSchema.nodeData.fieldPath)
           var value = lowercaseFirstLetter(adaption.formula.inputFormula)
           stringToObj(path, value, jsonLiquidTemplate)
-          console.log(jsonLiquidTemplate)
         })
         setLiquidTemplate(JSON.stringify(jsonLiquidTemplate, null, "\t"));
       }
@@ -209,6 +242,12 @@ const SchemaMapper = () => {
       .then(response => {
           setMappings(response.data[0].steps[0].adaptions)
           setWorkflow(response.data[0])
+          if(response.data[0].trigger.schema_tree) {
+            setTriggerTree(response.data[0].trigger.schema_tree)
+          }
+          if(response.data[0].steps[0].schema_tree) {
+            setActionTree(response.data[0].steps[0].schema_tree)
+          }
           updateLiquidTemplate(response.data[0].steps[0].adaptions)
           response.data[0].trigger.function ? setGeneratedFunction(response.data[0].trigger.function) : setGeneratedFunction("")
           setShouldFetchMappings(false);
@@ -320,7 +359,7 @@ const SchemaMapper = () => {
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right',paddingRight: 190}}>
               <Button onClick={onDrawerClose}> View Liquid Template </Button>
             </div>
-            <SchemaMapperHeader mappings= {mappings} requiredActionFields={requiredActionFields}/>
+            <SchemaMapperHeader  saveSchemaTrees={saveSchemaTrees} mappings= {mappings} requiredActionFields={requiredActionFields}/>
             <Drawer 
               title="Generations from Mappings"
               onClose={onDrawerClose}
@@ -333,12 +372,6 @@ const SchemaMapper = () => {
                   <div className={Classes.DIALOG_BODY}>
                     <h3> Javascript Function</h3>
                     {renderCodeBlock()}
-                      {/* <CopyBlock 
-                        text={generatedFunction}
-                        language={"javascript"}
-                        showLineNumbers={true}
-                        theme={dracula}
-                       /> */}
                   </div>
                 </div>
                   <div className={Classes.DRAWER_FOOTER}>
@@ -357,9 +390,9 @@ const SchemaMapper = () => {
             </Overlay>  
             
             <div class="SchemaMapperParent">
-              <TriggerSchemaMapper mappings={mappings} selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
+              <TriggerSchemaMapper schemaTree={triggerTree} storeSchemaTree={storeSchemaTree} mappings={mappings} selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
               <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} selectTriggerNode={selectTriggerNode} selectActionNode={selectActionNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>
-              <ActionStepSchemaMapper mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema}/>
+              <ActionStepSchemaMapper schemaTree={actionTree} storeSchemaTree={storeSchemaTree} mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema}/>
             </div>
   </div>
 );

@@ -1,8 +1,8 @@
 import React, { useCallback, useState, useContext, useEffect } from "react";
-import { ProgressBar, Card, H1, H2, H3, H4, H5 } from "@blueprintjs/core";
+import { ProgressBar, Card, H1, H2, H3, H4, H5, Button } from "@blueprintjs/core";
 import "reactflow/dist/style.css";
 
-const SchemaMapperHeader = ({requiredActionFields, mappings}) => {
+const SchemaMapperHeader = ({saveSchemaTrees, requiredActionFields, mappings}) => {
     const requiredActionFieldsCount = requiredActionFields.length;
     var requiredMappings = mappings;
     var requiredMappingsCount = 0
@@ -42,6 +42,9 @@ const SchemaMapperHeader = ({requiredActionFields, mappings}) => {
                     </div>
                     <div style={{display: 'block', width: 300, alignContent: 'center', alignItems: 'center'}}>
                         <ProgressBar intent={intentGenerator()} stripes={false} value={requiredMappingsCount / requiredActionFieldsCount}/>
+                    </div>
+                    <div style={{paddingTop: 20}}>
+                        <Button onClick={saveSchemaTrees}>Save</Button>
                     </div>
                 </div>
             </Card>

@@ -800,6 +800,8 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid){
 
 function runWorkflow(workflow, actionInterface, environment, inputJSON){
     
+    const traceUUID = crypto.randomUUID();
+
     //Check the workflow's status
     if (workflow.status == "needs_mapping") {
         return {
@@ -827,7 +829,22 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
                 //TO DO: Create Workflow in MongoDB with a 'running' status
                 //TO DO: Update Workflow in MongoDB with a 'completed' or 'failed' status 
                 engine.parseAndRender(stringifiedTemplate, inputJSON).then((result) => {
-                    
+
+                    WorkflowLog.create({
+                        uuid: crypto.randomUUID(),
+                        created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                        message: response.data,
+                        level: "info",
+                        workflow_uuid: workflow.uuid,
+                        traceUUID: traceUUID
+                    },
+                        function(err,workflowLog){
+                            if (err) {
+                                console.log(err);
+                                return;
+                            }
+                    })
+                        
                         const requestBody = JSON.parse(result)
                         engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
 
@@ -850,7 +867,6 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
                                                 return;
                                             }
                                         })
-
                                 }).catch((error) => {
                                     console.log(error)
                                     WorkflowLog.create({
@@ -858,7 +874,8 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
                                         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
                                         message: error,
                                         level: "error",
-                                        workflow_uuid: workflow.uuid
+                                        workflow_uuid: workflow.uuid,
+                                        traceUUID: traceUUID
                                     },
                                         function(err,workflowLog){
                                             if (err) {

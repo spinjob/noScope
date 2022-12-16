@@ -5,7 +5,8 @@ var WorflowLogSchema = new mongoose.Schema({
     created_at: String,
     message: String,
     level: String,
-    workflow_uuid: String
+    workflow_uuid: String,
+    traceUUID: String
 });
 
 mongoose.model('WorkflowLog', WorflowLogSchema);

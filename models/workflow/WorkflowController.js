@@ -54,7 +54,14 @@ router.put('/:workflowId/map', function(req,res) {
 });
 
 router.put('/:workflowId/steps/0', function(req,res) {
-    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {'trigger.translation': req.body.fullFormula, 'trigger.function': req.body.function}, function (err,workflow){
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {'trigger.translation': req.body.fullFormula, 'trigger.function': req.body.function, 'trigger.schema_tree': req.body.schemaTree}, function (err,workflow){
+        if (err) return res.status(500).send(err);
+        res.status(200).send(workflow);
+    });
+});
+
+router.put('/:workflowId/steps/1', function(req,res) {
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {'steps.0.schemaTree': req.body.schemaTree}, function (err,workflow){
         if (err) return res.status(500).send(err);
         res.status(200).send(workflow);
     });

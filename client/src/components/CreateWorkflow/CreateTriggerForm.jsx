@@ -10,12 +10,15 @@ import {
 } from "@blueprintjs/core";
 import SelectTrigger from "./SelectTrigger/SelectTrigger.jsx";
 
-function CreateTriggerForm({ prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
+function CreateTriggerForm({ interfaces, prevStep, projectId, handleNewNode, nextStep, isDisabled}) {
 
     const [trigger, setTrigger] = useState("");
     const [triggerIntent, setTriggerIntent] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [userContext] = useContext(UserContext);
+
+      console.log("CreateTriggerForm.jsx")
+      console.log(interfaces)
 
     const Continue = e => {
       //e.preventDefault();
@@ -49,6 +52,7 @@ function CreateTriggerForm({ prevStep, projectId, handleNewNode, nextStep, isDis
                     isDisabled={isDisabled}
                     onChange={e => setTrigger(trigger)}
                     value={trigger}
+                    interfaces={interfaces}
                     setTrigger={trigger => {
                       setTrigger(trigger);
                     }}

@@ -11,7 +11,7 @@ import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema}) {
+function TriggerSchemaMapper ({mappings, schemaTree, selectTriggerNode, storeTriggerSchema, storeSchemaTree}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
@@ -19,7 +19,7 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
     const [interfaces, setInterfaces] = useState(location.state.interfaces)
     const [interfaceSchemas, setInterfaceSchemas] = useState([])
     const [haveFetchInterfaceSchemas, setHaveFetchInterfaceSchemas] = useState(false)
-    const [triggerRequestSchemas, setTriggerRequestSchemas] = useState([])
+    const [triggerRequestSchemas, setTriggerRequestSchemas] = useState(schemaTree)
     const [triggerResponseSchemas, setTriggerResponseSchemas] = useState([])
     const [actionRequestSchemas, setActionRequestSchemas] = useState([])
     const [workflow, setWorkflow] = useState(location.state.workflow)
@@ -131,6 +131,7 @@ function TriggerSchemaMapper ({mappings, selectTriggerNode, storeTriggerSchema})
 
                     })
                     setTriggerRequestSchemas(treeArray)
+                    // storeSchemaTree("trigger", treeArray)
 
                 }
                 

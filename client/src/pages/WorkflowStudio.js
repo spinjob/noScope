@@ -4,7 +4,6 @@ import Navigation from "../components/Navigation";
 import WorkflowForm from "../components/CreateWorkflow/WorkflowForm";
 import { UserContext } from "../context/UserContext";
 import {useNavigate } from "react-router-dom";
-
 import "../styles/workflowStudioStyles.css";
 import ReactFlow, {
   addEdge,
@@ -33,6 +32,8 @@ const WorkflowStudio = () => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [trigger, setTrigger] = useState({});
+    const [project, setProject] = useState(null);
+    const [interfaces, setInterfaces] = useState([]);
     //turn into array to support more than one action
     const [action, setAction] = useState({});
 
@@ -77,6 +78,28 @@ const WorkflowStudio = () => {
       (params) => setEdges((eds) => addEdge(params, eds)),
       [setEdges]
     );
+
+    const fetchProjectDetails = useCallback(() => {
+        axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/"+id+"/details")
+        .then(response => {
+          console.log(response.data)
+            setProject(response.data)
+            fetchInterfaceDetails(response.data[0].interfaces)
+
+        }).catch(error => {
+            console.log(error)
+        })
+    })
+
+    const fetchInterfaceDetails = useCallback((interfaces) => {
+      axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/interfaces", {interfaces: interfaces})
+      .then(response => {
+        console.log(response.data)
+        setInterfaces(response.data)
+      }).catch(error => {
+          console.log(error)
+      })
+  })
 
     const createWorkflow = (workflowName) => {
 
@@ -308,6 +331,13 @@ const WorkflowStudio = () => {
            
     }
 
+    useEffect(() => {
+        if(project == null){
+          fetchProjectDetails()
+        } else {
+        }
+      }, [project, fetchProjectDetails]);
+
   return (
 
     <div>
@@ -318,7 +348,9 @@ const WorkflowStudio = () => {
                 <WorkflowForm 
                     projectId={id} 
                     handleNewNode={handleNewNode} 
-                    createWorkflow={createWorkflow}/>
+                    createWorkflow={createWorkflow}
+                    project={project}
+                    interfaces={interfaces}/>
                 </div>
                 <div class="child2">
                     <ReactFlow

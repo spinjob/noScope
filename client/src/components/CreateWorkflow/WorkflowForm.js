@@ -12,8 +12,12 @@ export default class SelectAction extends Component {
             step: 1,
             trigger: '',
             actions: [],
-            projectId: this.props.projectId
+            projectId: this.props.projectId,
+            interfaces: this.props.interfaces,
+            project: this.props.project
         }
+        console.log("WorkflowForm.js")
+        console.log(this.props.interfaces)
 
     }
 
@@ -47,7 +51,8 @@ export default class SelectAction extends Component {
                         handleChange={this.handleChange}
                         projectId={this.props.projectId}
                         handleNewNode={this.props.handleNewNode}
-                        isDisabled={false} />
+                        isDisabled={false}
+                        interfaces={this.props.interfaces}/>
                     </div>
 
                 )
@@ -57,11 +62,13 @@ export default class SelectAction extends Component {
                         <CreateTriggerForm 
                         nextStep={this.nextStep}
                         handleChange={this.handleChange}
-                        isDisabled={true} />
+                        isDisabled={true} 
+                        interfaces={this.props.interfaces}/>
                         <CreateActionForm 
                         nextStep={this.nextStep}
                         prevStep={this.prevStep}
                         projectId={this.props.projectId}
+                        interfaces={this.props.interfaces}
                         handleNewNode={this.props.handleNewNode}/>
                     </div>
                 )
@@ -71,17 +78,20 @@ export default class SelectAction extends Component {
                     <CreateTriggerForm 
                     nextStep={this.nextStep}
                     handleChange={this.handleChange}
-                    isDisabled={true} />
+                    isDisabled={true} 
+                    interfaces={this.props.interfaces}/>
                     <CreateActionForm 
                     nextStep={this.nextStep}
                     prevStep={this.prevStep}
                     projectId={this.props.projectId}
                     handleNewNode={this.props.handleNewNode} 
+                    interfaces={this.props.interfaces}
                     isDisabled={true}/>
                     <ConfirmWorkflow 
                     prevStep={this.prevStep}
                     projectId={this.props.projectId}
                     createWorkflow={this.props.createWorkflow}
+                    interfaces={this.props.interfaces}
                     />
 
                     </div>

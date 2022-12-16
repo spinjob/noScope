@@ -14,8 +14,11 @@ class SelectTrigger extends React.PureComponent {
 
     this.state = {
      trigger: {name: "", uuid: ""},
-      triggers: []
+      triggers: [],
+      interfaces: this.props.interfaces
     }
+    console.log("SelectTrigger.jsx")
+        console.log(this.props.interfaces)
   }
 
   componentDidMount(){
@@ -37,9 +40,20 @@ class SelectTrigger extends React.PureComponent {
             "interfaces": projects[0].interfaces
         }).then(
             response => {
+                console.log(this.props.interfaces)
                 this.setState(
                     { 
-                        triggers: response.data.map((m, index) => ({ ...m, rank: index + 1 }))
+                        triggers: response.data.map((m, index) => (
+                          { ...m, 
+                            rank: index + 1, 
+                            interface_name: this.props.interfaces.length > 0 ? (this.props.interfaces.filter(
+                                function(api) {
+                                  return api.uuid == m.parent_interface_uuid
+                                }
+                              )[0].name) : ("")
+                          }
+                        )
+                      )
                     }
                 )
                 return response.data
@@ -48,6 +62,11 @@ class SelectTrigger extends React.PureComponent {
     } else {}
       
   }
+
+  filterInteraces(triggerInterface, interfaceId) {
+     return triggerInterface.uuid == interfaceId;
+  }
+
   // Each of the Select2 components will display the same interface name BUT there will not be a UUID.  So, the user *must* select an interface for the UUID to pass through for the creation of the project on the back-end.
   render() {
     const buttonText = this.state.trigger.name

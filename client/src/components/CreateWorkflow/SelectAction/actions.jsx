@@ -17,12 +17,12 @@ export const renderActions = (interfaceAction, { handleClick, modifiers, query }
   if (!modifiers.matchesPredicate) {
     return null;
   }
-  const text = `${interfaceAction.rank}. ${interfaceAction.name}`;
+  const text = `${interfaceAction.rank}. ${interfaceAction.method.toUpperCase()} ${interfaceAction.name}`;
   return (
     <MenuItem
       active={modifiers.active}
       disabled={modifiers.disabled}
-      label={interfaceAction.method}
+      label={interfaceAction.interface_name}
       key={interfaceAction.rank}
       onClick={handleClick}
       text={highlightText(text, query)}
