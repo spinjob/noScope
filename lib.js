@@ -790,7 +790,7 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
         }
 
     }
-    
+
     //This for loop will not assume a reference and will build out the schema object from the inline properties.
     for (var i = 0; i < inlineSchemaProperties.length; ++i){
         console.log("Top Level Inline Schema Properties being Processed")
@@ -862,7 +862,8 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     var propertyKeys = Object.keys(propertyValue.properties);
                     var propertyValues = Object.values(propertyValue.properties);
                     var propertyProperties = processSchemaProperties(propertyKeys, propertyValues, propertyKey, schemaMap);
-                    propertyObject[propertyKey] = propertyProperties;
+                    propertyObject[propertyKey] = propertyValue;
+                    propertyObject[propertyKey].properties = propertyProperties; 
                     schemaProperties = Object.assign(schemaProperties, propertyObject);
                     // console.log("Schema Properties: ")
                     // console.log(JSON.parse(JSON.stringify(schemaProperties)))
