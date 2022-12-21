@@ -15,6 +15,7 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
     const [schema, setSchema] = useState("");
     const [schemaIntent, setSchemaIntent] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
         const handleRadioChange = (e) => {
                 setSelectedValue(e.target.value)
                 if(e.target.value === "three"){
@@ -58,7 +59,7 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
 
         const renderConfigurationItems = () => {
             if(!project.configuration) {
-                    console.log("no configurations")
+            
             } else {
                 var configurationKeys = Object.keys(project.configuration)
                 var configurationValues = Object.values(project.configuration)
@@ -90,7 +91,7 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
         }
         const renderEnumMenuItems = () => {
             if(!field2.nodeData.enum) {
-                    console.log("no configurations")
+            
             } else {
                 return field2.nodeData.enum.map((key, index) => {
                     return <MenuItem2 text={key} icon="citation" onClick={handleEnumerationAddition}/>
@@ -102,7 +103,6 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
         const returnTypedOperators = (type) => {
             
             if (type==="string"){
-                console.log("string")
                 return ( 
                 <Menu>
                     <MenuItem2 text="Append" icon="unresolve" onClick={handleOperatorAddition}/>
@@ -114,7 +114,6 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
                 </Menu>
             )
             } if (type==="float" || type==="integer" || type==="number"){
-                console.log("number")
                 return  (
                 <Menu>
                     <MenuItem2 text= "Add" icon="plus" onClick={handleOperatorAddition}/>
@@ -186,7 +185,7 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
         }
 
         const handleFieldAddition = (config) => {
-            setEquation(equation + " " + config.target.innerText.split(" : ")[1])
+            setEquation(equation + " " + config.fieldPath)
         }
 
         const handleEnumerationAddition = (value) => {
@@ -233,7 +232,6 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
             if (field1.nodeData.type === "array") {
                 return "block"
             } else {
-                console.log("not iterable")
                 return "none"
             }
         }

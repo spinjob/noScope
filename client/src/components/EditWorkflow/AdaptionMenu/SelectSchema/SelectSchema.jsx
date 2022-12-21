@@ -20,6 +20,7 @@ class SelectSchema extends React.PureComponent {
   componentDidMount(){
     if(
         this.props.schemas.length > 0) {
+          console.log(this.props.schemas)
     }
     else {
        console.log( "No schemas found")

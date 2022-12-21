@@ -54,7 +54,7 @@ const SchemaMapper = () => {
     const [codeGenerationLoading, setCodeGenerationLoading] = useState(false);
 
     const interfaces = location.state.interfaces;
-    
+
     //Open AI Functions
 
     const fetchGeneratedCode = useCallback(() => {
@@ -238,18 +238,18 @@ const SchemaMapper = () => {
     const fetchMappings = useCallback(() => {
       axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/details")
       .then(response => {
+
+          console.log(response.data[0])
           setMappings(response.data[0].steps[0].adaptions)
           setWorkflow(response.data[0])
-          if(response.data[0].trigger.schema_tree) {
-            setTriggerTree(response.data[0].trigger.schema_tree)
-          }
-          if(response.data[0].steps[0].schema_tree) {
-            setActionTree(response.data[0].steps[0].schema_tree)
-          }
+          setTriggerTree(response.data[0].trigger.webhook.schemaTree)
+          setActionTree(response.data[0].steps[0].request.schemaTree)
+          setTriggerSchema(response.data[0].trigger.webhook.schemaList)
+          setActionSchema(response.data[0].steps[0].request.schemaList)
+          
           updateLiquidTemplate(response.data[0].steps[0].adaptions)
           response.data[0].trigger.function ? setGeneratedFunction(response.data[0].trigger.function) : setGeneratedFunction("")
           setShouldFetchMappings(false);
-          console.log("fetched mappings")
           return response
       })
       .catch(error => {
@@ -338,6 +338,8 @@ const SchemaMapper = () => {
       useEffect(() => {
         // fetch only when user details are not present
         if (shouldFetchMappings) {
+          fetchMappings()
+        } else if(!workflow) {
           fetchMappings()
         }
       }, [fetchMappings, setMappings])

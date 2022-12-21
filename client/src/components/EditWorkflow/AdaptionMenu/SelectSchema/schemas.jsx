@@ -11,12 +11,12 @@ export const renderSchemas = (schema, { handleClick, modifiers, query }) => {
   if (!modifiers.matchesPredicate) {
     return null;
   }
-  const text = `${schema.rank}. ${schema.nodeData.fieldPath}`;
+  const text = `${schema.rank}. ${schema.fieldPath}`;
   return (
     <MenuItem
       active={modifiers.active}
       disabled={modifiers.disabled}
-      label={schema.nodeData.type}
+      label={schema.type}
       key={schema.rank}
       onClick={handleClick}
       text={highlightText(text, query)}
@@ -28,7 +28,7 @@ export const filterSchema = (query, schema) => {
   return (
     `${
         schema.rank
-    }. ${schema.label.toLowerCase()} ${schema.nodeData.fieldPath.toLowerCase()}`.indexOf(
+    }. ${schema.label} ${schema.fieldPath}`.indexOf(
       query.toLowerCase()
     ) >= 0
   );

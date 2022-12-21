@@ -5,6 +5,8 @@ import WorkflowForm from "../components/CreateWorkflow/WorkflowForm";
 import { UserContext } from "../context/UserContext";
 import {useNavigate } from "react-router-dom";
 import "../styles/workflowStudioStyles.css";
+import { generateSchemaTree, generateSchemaList} from "../scripts/lib.js"
+
 import ReactFlow, {
   addEdge,
   Controls,
@@ -16,10 +18,6 @@ import "reactflow/dist/style.css";
 import axios from "axios";
 import {v4 as uuidv4} from 'uuid';
 
-// import {
-//   nodes as initialNodes,
-//   edges as initialEdges
-// } from "./initial-elements";
 
 const onInit = (reactFlowInstance) =>
   console.log("flow loaded:", reactFlowInstance);
@@ -103,11 +101,10 @@ const WorkflowStudio = () => {
 
     const createWorkflow = (workflowName) => {
 
-        console.log("Workflow Studio:" + action.request_body)
-
         const workflowUuid = uuidv4();
         const stepUuid = uuidv4();
         const triggerUuid = uuidv4()
+        
         const workflowStep = {
             uuid: stepUuid,
             sequence: 1,
@@ -118,7 +115,10 @@ const WorkflowStudio = () => {
                 parameters: action.parameters,
                 method: action.method,
                 parent_interface_uuid: action.parent_interface_uuid,
-                request_body: action.requestBody
+                request_body: action.requestBody,
+                request_body2: action.requestBody2,
+                schemaTree: generateSchemaTree('requestBody',action.requestBody2.schema)
+                ,schemaList: generateSchemaList(action.requestBody2.schema)
             }
         }
 
@@ -133,7 +133,10 @@ const WorkflowStudio = () => {
                 parameters: trigger.parameters,
                 method: trigger.method,
                 request_body: trigger.requestBody,
-                responses: trigger.responses
+                request_body2: trigger.requestBody2,
+                responses: trigger.responses,
+                schemaTree: generateSchemaTree('requestBody',trigger.requestBody2.schema)
+                ,schemaList: generateSchemaList(trigger.requestBody2.schema)
             }
         }
 

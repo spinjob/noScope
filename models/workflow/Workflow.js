@@ -13,7 +13,10 @@ var WorkflowWebhookTriggerSchema = new mongoose.Schema({
     parameters: Array,
     method: String,
     request_body: Object,
-    responses: Array
+    request_body2: Object,
+    responses: Array,
+    schemaTree: Array,
+    schemaList: Array
 });
 
 var WorkflowTriggerSchema = new mongoose.Schema({
@@ -24,8 +27,7 @@ var WorkflowTriggerSchema = new mongoose.Schema({
     parent_project_uuid: String,
     webhook: WorkflowWebhookTriggerSchema,
     translation: String,
-    function: String,
-    schema_tree: Array
+    function: String
 });
 
 var WorkflowStepRequestSchema = new mongoose.Schema({
@@ -34,7 +36,11 @@ var WorkflowStepRequestSchema = new mongoose.Schema({
     method: String,
     parameters: Array,
     parent_interface_uuid: String,
-    request_body: Object
+    request_body: Object,
+    request_body2: Object,
+    schemaTree: Array,
+    schemaList: Array
+
 });
 
 var WorkflowStepSchema = new mongoose.Schema({
@@ -45,8 +51,7 @@ var WorkflowStepSchema = new mongoose.Schema({
     full_formula: String,
     function: String,
     adaptions: [AdaptionSchema],
-    request: WorkflowStepRequestSchema,
-    schema_tree: Array
+    request: WorkflowStepRequestSchema
 
 });
 
