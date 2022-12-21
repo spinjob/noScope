@@ -8,6 +8,7 @@ var InterfaceWebhookSchema = new mongoose.Schema({
     method: String,
     parameters: Array,
     requestBody: Object,
+    requestBody2: Object,
     responses: Array
 });
 
