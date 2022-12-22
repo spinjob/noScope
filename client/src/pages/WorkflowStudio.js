@@ -5,7 +5,7 @@ import WorkflowForm from "../components/CreateWorkflow/WorkflowForm";
 import { UserContext } from "../context/UserContext";
 import {useNavigate } from "react-router-dom";
 import "../styles/workflowStudioStyles.css";
-import { generateSchemaTree, generateSchemaList} from "../scripts/lib.js"
+import { generateSchemaTree, generateSchemaList, generateParameterSchemaTree} from "../scripts/lib.js"
 
 import ReactFlow, {
   addEdge,
@@ -104,6 +104,8 @@ const WorkflowStudio = () => {
         const workflowUuid = uuidv4();
         const stepUuid = uuidv4();
         const triggerUuid = uuidv4()
+
+        console.log(generateParameterSchemaTree(action.parameterSchema))
         
         const workflowStep = {
             uuid: stepUuid,
@@ -115,10 +117,11 @@ const WorkflowStudio = () => {
                 parameters: action.parameters,
                 method: action.method,
                 parent_interface_uuid: action.parent_interface_uuid,
+                parameterTree: generateParameterSchemaTree(action.parameterSchema),
                 request_body: action.requestBody,
                 request_body2: action.requestBody2,
-                schemaTree: generateSchemaTree('requestBody',action.requestBody2.schema)
-                ,schemaList: generateSchemaList(action.requestBody2.schema)
+                schemaTree: generateSchemaTree('requestBody',action.requestBody2.schema),
+                schemaList: generateSchemaList(action.requestBody2.schema)
             }
         }
 

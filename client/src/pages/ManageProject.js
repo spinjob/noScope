@@ -131,7 +131,7 @@ const ManageProject = () => {
                 <H1 >Manage Project</H1>
             </div>
             <Divider />
-            <H2 style={{padding:40}}>{project.name}</H2>
+            <H2 style={{paddingLeft:40, paddingTop: 40}}>{project.name}</H2>
             <div class="ManageProjectParent" >
                 <div class="ManageProjectChild1">
                 <Card elevation={3}>

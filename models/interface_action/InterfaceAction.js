@@ -7,6 +7,7 @@ var InterfaceActionSchema = new mongoose.Schema({
     path: String,
     method: String,
     parameters: Array,
+    parameterSchema: Object,
     requestBody: Object,
     requestBody2: Object,
     responses: Array

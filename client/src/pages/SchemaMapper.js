@@ -55,6 +55,7 @@ const SchemaMapper = () => {
 
     const interfaces = location.state.interfaces;
 
+    console.log(workflow)
     //Open AI Functions
 
     const fetchGeneratedCode = useCallback(() => {
@@ -238,15 +239,14 @@ const SchemaMapper = () => {
     const fetchMappings = useCallback(() => {
       axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/details")
       .then(response => {
-
-          console.log(response.data[0])
           setMappings(response.data[0].steps[0].adaptions)
           setWorkflow(response.data[0])
           setTriggerTree(response.data[0].trigger.webhook.schemaTree)
           setActionTree(response.data[0].steps[0].request.schemaTree)
           setTriggerSchema(response.data[0].trigger.webhook.schemaList)
           setActionSchema(response.data[0].steps[0].request.schemaList)
-          
+
+
           updateLiquidTemplate(response.data[0].steps[0].adaptions)
           response.data[0].trigger.function ? setGeneratedFunction(response.data[0].trigger.function) : setGeneratedFunction("")
           setShouldFetchMappings(false);
@@ -392,7 +392,7 @@ const SchemaMapper = () => {
             <div class="SchemaMapperParent">
               <TriggerSchemaMapper schemaTree={triggerTree} storeSchemaTree={storeSchemaTree} mappings={mappings} selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
               <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} selectTriggerNode={selectTriggerNode} selectActionNode={selectActionNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>
-              <ActionStepSchemaMapper schemaTree={actionTree} storeSchemaTree={storeSchemaTree} mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema}/>
+              <ActionStepSchemaMapper schemaTree={actionTree} storeSchemaTree={storeSchemaTree} mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema} />
             </div>
   </div>
 );

@@ -10,7 +10,7 @@ import Loader from '../Loader';
 import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
-function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, updateRequiredSchema, storeSchemaTree}) {
+function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, updateRequiredSchema, storeSchemaTree, parameterTrees}) {
 
     let { id, workflowId } = useParams();
     const location = useLocation();
@@ -23,6 +23,8 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
     const [actionParameters, setActionParameters] = useState([]);
     const [selected, setSelected] = useState(0)
     const requiredProperties = [];
+
+    console.log(workflow)
 
     const handleNodeExpand = useCallback((node) => {
         node.isExpanded = true
@@ -87,19 +89,21 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
     })
     
     const processActionPathParameters = useCallback(() => {
+        
         let firstStep = workflow.steps[0]
         let requiredParameters = [];
         if (!firstStep) {
             console.log("No first step")
 
         } else {
-            
+            //console.log("First step exists")
             if(firstStep.request.parameters) {
+                //console.log("First step has parameters")
                 const interfaceActionParameters = [];
                 firstStep.request.parameters.forEach((parameter) => {
-                    
+                   // console.log(parameter)
                     interfaceParameters.forEach((interfaceParameter) => {
-                    
+
                         if (parameter === interfaceParameter.parameter_name) {
                             if (!interfaceParameter.schemaReference){
                                 const parameterObject = {
@@ -123,6 +127,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                             } else {
                                 interfaceSchemas.forEach((interfaceSchema) => {
                                     if (interfaceParameter.schemaReference === interfaceSchema.name) {
+                                        console.log(interfaceParameter.schemaReference)
                                         const parameterObject = {
                                             id: interfaceParameter.uuid,
                                             label: lowercaseFirstLetter(interfaceParameter.name),
@@ -228,11 +233,8 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
     })
 
     const renderRequestBodyTree = useCallback(() => {
-    
-        if (actionRequestSchemas) {
-            
-        }
-        return !actionRequestSchemas ? (
+        console.log(schemaTree)
+        return !schemaTree ? (
             <div>
                 <H5>Request Body Schema</H5>
                 <Card>
@@ -261,18 +263,22 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
     })
 
     const renderParameterTree = useCallback((type) => {
-        var nodes = [];
+
+        var headerTree = workflow.steps[0].request.parameterTree.header
+        var pathTree = workflow.steps[0].request.parameterTree.path
+
+        var headerTreeArray = []
+        var pathTreeArray = []
+
+        headerTreeArray.push(headerTree)
+        pathTreeArray.push(pathTree)
+
+
         var capitalizedType = type.charAt(0).toUpperCase() + type.slice(1)
-        if (actionParameters) {
-            actionParameters.forEach(node => {
-                if (node.nodeData.parameter_type == type) {
-                    nodes.push(node)
-                }
-            })
-        }
+
         if (type == "header") {
 
-            return nodes.length == 0 ? (
+            return !headerTree ? (
                 <div>
                     <H5>{capitalizedType} Parameters</H5>
                     <Card> 
@@ -286,7 +292,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                 <div>
                     <H5>Header Parameters</H5>
                     <Tree
-                        contents={nodes}
+                        contents={headerTreeArray}
                         className={Popover2Classes.ELEVATION_0}
                         onNodeClick={handleActionNodeSelect}
                         onNodeCollapse={handleNodeCollapse}
@@ -297,7 +303,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                 
             )
         } else if (type == "path") {
-            return nodes.length == 0 ? (
+            return !pathTree ? (
                 <div>
                     <H5>{capitalizedType} Parameters</H5>
                     <Card> 
@@ -311,7 +317,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                 <div>
                     <H5>Path Parameters</H5>
                     <Tree
-                        contents={nodes}
+                        contents={pathTreeArray}
                         className={Popover2Classes.ELEVATION_0}
                         onNodeClick={handleActionNodeSelect}
                         onNodeCollapse={handleNodeCollapse}
@@ -342,9 +348,9 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
 
       useEffect(() => {
         if (actionParameters.length == 0) {
+           //console.log(actionParameters)
             processActionPathParameters()
         } else {
-           //console.log(actionRequestSchemas)
         }
       }, [actionParameters, processActionPathParameters])  
 

@@ -13,6 +13,9 @@ import MyProjects from "./pages/MyProjects"
 import ManageWorkflow from "./pages/ManageWorkflow"
 import SchemaMapper from "./pages/SchemaMapper"
 import MyInterfaces from "./pages/MyInterfaces"
+import logoCopy from "./assets/copy_logo.png"
+import logoIcon from "./assets/logo_web.png"
+import fullLogo from "./assets/full_logo@1x.png"
 
 
 function App() {
@@ -66,6 +69,9 @@ function App() {
     <div>
        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: 30}}>
         <Card elevation="3" style={{width: 400}}>
+          <div style={{display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'center', paddingBottom: 20}}>
+            <img src={fullLogo} alt="logo" style={{height: 85}}/>
+          </div>
         <Tabs id="Tabs" onChange={setCurrentTab} selectedTabId={currentTab}>
           <Tab id="login" title="Login" panel={<Login />} />
           <Tab id="register" title="Register" panel={<Register />} />

@@ -4,6 +4,9 @@ import { UserContext } from "../context/UserContext"
 import Loader from "./Loader"
 import { useNavigate } from "react-router-dom";
 import SideBar from "./SideBar";
+import logoCopy from "../assets/copy_logo.png"
+import logoIcon from "../assets/logo_web.png"
+import fullLogo from "../assets/full_logo@1x.png"
 
 const Navigation = ({toggleSideBar}) => {
 
@@ -111,7 +114,9 @@ const Navigation = ({toggleSideBar}) => {
         <Navbar fixedToTop>
             <NavbarGroup align={'left'}>
                 <Button icon={'menu'} onClick={toggleSideBar} minimal={true} paddingRight={3}/>
-                <NavbarHeading>NoScope</NavbarHeading>
+                <NavbarHeading>
+                    <img src={logoCopy} alt="logo" style={{height: 25, paddingLeft: 10, paddingRight: 10}}/>
+                </NavbarHeading>
                     <NavbarDivider />
                         <Button icon="home" text="Home" minimal={true} onClick={homeHandler} />
                         <Button icon="user" text="My Projects"  minimal={true} onClick={projectHandler} />

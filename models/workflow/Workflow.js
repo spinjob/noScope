@@ -35,6 +35,7 @@ var WorkflowStepRequestSchema = new mongoose.Schema({
     parameters: Array,
     method: String,
     parameters: Array,
+    parameterTree: Object,
     parent_interface_uuid: String,
     request_body: Object,
     request_body2: Object,
