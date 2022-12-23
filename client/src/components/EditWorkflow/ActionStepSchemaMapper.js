@@ -1,7 +1,7 @@
 import React , {Component,useCallback, useContext, useEffect, useState } from 'react'
 import '@blueprintjs/core/lib/css/blueprint.css';
 import { useParams, useLocation } from "react-router-dom";
-import { Tree, Classes as Popover2Classes, Icon, Card, ContextMenu, Tooltip2, H1, H2, H3, H4, H5, Divider, } from "@blueprintjs/core";
+import { Tree, TreeNodeInfo, Classes as Popover2Classes, Icon, Card, ContextMenu, Tooltip2, H1, H2, H3, H4, H5, Divider, TreeNode, } from "@blueprintjs/core";
 import { Select2 } from "@blueprintjs/select";
 import { IconNames } from "@blueprintjs/icons";
 import axios from "axios";
@@ -18,13 +18,12 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
     const [interfaces, setInterfaces] = useState(location.state.interfaces)
     const [interfaceSchemas, setInterfaceSchemas] = useState([])
     const [actionRequestSchemas, setActionRequestSchemas] = useState(schemaTree)
+    const [actionParameterSchemas, setActionParameterSchemas] = useState(parameterTrees)
     const [workflow, setWorkflow] = useState(location.state.workflow)
     const [interfaceParameters, setInterfaceParameters] = useState([]);
     const [actionParameters, setActionParameters] = useState([]);
-    const [selected, setSelected] = useState(0)
+    const [selectedActionPath, setSelectedActionPath] = useState([])
     const requiredProperties = [];
-
-    console.log(workflow)
 
     const handleNodeExpand = useCallback((node) => {
         node.isExpanded = true
@@ -42,33 +41,71 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
 
     })
 
-    const handleActionNodeSelect = useCallback((node) => {
-        if (node.icon && node.icon === "cube") {} 
-        else {
-            if (selected == 0) {
-                if (node.isSelected) {
-                    node.isSelected = false
-                    setSelected(0)
-                    selectActionNode(node, false)
-                } else {
-                    node.isSelected = true
-                    setSelected(1)
-                    selectActionNode(node, true)
-                }
-            } else {
-                if (node.isSelected) {
-                    node.isSelected = false
-                    setSelected(0)
-                    selectActionNode(node, false)
-                } else {
-                }
-    
-            }
-         }
-        setActionRequestSchemas(_.cloneDeep(actionRequestSchemas));
+    const handleNodeClick = useCallback((node, nodePath, e) => {
 
-    })
+        if (node.icon && node.icon === "cube") {
+        } else {
+            console.log("Clicked node: ")
+            console.log("node", node)
+            console.log("nodePath", nodePath)
+            
+            if(node.isSelected){
+                //CASE: Clicked node is already selected
+                    if(selectedActionPath.length > 0 && selectedActionPath !== nodePath){
+                        //CASE: Another node is selected
+                        node.isSelected = false
+                        selectActionNode(node, false)
+                        setSelectedActionPath([])
+                        setActionRequestSchemas(_.cloneDeep(schemaTree));
+
+                    } else if (selectedActionPath.length > 0 && selectedActionPath === nodePath) {
+                        //CASE: Clicked node is selected
+                        node.isSelected = false
+                        selectActionNode(node, false)
+                        setSelectedActionPath([])
+                        setActionRequestSchemas(_.cloneDeep(schemaTree));
+
+                    } else if(selectedActionPath.length === 0) {
+                        //CASE: No other node is selected
+                        node.isSelected = false
+                        selectActionNode(node, false)
+                        setSelectedActionPath([])
+                        setActionRequestSchemas(_.cloneDeep(schemaTree));
+
+                    }
+            } else if (node.isSelected === false | node.isSelected === undefined) {
+                //CASE: Node is not selected
+
+                    if(selectedActionPath.length > 0 && selectedActionPath !== nodePath){
+                        //CASE: Another node is selected
+                            node.isSelected = true
+                            selectActionNode(node, true)
+                            setSelectedActionPath(nodePath)
+                            Tree.nodeFromPath(selectedActionPath, schemaTree).isSelected = false
+                            setActionRequestSchemas(_.cloneDeep(schemaTree));
+                            setActionRequestSchemas(_.cloneDeep(schemaTree));
+
+                    } else if (selectedActionPath.length > 0 && selectedActionPath === nodePath) {
+                        //CASE: Clicked node is thought to be selected. This is a bug. Set the Tree node to selected
+                        node.isSelected = true
+                        selectActionNode(node, true)
+                        setSelectedActionPath(nodePath)
+                        setActionRequestSchemas(_.cloneDeep(schemaTree));
+                        
+                    } else if(selectedActionPath.length === 0) {
+                        //CASE: No other node is selected
+                        node.isSelected = true
+                        selectActionNode(node, true)
+                        setSelectedActionPath(nodePath)
+                        setActionRequestSchemas(_.cloneDeep(schemaTree));
+                    }
+                
+            }
+        }
     
+        console.log("selectedActionPath: ", selectedActionPath)
+        console.log("actionRequestSchemas: ", schemaTree)
+    })
 
     const processNodeStatus = useCallback((nodeLabel) => {
        var isDisabled = false
@@ -86,78 +123,6 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
         return isDisabled
        }
      
-    })
-    
-    const processActionPathParameters = useCallback(() => {
-        
-        let firstStep = workflow.steps[0]
-        let requiredParameters = [];
-        if (!firstStep) {
-            console.log("No first step")
-
-        } else {
-            //console.log("First step exists")
-            if(firstStep.request.parameters) {
-                //console.log("First step has parameters")
-                const interfaceActionParameters = [];
-                firstStep.request.parameters.forEach((parameter) => {
-                   // console.log(parameter)
-                    interfaceParameters.forEach((interfaceParameter) => {
-
-                        if (parameter === interfaceParameter.parameter_name) {
-                            if (!interfaceParameter.schemaReference){
-                                const parameterObject = {
-                                    id: interfaceParameter.uuid,
-                                    label: lowercaseFirstLetter(interfaceParameter.name),
-                                    icon: iconGenerator(interfaceParameter.type),
-                                    nodeData: {
-                                            type: interfaceParameter.type,
-                                            description: interfaceParameter.description,
-                                            uuid: interfaceParameter.uuid,
-                                            parentInterface: interfaceParameter.parent_interface_uuid,
-                                            parameter_type: interfaceParameter.parameter_type,
-                                            required: interfaceParameter.required,
-                                            fieldPath: interfaceParameter.parameter_type + "." + interfaceParameter.name,
-                                    }
-                                }
-                                if (interfaceParameter.required) {
-                                    requiredParameters.push(parameterObject)
-                                }
-                                interfaceActionParameters.push(parameterObject)
-                            } else {
-                                interfaceSchemas.forEach((interfaceSchema) => {
-                                    if (interfaceParameter.schemaReference === interfaceSchema.name) {
-                                        console.log(interfaceParameter.schemaReference)
-                                        const parameterObject = {
-                                            id: interfaceParameter.uuid,
-                                            label: lowercaseFirstLetter(interfaceParameter.name),
-                                            icon: iconGenerator(interfaceParameter.type),
-                                            nodeData: {
-                                                    type: interfaceSchema.type,
-                                                    description: interfaceParameter.description,
-                                                    uuid: interfaceParameter.uuid,
-                                                    parentInterface: interfaceParameter.parent_interface_uuid,
-                                                    parameter_type: interfaceParameter.parameter_type,
-                                                    required: interfaceParameter.required,
-                                                    fieldPath: interfaceParameter.parameter_type + "." + interfaceParameter.name,
-                                            }
-                                        }
-                                        if (interfaceParameter.required) {
-                                            requiredParameters.push(parameterObject)
-                                        }
-                                        interfaceActionParameters.push(parameterObject)
-                                    }
-                                })
-                                
-                            }
-                           
-                        } 
-                    })
-                })
-                setActionParameters(interfaceActionParameters)
-                updateRequiredSchema(requiredParameters)
-            }
-        }   
     })
 
     const iconGenerator = (type, required) => {
@@ -233,7 +198,6 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
     })
 
     const renderRequestBodyTree = useCallback(() => {
-        console.log(schemaTree)
         return !schemaTree ? (
             <div>
                 <H5>Request Body Schema</H5>
@@ -250,7 +214,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                 <Tree
                     contents={schemaTree}
                     className={Popover2Classes.ELEVATION_0}
-                    onNodeClick={handleActionNodeSelect}
+                    onNodeClick={handleNodeClick}
                     onNodeCollapse={handleNodeCollapse}
                     onNodeExpand={handleNodeExpand}
                     style={{ width: 600 }}
@@ -294,7 +258,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                     <Tree
                         contents={headerTreeArray}
                         className={Popover2Classes.ELEVATION_0}
-                        onNodeClick={handleActionNodeSelect}
+                        onNodeClick={handleNodeClick}
                         onNodeCollapse={handleNodeCollapse}
                         onNodeExpand={handleNodeExpand}
                         style={{ width: 600 }}
@@ -319,7 +283,7 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
                     <Tree
                         contents={pathTreeArray}
                         className={Popover2Classes.ELEVATION_0}
-                        onNodeClick={handleActionNodeSelect}
+                        onNodeClick={handleNodeClick}
                         onNodeCollapse={handleNodeCollapse}
                         onNodeExpand={handleNodeExpand}
                         style={{ width: 600 }}
@@ -347,13 +311,10 @@ function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, update
       }, [])  
 
       useEffect(() => {
-        if (actionParameters.length == 0) {
-           //console.log(actionParameters)
-            processActionPathParameters()
-        } else {
+        if (actionRequestSchemas.length == 0 && schemaTree) {
+            setActionRequestSchemas(schemaTree)
         }
-      }, [actionParameters, processActionPathParameters])  
-
+      }, [actionRequestSchemas, setActionRequestSchemas])  
 
 return !workflow ? (
         <Loader />
@@ -377,15 +338,6 @@ return !workflow ? (
             <div style={{paddingBottom: 20, paddingTop: 20}}>
                 {renderRequestBodyTree()}
             </div>
-            {/* <H5>Request Body Schema</H5>
-            <Tree
-                contents={actionRequestSchemas}
-                className={Popover2Classes.ELEVATION_0}
-                onNodeClick={handleActionNodeSelect}
-                onNodeCollapse={handleNodeCollapse}
-                onNodeExpand={handleNodeExpand}
-                style={{ width: 600 }}
-            /> */}
         </div>
 
  ) 

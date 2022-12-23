@@ -141,6 +141,7 @@
 .SchemaMappingView {
     display: block;
     flex-direction: row;
+    width: '20%'
 }
 
 .SchemaMappingOverlayContainer {

@@ -72,12 +72,13 @@ const SchemaMappingView = ({triggerField, actionField, onClick, isActive, mappin
             <Card style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <Card elevation={3} style={{display: 'flex', alignItems: 'center', margin: 10}}> 
                         <div>
-                        <Icon icon={iconGenerator(triggerField.nodeData.type)}/> <H4>{triggerField.label}</H4>
-                        <p>{triggerField.nodeData.description}</p>
+                        <Icon icon={iconGenerator(triggerField.nodeData.type)}/>
+                        <H4>{triggerField.label}</H4>
+                        {/* <p>{triggerField.nodeData.description}</p> */}
                         <Divider/>
-                            <br></br>
-                            <H5>{triggerField.nodeData.fieldPath}</H5>
-                            </div>
+                        <br></br>
+                        <p>{triggerField.nodeData.fieldPath}</p>
+                        </div>
                 </Card>
                 <div class="SchemaMappingViewButton">
                     <Button disabled={isActive} minimal={true} outlined={true} onClick={onClick} text="Map"/>
@@ -86,10 +87,10 @@ const SchemaMappingView = ({triggerField, actionField, onClick, isActive, mappin
                     <div>
                         <Icon icon={iconGenerator(actionField.nodeData.type)}/> 
                         <H4>{actionField.label}</H4>
-                        <p>{actionField.nodeData.description}</p>
+                        {/* <p>{actionField.nodeData.description}</p> */}
                         <Divider/>
                         <br></br>
-                        <H5>{actionField.nodeData.fieldPath}</H5>
+                        <p>{actionField.nodeData.fieldPath}</p>
                     </div>
                 </Card>
             </Card>

@@ -251,7 +251,7 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
                     <div class="SchemaMapperParent">
                         <div style={{display: 'block', margin: 10}}>
                             <H4>Input Property</H4>
-                            <Card elevation={3} style={{display: 'block', alignItems: 'center'}}> 
+                            <Card elevation={3} style={{display: 'block', alignItems: 'center', width: 300}}> 
                                 <div>
                                     <H5>{field1.label}</H5>
                                     <p>{field1.nodeData.type}</p>
@@ -277,7 +277,7 @@ const FieldMappingOverlay = ({project, field1, field2, triggerSchema, workflowId
                         <Icon icon="arrow-right" iconSize={50}/>
                         <div style={{display: 'block', margin: 10}}>
                             <H4>Output Property</H4>
-                            <Card elevation={3} style={{display: 'block', alignItems: 'center', margin: 10}}> 
+                            <Card elevation={3} style={{display: 'block', alignItems: 'center', margin: 10, width:300}}> 
                                 <div>
                                     <H5>{field2.label}</H5>
                                     <p>{field1.nodeData.type}</p>

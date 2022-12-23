@@ -55,7 +55,6 @@ const SchemaMapper = () => {
 
     const interfaces = location.state.interfaces;
 
-    console.log(workflow)
     //Open AI Functions
 
     const fetchGeneratedCode = useCallback(() => {
@@ -185,9 +184,8 @@ const SchemaMapper = () => {
     }
 
    const selectActionNode = (node, isSelected) => {
-
-        if (isSelected) {
-          console.log("Selected action node: ", node);
+        
+        if (isSelected) {     
           setActionNode(node);
           setMappingDisabled(false);
 
@@ -354,42 +352,44 @@ const SchemaMapper = () => {
 
   return (
 
-    <div style={{justifyContent: 'center',alignItems: 'center'}}>
+    <div>
             <Navigation />
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right',paddingRight: 190}}>
               <Button onClick={onDrawerClose}> View Liquid Template </Button>
             </div>
-            <SchemaMapperHeader  saveSchemaTrees={saveSchemaTrees} mappings= {mappings} requiredActionFields={requiredActionFields}/>
-            <Drawer 
-              title="Generations from Mappings"
-              onClose={onDrawerClose}
-              isOpen={drawerViewOpen}>
-                <div className={Classes.DRAWER_BODY}>
-                  <div className={Classes.DIALOG_BODY}>
-                    <h3> Liquid Template</h3>
-                      <JSONPretty id="json-pretty" data={liquidTemplate}></JSONPretty>
-                  </div>
-                  <div className={Classes.DIALOG_BODY}>
-                    <h3> Javascript Function</h3>
-                    {renderCodeBlock()}
-                  </div>
-                </div>
-                  <div className={Classes.DRAWER_FOOTER}>
-                    <Button onClick={onLiquidTemplateSave}>Save Liquid Template</Button>
-                    <Button icon="code" onClick={fetchGeneratedCode}>Generate Javascript</Button>
-                  </div>
-            </Drawer>
-            <Overlay
-              isOpen={mappingViewOpen} 
-              onClose={toggleOverlay} 
-              canEscapeKeyClose={true} 
-              canOutsideClickClose={true}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
-                  <FieldMappingOverlay project={project} toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
-                </div>  
-            </Overlay>  
-            
-            <div class="SchemaMapperParent">
+            <div style = {{display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+                <SchemaMapperHeader  saveSchemaTrees={saveSchemaTrees} mappings= {mappings} requiredActionFields={requiredActionFields}/>
+                <Drawer 
+                  title="Generations from Mappings"
+                  onClose={onDrawerClose}
+                  isOpen={drawerViewOpen}>
+                    <div className={Classes.DRAWER_BODY}>
+                      <div className={Classes.DIALOG_BODY}>
+                        <h3> Liquid Template</h3>
+                          <JSONPretty id="json-pretty" data={liquidTemplate}></JSONPretty>
+                      </div>
+                      <div className={Classes.DIALOG_BODY}>
+                        <h3> Javascript Function</h3>
+                        {renderCodeBlock()}
+                      </div>
+                    </div>
+                      <div className={Classes.DRAWER_FOOTER}>
+                        <Button onClick={onLiquidTemplateSave}>Save Liquid Template</Button>
+                        <Button icon="code" onClick={fetchGeneratedCode}>Generate Javascript</Button>
+                      </div>
+                </Drawer>
+                <Overlay
+                  isOpen={mappingViewOpen} 
+                  onClose={toggleOverlay} 
+                  canEscapeKeyClose={true} 
+                  canOutsideClickClose={true}>
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
+                      <FieldMappingOverlay project={project} toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
+                    </div>  
+                </Overlay> 
+            </div>
+             
+            <div style = {{display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100vw'}}>
               <TriggerSchemaMapper schemaTree={triggerTree} storeSchemaTree={storeSchemaTree} mappings={mappings} selectTriggerNode={selectTriggerNode} storeTriggerSchema={storeTriggerSchema} triggerSchema={triggerSchema}/>
               <SchemaMappingView mappings= {mappings} isActive={mappingDisabled} triggerField={triggerNode} selectTriggerNode={selectTriggerNode} selectActionNode={selectActionNode} actionField={actionNode} onClick={toggleOverlay} interfaceSchema={interfaceSchema} setShouldFetchMappings={toggleShouldFetchMappings}/>
               <ActionStepSchemaMapper schemaTree={actionTree} storeSchemaTree={storeSchemaTree} mappings={mappings} selectActionNode={selectActionNode} actionSchema={actionSchema} updateRequiredSchema={updateRequiredSchema} />

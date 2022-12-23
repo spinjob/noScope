@@ -21,7 +21,7 @@ const generateSchemaTree = function (type, schema){
                     childNodes: childPropertyNodes,
                     isExpanded: true,
                     nodeData:{
-                        fieldPath: schemaKeys[index],
+                        fieldPath: "." + schemaKeys[index],
                         type: schemaValues[index].type,
                         description: schemaValues[index].description ? schemaValues[index].description : null                 
                     }
@@ -57,7 +57,7 @@ const generateSchemaTree = function (type, schema){
                     label: schemaKeys[index],
                     icon: iconGenerator(schemaValues[index].type),
                     nodeData:{
-                        fieldPath: schemaKeys[index],
+                        fieldPath: "." + schemaKeys[index],
                         type: schemaValues[index].type,
                         enum: schemaValues[index].enum ? schemaValues[index].enum : null,
                         description: schemaValues[index].description ? schemaValues[index].description : null,
@@ -88,23 +88,24 @@ const generateSchemaTree = function (type, schema){
 }
 
 const iconGenerator = function (type) {
-        switch (type) {
+
+        switch (type) { 
             case "string":
                 return "citation"
             case "integer":
-                return "numerical"
-            case "number":
                 return "numerical" 
+            case "number":
+                return "numerical"
             case "float":
-                return "floating-point"                   
+                return "floating-point"              
             case "boolean":
-                return "segmented-control"
+                return "segmented-control"      
             case "array":
                 return "array"
             case "object":
-                return "cube"
+                return "cube" 
             default: 
-                return "symbol-circle"
+                return "symbol-circle" 
     }
 }
 
@@ -212,6 +213,7 @@ const generateSchemaList = function (schema){
     const schemaList = [];
     const schemaKeys = Object.keys(schema);
     const schemaValues = Object.values(schema);
+
     schemaKeys.forEach((key, index) => {
         if(schemaValues[index].properties){
             var propertyKeys = Object.keys(schemaValues[index].properties);
