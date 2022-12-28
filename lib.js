@@ -1120,9 +1120,6 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
         }
     } else if (workflow.status === "active") {
         //Continue
-
-        console.log(workflow)
-
         const header = JSON.parse(workflow.trigger.translation).header ? JSON.parse(workflow.trigger.translation).header : {}
         const stringifiedHeaderTemplate = JSON.stringify(header)
         const path = JSON.parse(workflow.trigger.translation).path ? JSON.parse(workflow.trigger.translation).path : {}
@@ -1135,21 +1132,21 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
         const nextStepSandboxUrl = actionInterface.sandbox_server + nextStep.request.path
         const nextStepProductionUrl = actionInterface.production_server + nextStep.request.path
 
-        console.log(header)
-        console.log(path)
-        console.log(requestBodyTemplate)
+
         if (nextStep.type === 'httpRequest') {
             if (environment == "sandbox") {
                 //Apply Trigger's Liquid Template to Input JSON
                 //TO DO: Create Workflow in MongoDB with a 'running' status
                 //TO DO: Update Workflow in MongoDB with a 'completed' or 'failed' status 
+
+                console.log("Stringified Request Body Template:")
                 console.log(stringifiedTemplate)
                 engine.parseAndRender(stringifiedTemplate, inputJSON).then((result) => {
                     WorkflowLog.create({
                         uuid: crypto.randomUUID(),
                         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        message: result,
-                        level: "info",
+                        message:  "Request Body: " + result,
+                        level: "debug",
                         workflow_uuid: workflow.uuid,
                         traceUUID: traceUUID
                     },
@@ -1160,141 +1157,170 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
                             }
                     })
                         const requestBody = JSON.parse(result)
-                    
-                    //    if Header Translation exists, apply it to the input JSON
+                        console.log("Translated Request Body:")
+                        console.log(requestBody)
+                        console.log("HEADER TEMPLATE: ")
+                        console.log(header)
+                        console.log("PATH TEMPLATE: ")
+                        console.log(path)
 
-                        // if (header.length > 0 && path == {}) {
-                        //     engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
-                        //         const translatedHeader = JSON.parse(result)
-                        //         if (nextStep.request.method === 'post') {
-                        //             axios.post(nextStepUrl, requestBody,{headers: translatedHeader}).then((response) => {
-                        //                 console.log(response.data)
-                        //                 WorkflowLog.create({
-                        //                     uuid: crypto.randomUUID(),
-                        //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        //                     message: response.data,
-                        //                     level: "info",
-                        //                     workflow_uuid: workflow.uuid
-                        //                 },
-                        //                     function(err,workflowLog){
-                        //                         if (err) {
-                        //                             console.log(err);
-                        //                             return;
-                        //                         }
-                        //                     }
-                        //                 )
-                        //             }).catch((error) => {
-                        //                 console.log(error)
-                        //                 WorkflowLog.create({
-                        //                     uuid: crypto.randomUUID(),
-                        //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        //                     message: error,
-                        //                     level: "error",
-                        //                     workflow_uuid: workflow.uuid,
-                        //                     traceUUID: traceUUID
-                        //                 },
-                        //                     function(err,workflowLog){
-                        //                         if (err) {
-                        //                             console.log(err);
-                        //                             return;
-                        //                         }
-                        //                     })
-                        //             })
-                            
-                        //         } 
-                            
-                        //     }).catch((err) => {
-                        //         console.log(err);
-                        //     })
-                            
-                        // } else if (header.length > 0 && path.length > 0) {
-                        //     engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
-                        //         const translatedHeader = JSON.parse(result)
-                        //         engine.parseAndRender(stringifiedPathTemplate, inputJSON).then((result) => {
-                        //             if (nextStep.request.method === 'post') {
-                        //                 axios.post(nextStepUrl + result, requestBody,{headers: translatedHeader}).then((response) => {
-                        //                     console.log(response.data)
-                        //                     WorkflowLog.create({
-                        //                         uuid: crypto.randomUUID(),
-                        //                         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        //                         message: response.data,
-                        //                         level: "info",
-                        //                         workflow_uuid: workflow.uuid
-                        //                     },
-                        //                         function(err,workflowLog){
-                        //                             if (err) {
-                        //                                 console.log(err);
-                        //                                 return;
-                        //                             }
-                        //                         })
-                        //                 }).catch((error) => {
-                        //                     console.log(error)
-                        //                     WorkflowLog.create({
-                        //                         uuid: crypto.randomUUID(),
-                        //                         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        //                         message: error,
-                        //                         level: "error",
-                        //                         workflow_uuid: workflow.uuid,
-                        //                         traceUUID: traceUUID
-                        //                     },
-                        //                         function(err,workflowLog){
-                        //                             if (err) {
-                        //                                 console.log(err);
-                        //                                 return;
-                        //                             }
-                        //                         })
-                        //                 })
-                        //             }
-                        //         })
-                        //     }).catch((err) => {
-                        //         console.log(err);
-                        //     })
-
-                        // } else if (path.length > 0 && header == {}) {
-                        //     engine.parseAndRender(stringifiedPathTemplate, inputJSON).then((result) => {
-    
-                        //         if (nextStep.request.method === 'post') {
+                    // if Header Translation exists, apply it to the input JSON
+                        
+                        if (Object.keys(header).length > 0 && Object.keys(path).length == 0) {
+                            console.log("Header ONLY Translation")
+                            engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
+                                console.log("Header Translation")
+                                const translatedHeader = JSON.parse(result)
                                 
-                        //             axios.post(nextStepUrl + result, requestBody).then((response) => {
-                        //                 console.log(response.data)
-                        //                 WorkflowLog.create({
-                        //                     uuid: crypto.randomUUID(),
-                        //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        //                     message: response.data,
-                        //                     level: "info",
-                        //                     workflow_uuid: workflow.uuid
-                        //                 },
-                        //                     function(err,workflowLog){
-                        //                         if (err) {
-                        //                             console.log(err);
-                        //                             return;
-                        //                         }
-                        //                     })
-                        //             }).catch((error) => {
-                        //                 console.log(error)
-                        //                 WorkflowLog.create({
-                        //                     uuid: crypto.randomUUID(),
-                        //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        //                     message: error,
-                        //                     level: "error",
-                        //                     workflow_uuid: workflow.uuid,
-                        //                     traceUUID: traceUUID
-                        //                 },
-                        //                     function(err,workflowLog){
-                        //                         if (err) {
-                        //                             console.log(err);
-                        //                             return;
-                        //                         }
-                        //                     })
-                        //             })
-                            
-                        //         } 
-                            
-                        //     }).catch((err) => {
-                        //         console.log(err);
-                        //     })
+                                WorkflowLog.create({
+                                    uuid: crypto.randomUUID(),
+                                    created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                                    message: "Header Translation: " + result,
+                                    level: "debug",
+                                    workflow_uuid: workflow.uuid,
+                                    traceUUID: traceUUID
+                                },
+                                    function(err,workflowLog){
+                                        if (err) {
+                                            console.log(err);
+                                            return;
+                                        }
+                                })
 
-                        // }
+                                if (nextStep.request.method === 'post') {
+                                    //For testing purposes.  Will need solution for authentication.
+                                    const authToken = "Bearer " + "B0tdSnWi24drSpEwI1-8SV2ufO5fFGiyMSX7GfPzTBs.csegtsjNPPoKA7U6BAeWkDtdwiJ7AZ0p02WcLWgl8mo"
+                                    translatedHeader["Authorization"] = authToken
+
+                                    console.log(translatedHeader)
+
+                                    axios.post(nextStepSandboxUrl, requestBody,{headers: translatedHeader}).then((response) => {
+                                        console.log(response.data)
+                                        WorkflowLog.create({
+                                            uuid: crypto.randomUUID(),
+                                            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                                            message: response.data,
+                                            level: "info",
+                                            workflow_uuid: workflow.uuid
+                                        },
+                                            function(err,workflowLog){
+                                                if (err) {
+                                                    console.log(err);
+                                                    return;
+                                                }
+                                            }
+                                        )
+                                    }).catch((error) => {
+                                        console.log(error)
+                                        WorkflowLog.create({
+                                            uuid: crypto.randomUUID(),
+                                            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                                            message: error,
+                                            level: "error",
+                                            workflow_uuid: workflow.uuid,
+                                            traceUUID: traceUUID
+                                        },
+                                            function(err,workflowLog){
+                                                if (err) {
+                                                    console.log(err);
+                                                    return;
+                                                }
+                                            })
+                                    })
+                            
+                                } 
+                            
+                            }).catch((err) => {
+                                console.log(err);
+                            })
+                            
+                        } else if (Object.keys(header).length > 0 && Object.keys(path).length > 0) {
+                            // engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
+                            //     const translatedHeader = JSON.parse(result)
+                            //     engine.parseAndRender(stringifiedPathTemplate, inputJSON).then((result) => {
+                            //         if (nextStep.request.method === 'post') {
+                            //             axios.post(nextStepUrl + result, requestBody,{headers: translatedHeader}).then((response) => {
+                            //                 console.log(response.data)
+                            //                 WorkflowLog.create({
+                            //                     uuid: crypto.randomUUID(),
+                            //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                            //                     message: response.data,
+                            //                     level: "info",
+                            //                     workflow_uuid: workflow.uuid
+                            //                 },
+                            //                     function(err,workflowLog){
+                            //                         if (err) {
+                            //                             console.log(err);
+                            //                             return;
+                            //                         }
+                            //                     })
+                            //             }).catch((error) => {
+                            //                 console.log(error)
+                            //                 WorkflowLog.create({
+                            //                     uuid: crypto.randomUUID(),
+                            //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                            //                     message: error,
+                            //                     level: "error",
+                            //                     workflow_uuid: workflow.uuid,
+                            //                     traceUUID: traceUUID
+                            //                 },
+                            //                     function(err,workflowLog){
+                            //                         if (err) {
+                            //                             console.log(err);
+                            //                             return;
+                            //                         }
+                            //                     })
+                            //             })
+                            //         }
+                            //     })
+                            // }).catch((err) => {
+                            //     console.log(err);
+                            // })
+
+                        } else if (Object.keys(header).length == 0 && Object.keys(path).length > 0) {
+                            // engine.parseAndRender(stringifiedPathTemplate, inputJSON).then((result) => {
+                            //     if (nextStep.request.method === 'post') {
+                                
+                            //         axios.post(nextStepUrl + result, requestBody).then((response) => {
+                            //             console.log(response.data)
+                            //             WorkflowLog.create({
+                            //                 uuid: crypto.randomUUID(),
+                            //                 created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                            //                 message: response.data,
+                            //                 level: "info",
+                            //                 workflow_uuid: workflow.uuid
+                            //             },
+                            //                 function(err,workflowLog){
+                            //                     if (err) {
+                            //                         console.log(err);
+                            //                         return;
+                            //                     }
+                            //                 })
+                            //         }).catch((error) => {
+                            //             console.log(error)
+                            //             WorkflowLog.create({
+                            //                 uuid: crypto.randomUUID(),
+                            //                 created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                            //                 message: error,
+                            //                 level: "error",
+                            //                 workflow_uuid: workflow.uuid,
+                            //                 traceUUID: traceUUID
+                            //             },
+                            //                 function(err,workflowLog){
+                            //                     if (err) {
+                            //                         console.log(err);
+                            //                         return;
+                            //                     }
+                            //                 })
+                            //         })
+                            
+                            //     } 
+                            
+                            // }).catch((err) => {
+                            //     console.log(err);
+                            // })
+
+                        }
                 })
 
             }

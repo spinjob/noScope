@@ -213,7 +213,7 @@ const generateSchemaList = function (schema){
     const schemaList = [];
     const schemaKeys = Object.keys(schema);
     const schemaValues = Object.values(schema);
-
+    
     schemaKeys.forEach((key, index) => {
         if(schemaValues[index].properties){
             var propertyKeys = Object.keys(schemaValues[index].properties);

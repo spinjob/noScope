@@ -149,7 +149,7 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
             var formattedEquation = ""
             ///Need to add a check to add an IF statement to the Liquid Template if the trigger field is optional (i.e. if the field may not always be provided) to remove the template field if null.
             if (field1.nodeData.fieldPath.length > 0) {
-                if(isEditing){
+                if(isEditing == false | isEditing == undefined){
                     if (field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
                         inputFormula = "{{"+ equation + " | plus: 0}}"
                         outputFormula = "{" + field2.nodeData.fieldPath + "}"
@@ -234,7 +234,12 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
         }
 
         const handleFieldAddition = (config) => {
-            setEquation(equation + " " + config.fieldPath)
+            var configValue = config.target.innerText.split(": ")[1]
+            if(equation.length > 0){
+                setEquation(equation + " " + configValue.trim())
+            } else{
+                setEquation(configValue.trim())
+            }
         }
 
         const handleEnumerationAddition = (value) => {
