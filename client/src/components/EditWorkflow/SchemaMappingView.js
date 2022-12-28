@@ -7,14 +7,16 @@ import Loader from "../Loader";
 
 import "reactflow/dist/style.css";
 
-const SchemaMappingView = ({triggerField, actionField, onClick, isActive, mappings}) => {
+const SchemaMappingView = ({selectTriggerNode, selectActionNode, triggerField, actionField, onClick, isActive, mappings}) => {
 
     let {id, workflowId} = useParams();
 
     const onEditClick = (mapping) => {
-
+        console.log(mapping)
         triggerField = mapping.inputSchema
         actionField = mapping.outputSchema
+        selectActionNode(mapping.outputSchema, true)
+        selectTriggerNode(mapping.inputSchema, true)
         onClick(mapping)
     }
 

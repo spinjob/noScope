@@ -53,6 +53,20 @@ router.put('/:workflowId/map', function(req,res) {
     });
 });
 
+router.delete('/:workflowId/map/:mapId', function(req,res) {
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, { $pull: {'steps.0.adaptions': {uuid: req.params.mapId}}}, function (err,workflow){
+        if (err) return res.status(500).send(err);
+        res.status(200).send(workflow);
+    });
+});
+
+router.put('/:workflowId/map/:mapId', function(req,res) {
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId, 'steps.0.adaptions.uuid': req.params.mapId}, {'steps.0.adaptions.$.formula': req.body}, function (err,workflow){
+        if (err) return res.status(500).send(err);
+        res.status(200).send(workflow);
+    });
+});
+
 router.put('/:workflowId/steps/0', function(req,res) {
     Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {'trigger.translation': req.body.fullFormula, 'trigger.function': req.body.function, 'trigger.schema_tree': req.body.schemaTree}, function (err,workflow){
         if (err) return res.status(500).send(err);

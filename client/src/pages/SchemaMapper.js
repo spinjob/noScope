@@ -52,6 +52,9 @@ const SchemaMapper = () => {
     const [workflow, setWorkflow] = useState({});
     const location = useLocation();
     const [codeGenerationLoading, setCodeGenerationLoading] = useState(false);
+    const [selectedMapping, setSelectedMapping] = useState(null);
+    const [isEditingMapping, setIsEditingMapping] = useState(false);
+    const [equationForMapping, setEquationForMapping] = useState(triggerNode.nodeData.fieldPath);
 
     const interfaces = location.state.interfaces;
 
@@ -196,14 +199,28 @@ const SchemaMapper = () => {
    }
 
    const toggleOverlay = (mapping) => {
-      //If mapping is provided, then we are editing an existing mapping
-        if (mappingViewOpen)
-        {
-          setMappingViewOpen(false);
-        } else {
-          setMappingViewOpen(true);
-        }
-        
+
+      if (mappingViewOpen)
+      {
+        setMappingViewOpen(false);
+        setSelectedMapping(null);
+        setEquationForMapping("");
+        setIsEditingMapping(false);
+      } else if(mapping.formula != null) {
+        console.log("EDITING MAPPING")
+        console.log(mapping)
+        setSelectedMapping(mapping);
+        setIsEditingMapping(true);
+        setEquationForMapping(mapping.formula.inputFormula);
+        setMappingViewOpen(true);
+      } else if (mapping.formula == null | mapping.formula == undefined) {
+        console.log("NEW MAPPING")
+        setMappingViewOpen(true);
+        setSelectedMapping(null);
+        setEquationForMapping(triggerNode.nodeData.fieldPath);
+        setIsEditingMapping(false);
+      }
+
    }
 
    const updateLiquidTemplate = (adaptions) => {
@@ -384,7 +401,7 @@ const SchemaMapper = () => {
                   canEscapeKeyClose={true} 
                   canOutsideClickClose={true}>
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', width: '100vw', padding: 30}}>
-                      <FieldMappingOverlay project={project} toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id}/> 
+                      <FieldMappingOverlay startingEquation={equationForMapping} editing={isEditingMapping} project={project} toggleOverlay ={toggleOverlay} setShouldFetchMappings={toggleShouldFetchMappings} field1={triggerNode} field2={actionNode} triggerSchema={triggerSchema} workflowId={workflowId} projectId={id} mapping={selectedMapping}/> 
                     </div>  
                 </Overlay> 
             </div>
