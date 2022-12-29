@@ -71,7 +71,7 @@ export default function MyProjectsTable() {
       </Table2> */}
        <div style={{paddingTop:20, width: '100%'}}>
         {projects.map((project, index) => (
-            <Card>
+            <Card elevation={2}>
                 <div style={{display:"flex"}}>
                     <div style={{display:"block"}}>
                         <H3>
@@ -79,7 +79,7 @@ export default function MyProjectsTable() {
                          </H3> 
                     </div>
                     <div style={{display:"block", marginLeft:"auto"}}>
-                         <Button minimal={true} outlined={true} onClick={() => navigate("/projects/" + project[2])} >
+                         <Button intent={'primary'} minimal={true} outlined={true} onClick={() => navigate("/projects/" + project[2])} >
                                     View Details
                           </Button>
                     </div>

@@ -128,7 +128,7 @@ const ManageProject = () => {
         <div>
             <Navigation />
             <div className="container" style={{padding:40}}>
-                <H1 >Manage Project</H1>
+                <H2 >Manage Project</H2>
             </div>
             <Divider />
             <H2 style={{paddingLeft:40, paddingTop: 40}}>{project.name}</H2>
@@ -154,7 +154,7 @@ const ManageProject = () => {
                 <div class="ManageProjectChild2">
                 <Card elevation={3}>
                     <H3>Workflows</H3>
-                        <Button text="New Workflow" onClick={() => navigate("/projects/"+project.uuid+"/workflows/new")}> </Button>
+                        <Button intent={'primary'} text="New Workflow" onClick={() => navigate("/projects/"+project.uuid+"/workflows/new")}> </Button>
                         <ProjectWorkflows projectId={id} />
                   </Card>
                 </div>

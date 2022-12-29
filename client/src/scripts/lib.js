@@ -33,7 +33,7 @@ const generateSchemaTree = function (type, schema){
                     
                     var propertyKeys = Object.keys(schemaValues[index].items.properties);
                     var propertyValues = Object.values(schemaValues[index].items.properties);
-                    var arrayFieldPath = schemaKeys[index] + '[]';
+                    var arrayFieldPath = schemaKeys[index] + "[0]";
 
                     var childPropertyNodes = processChildNodes(propertyKeys,propertyValues, arrayFieldPath, "array");
                     const parentObject = {
@@ -115,6 +115,14 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
 
     keys.forEach((key, index) => {
         const propertyNodeId = uuidv4();
+        var arrayItem = false
+        
+        if(parentType == "array"){
+            arrayItem = true
+        } else {
+            arrayItem = false
+        }
+
         if (!values[index].properties && !values[index].items){
             const childNode = {
                 id: propertyNodeId,
@@ -126,6 +134,7 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
                     required: values[index].required ? values[index].required : false,
                     description: values[index].description ? values[index].description : '',
                     enum: values[index].enum ? values[index].enum : null,
+                    arrayItemSchema: arrayItem
                 }
             }
             childNodes.push(childNode);
@@ -146,6 +155,7 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
                     required: values[index].required ? values[index].required : false,
                     description: values[index].description ? values[index].description : '',
                     enum: values[index].enum ? values[index].enum : null,
+                    arrayItemSchema: arrayItem
                 }
             }
             childNodes.push(childNode);
@@ -153,7 +163,7 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
             if (values[index].items.properties){
                 var propertyKeys = Object.keys(values[index].items.properties);
                 var propertyValues = Object.values(values[index].items.properties);
-                var arrayFieldPath = parentPath + '.' + key + '[]';
+                var arrayFieldPath = parentPath + '.' + key + '[0]';
                 var childPropertyNodes = processChildNodes(propertyKeys,propertyValues, arrayFieldPath, "array");
                 const childNode = {
                     id: propertyNodeId,
@@ -167,6 +177,8 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
                         required: values[index].required ? values[index].required : false,
                         description: values[index].description ? values[index].description : '',
                         enum: values[index].enum ? values[index].enum : null,
+                        arrayItemSchema: arrayItem
+
                     }
                 }
                 childNodes.push(childNode);
@@ -179,10 +191,11 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
                     icon: iconGenerator(values[index].items.type),
                     nodeData: {
                         type: values[index].items.type,
-                        fieldPath: parentPath + '.' + key + "[]." + inlineLabel ,
+                        fieldPath: parentPath + '.' + key + "." + inlineLabel ,
                         description: values[index].items.description ? values[index].items.description : '',
                         required: values[index].items.required ? values[index].items.required : false,
-                        enum: values[index].items.enum ? values[index].items.enum : null
+                        enum: values[index].items.enum ? values[index].items.enum : null,
+                        arrayItemSchema: arrayItem
                     }
                 }
                 const childrenNodes = [];
@@ -195,10 +208,11 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
                     childNodes: childrenNodes,
                     nodeData: {
                         type: values[index].type,
-                        fieldPath: parentPath + '.' + key + '[]',
+                        fieldPath: parentPath + '.' + key + '[0]',
                         required: values[index].required ? values[index].required : false,
                         description: values[index].description ? values[index].description : '',
                         enum: values[index].enum ? values[index].enum : null,
+                        arrayItemSchema: arrayItem
                     }
                 }
                 childNodes.push(childNode);

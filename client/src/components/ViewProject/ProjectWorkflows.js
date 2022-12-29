@@ -53,7 +53,7 @@ const Workflows = ({projectWorkflows}) => (
                 </div>
                 <div class="ProjectWorkflowsChild2">
                      <H3>{workflow.name}</H3>
-                     <Button text="Details" onClick={() => navigate("/projects/" + id + "/workflows/" + workflow.uuid)}> </Button>
+                     <Button intent={'primary'} outlined={true} text="Details" onClick={() => navigate("/projects/" + id + "/workflows/" + workflow.uuid)}> </Button>
                 </div>
             </div>
         </Card>

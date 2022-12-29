@@ -80,7 +80,7 @@ const MyProjects = () => {
             <Navigation />
             <H1>MY PROJECTS</H1>
             <div style={{alignItems: 'left', display: 'block', paddingTop: 20}}>
-            <Button minimal={true} outlined={true} text="NEW PROJECT" onClick={() => navigate("/projects/new")}> </Button>
+            <Button intent={'primary'}  text="NEW PROJECT" onClick={() => navigate("/projects/new")}> </Button>
             </div>
             <MyProjectsTable />
        </div>     

@@ -17,7 +17,6 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
     const [isLoading, setIsLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(editing);
 
-
         const handleRadioChange = (e) => {
                 setSelectedValue(e.target.value)
                 if(e.target.value === "three"){
@@ -25,16 +24,14 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
             }
         }
         const constructForLoopLiquidTemplate = (field1, field2) => {
-           if (field1.nodeData.type == "array" && field2.nodeData.type == "array"){
-                    setEquation(`{%- for ${field1.nodeData.items[0].label} in ${field1.nodeData.fieldPath} %}
-                        {{${field2.nodeData.items[0].label}}}               
-                        {% endfor %}`)
-         } else if (field1.nodeData.type == "array" && field2.nodeData.type != "array"){
-                setEquation(`{%- for ${field1.nodeData.items[0].label} in ${field1.nodeData.fieldPath} %}
-                {{${field2.nodeData.fieldPath}}}}                
-                {% endfor %}`)
-            }
+            var delimitedPath = field1.nodeData.fieldPath.split(".")
+            var lastIndex = delimitedPath.splice(-1)
+            var parentArray = delimitedPath.join(".")
+
+            console.log(parentArray)
+            setEquation(field1.nodeData.fieldPath)
         }
+
         const displayAdaptionStudio = () => {
             if (selectedValue === "one") {
                 return "none"
@@ -69,6 +66,27 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
                     return <MenuItem2 text={key +" : "+configurationValues[index]} icon="cog" onClick={handleFieldAddition}/>
                 })
 
+            }
+        }
+
+        const renderOutputPreview = () => {
+
+            var delimitedPath = field1.nodeData.fieldPath.split(".")
+            var lastIndex = delimitedPath.splice(-1)
+            var parentArray = delimitedPath.join(".")
+
+            if (field2.nodeData.arrayItemSchema) {
+                return (
+                    <div>
+                       <p style={{padding: 10}}>{"= " + field2.nodeData.fieldPath}</p> 
+                    </div>
+                )
+            }else {
+                return (
+                    <div>
+                        <p style={{padding: 10}}>{"= " +field2.nodeData.fieldPath}</p> 
+                    </div>
+                )
             }
         }
 
@@ -150,25 +168,33 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
             ///Need to add a check to add an IF statement to the Liquid Template if the trigger field is optional (i.e. if the field may not always be provided) to remove the template field if null.
             if (field1.nodeData.fieldPath.length > 0) {
                 if(isEditing == false | isEditing == undefined){
-                    if (field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
-                        inputFormula = "{{"+ equation + " | plus: 0}}"
-                        outputFormula = "{" + field2.nodeData.fieldPath + "}"
-                        formattedEquation = inputFormula + "=" + outputFormula
-                    } else if (field1.nodeData.required && field2.nodeData.type == "string") {
+                    if(field2.nodeData.arrayItemSchema){ 
+                        var arrayItemFieldName = field2.nodeData.fieldPath.split('.').splice(-1)
                         inputFormula = "{{"+ equation + "}}"
-                        outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                        outputFormula = arrayItemFieldName + "[0]" + "{" + field2.nodeData.fieldPath + "}"
                         formattedEquation = inputFormula + "=" + outputFormula
+                    } else {
+                        if (field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
+                            inputFormula = "{{"+ equation + " | plus: 0}}"
+                            outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                            formattedEquation = inputFormula + "=" + outputFormula
+                        } else if (field1.nodeData.required && field2.nodeData.type == "string") {
+                            inputFormula = "{{"+ equation + "}}"
+                            outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                            formattedEquation = inputFormula + "=" + outputFormula
+                        }
+                        else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
+                            inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + " | plus: 0}} {% endif %}"
+                            outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                            formattedEquation = inputFormula + "=" + outputFormula
+                        }
+                        else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "string"){
+                            inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + "}} {% endif %}"
+                            outputFormula = "{" + field2.nodeData.fieldPath + "}"
+                            formattedEquation = inputFormula + "=" + outputFormula
+                        } 
                     }
-                    else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
-                        inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + " | plus: 0}} {% endif %}"
-                        outputFormula = "{" + field2.nodeData.fieldPath + "}"
-                        formattedEquation = inputFormula + "=" + outputFormula
-                    }
-                    else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "string"){
-                        inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + "}} {% endif %}"
-                        outputFormula = "{" + field2.nodeData.fieldPath + "}"
-                        formattedEquation = inputFormula + "=" + outputFormula
-                    } 
+                   
 
                 } else {
                     inputFormula = equation
@@ -283,15 +309,13 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
         
         
         const isIterable = (field1) => {
-            if (field1.nodeData.type === "array") {
+            if (field1.nodeData.arrayItemSchema) {
                 return "block"
             } else {
                 return "none"
             }
         }
-
-
-
+    
     return isLoading ? (
     
     <Loader/>
@@ -371,6 +395,7 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left',paddingTop: 10}}>
                                 <TextArea style={{ width: 500, height: 100}} placeholder="Equation" value={equation} onChange={(e) => setEquation(e.target.value)}/>
                                 <div style={{width: 30}} />
+                                {renderOutputPreview()}
                                 <p style={{padding: 10}}>{"= " +field2.nodeData.fieldPath}</p> 
                             </div>
                         <br/>
@@ -460,7 +485,7 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left',paddingTop: 10}}>
                                 <TextArea style={{ width: 500, height: 100}} placeholder="Equation" value={equation} onChange={(e) => setEquation(e.target.value)}/>
                                 <div style={{width: 30}} />
-                                <p style={{padding: 10}}>{"= " +field2.nodeData.fieldPath}</p> 
+                                {renderOutputPreview()}
                             </div>
                         <br/>
                     </div>

@@ -13,6 +13,7 @@ import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/popover2/lib/css/blueprint-popover2.css";
 import axios from "axios";
 import JSONPretty from 'react-json-pretty';
+import set from "lodash/set";
 import {Configuration, OpenAIApi} from "openai"
 import {CopyBlock, monoBlue} from "react-code-blocks";
 import prettier from "prettier/standalone";
@@ -242,13 +243,8 @@ const SchemaMapper = () => {
   
 
    const stringToObj = (path,value,obj) => {
-      var parts = path.split("."), part;
-      var last = parts.pop();
-      while(part = parts.shift()) {
-      if( typeof obj[part] != "object") obj[part] = {};
-      obj = obj[part]; // update "pointer"
-      }
-    obj[last] = value;
+      set(obj, path, value)
+      return obj
   }
 
     const fetchMappings = useCallback(() => {
