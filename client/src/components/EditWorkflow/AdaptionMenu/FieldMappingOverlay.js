@@ -63,7 +63,7 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
                 var configurationKeys = Object.keys(project.configuration)
                 var configurationValues = Object.values(project.configuration)
                 return configurationKeys.map((key, index) => {
-                    return <MenuItem2 text={key +" : "+configurationValues[index]} icon="cog" onClick={handleFieldAddition}/>
+                    return <MenuItem2 text={key +" : "+configurationValues[index]} icon="cog" onClick={handleConfigurationSelection}/>
                 })
 
             }
@@ -184,12 +184,12 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
                             formattedEquation = inputFormula + "=" + outputFormula
                         }
                         else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "number" | field2.nodeData.type == "integer" | field2.nodeData.type == "float"){
-                            inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + " | plus: 0}} {% endif %}"
+                            inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %}{{"+ equation + " | plus: 0}}{% endif %}"
                             outputFormula = "{" + field2.nodeData.fieldPath + "}"
                             formattedEquation = inputFormula + "=" + outputFormula
                         }
                         else if (field1.nodeData.required == false | !field1.nodeData.required && field2.nodeData.type == "string"){
-                            inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %} {{ "+ equation + "}} {% endif %}"
+                            inputFormula = "{% if " + field1.nodeData.fieldPath + " != null %}{{"+ equation + "}}{% endif %}"
                             outputFormula = "{" + field2.nodeData.fieldPath + "}"
                             formattedEquation = inputFormula + "=" + outputFormula
                         } 
@@ -259,8 +259,9 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
 
         }
 
-        const handleFieldAddition = (config) => {
-            var configValue = config.target.innerText.split(": ")[1]
+        const handleFieldAddition = (schema) => {
+            console.log(schema)
+            var configValue = schema.fieldPath
             if(equation.length > 0){
                 setEquation(equation + " " + configValue.trim())
             } else{
@@ -277,8 +278,11 @@ const FieldMappingOverlay = ({project, startingEquation, field1, field2, trigger
           
         }
 
-        const handleConfigurationSelection = (schema) => {
-            setEquation(equation + " "+ schema.nodeData.fieldPath)
+        const handleConfigurationSelection = (config) => {
+            console.log(config)
+            var innerText = config.target.innerText
+            var configValue = innerText.split(' : ')[1]
+            setEquation(equation + " "+ configValue)
         }
 
 

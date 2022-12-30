@@ -68,7 +68,7 @@ router.put('/:workflowId/map/:mapId', function(req,res) {
 });
 
 router.put('/:workflowId/steps/0', function(req,res) {
-    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {'trigger.translation': req.body.fullFormula, 'trigger.function': req.body.function, 'trigger.schema_tree': req.body.schemaTree}, function (err,workflow){
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {'trigger.translation': req.body.fullFormula, 'trigger.function': req.body.function, 'trigger.schema_tree': req.body.schemaTree, 'trigger.liquidTemplate': req.body.liquidTemplate}, function (err,workflow){
         if (err) return res.status(500).send(err);
         res.status(200).send(workflow);
     });

@@ -19,6 +19,7 @@ import {CopyBlock, monoBlue} from "react-code-blocks";
 import prettier from "prettier/standalone";
 import parserBabel from "prettier/parser-babel";
 import Loader from "../components/Loader";
+import { generateLiquidTemplateString} from "../scripts/lib.js"
 
 const SchemaMapper = () => {
   let { id, workflowId } = useParams();
@@ -47,6 +48,7 @@ const SchemaMapper = () => {
     const [requiredActionFields, setRequiredActionFields] = useState([]);
     const [shouldFetchMappings, setShouldFetchMappings] = useState(true);
     const [liquidTemplate, setLiquidTemplate] = useState("");
+    const [liquidTemplateString, setLiquidTemplateString] = useState("");
     const [generatedFunction, setGeneratedFunction] = useState("");
     const [formattedPrompt, setFormattedPrompt] = useState("");
     const [mappings, setMappings] = useState(null);
@@ -230,7 +232,7 @@ const SchemaMapper = () => {
         adaptions.forEach(adaption => {
           var path = lowercaseFirstLetter(adaption.outputSchema.nodeData.fieldPath)
           var value = lowercaseFirstLetter(adaption.formula.inputFormula)
-          stringToObj(path, value, jsonLiquidTemplate)
+          stringToObj(path, value, jsonLiquidTemplate, adaptions)
         })
         setLiquidTemplate(JSON.stringify(jsonLiquidTemplate, null, "\t"));
       }
@@ -242,8 +244,11 @@ const SchemaMapper = () => {
   }
   
 
-   const stringToObj = (path,value,obj) => {
+   const stringToObj = (path,value,obj,adaptions) => {
       set(obj, path, value)
+      var liquidTemplateString = generateLiquidTemplateString(obj, path, adaptions)
+      setLiquidTemplateString(liquidTemplateString)
+      console.log(liquidTemplateString)
       return obj
   }
 
@@ -289,7 +294,6 @@ const SchemaMapper = () => {
     const fetchProject = () => {
           axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ id + "/details").then(response => {
               setProject(response.data[0]);
-              console.log(response.data[0])
           }).catch(error => {
               console.log(error);
           })
@@ -306,7 +310,7 @@ const SchemaMapper = () => {
 
     const onLiquidTemplateSave = () => {
 
-      axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/steps/0", {"fullFormula": `${liquidTemplate}`, "function": `${generatedFunction}`})
+      axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/" + id + "/workflows/" + workflowId + "/steps/0", {"fullFormula": `${liquidTemplate}`, "function": `${generatedFunction}`, "liquidTemplate": `${liquidTemplateString}`})
         .then(response => {
           console.log(response);
           onDrawerClose()
@@ -340,7 +344,7 @@ const SchemaMapper = () => {
       }, [])
   
     useEffect(() => {
-        // fetch only when user details are not present
+      // fetch only when user details are not present
         if (!userContext.details) {
           fetchUserDetails()
         }
@@ -378,8 +382,12 @@ const SchemaMapper = () => {
                   isOpen={drawerViewOpen}>
                     <div className={Classes.DRAWER_BODY}>
                       <div className={Classes.DIALOG_BODY}>
-                        <h3> Liquid Template</h3>
+                        <h3> Output JSON Template</h3>
                           <JSONPretty id="json-pretty" data={liquidTemplate}></JSONPretty>
+                      </div>
+                      <div className={Classes.DIALOG_BODY}>
+                        <h3> Liquid String Template</h3>
+                          <p>{liquidTemplateString}</p>
                       </div>
                       <div className={Classes.DIALOG_BODY}>
                         <h3> Javascript Function</h3>

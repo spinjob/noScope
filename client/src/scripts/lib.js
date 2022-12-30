@@ -362,6 +362,156 @@ const generateParameterSchemaTree = function (schema){
     } 
 }
 
+const generateLiquidTemplateString = function (json, path, adaptions){
+    const firstLevelKeys = Object.keys(json);
+    const firstLevelValues = Object.values(json);
+    var liquidTemplateString = "";
+    for (var i = 0; i < firstLevelKeys.length; i++){
+        var newStringComponent = processLiquidTemplateJsonProperties(firstLevelKeys[i], firstLevelValues[i], firstLevelKeys[i], false, adaptions) + ",";
+        if (newStringComponent != undefined){
+            liquidTemplateString += newStringComponent;
+        }
+    }
+    var formattedLiquidTemplateString = '{'+liquidTemplateString.substring(0, liquidTemplateString.length - 1)+'}';
+    console.log(formattedLiquidTemplateString)
+    return formattedLiquidTemplateString;
+}
+//Need the full path for the array schema
+//Need to replace the child array schema path with 'arrayItem'
+
+const processLiquidTemplateJsonProperties = function (schemaKey, schemaValues, parentPath, isArraySchema, adaptions){
+    var schemaType = typeof schemaValues;
+    var isArr = Object.prototype.toString.call(schemaValues) == '[object Array]';
+
+    //If the schema is an object, we need to prefix the properties with the outputKeys, values, and brackets.  We also need to recursively call this function to process the next level of properties
+    if (schemaType == 'object' && !isArr){
+
+        var schemaStringPrefix = JSON.stringify(schemaKey) + ":{";
+        var schemaStringValue = "";
+        var schemaStringSuffix = "}";
+
+        var nextLevelKeys = Object.keys(schemaValues);
+        var nextLevelValues = Object.values(schemaValues);
+        for (var i = 0; i < nextLevelKeys.length; i++){
+            schemaStringValue = processLiquidTemplateJsonProperties(nextLevelKeys[i], nextLevelValues[i], parentPath + '.' + nextLevelKeys[i], false, adaptions)
+        }
+        return schemaStringPrefix + schemaStringValue + schemaStringSuffix;
+
+    } else if (schemaType == 'object' && isArr){
+
+        var nextLevelKeys = Object.keys(schemaValues[0]);
+        var nextLevelValues = Object.values(schemaValues[0]);
+        var sampleTranslationForPathFormatting = []
+        var parentPathVariable = parentPath + '[0]'
+        for (i = 0; i < nextLevelKeys.length; i++){
+            if (nextLevelValues[i].includes('}}') && nextLevelValues[i].includes(parentPathVariable)){
+                sampleTranslationForPathFormatting.push(nextLevelValues[i])
+            }
+        }
+        //Dotted path for Array path reference
+        var dottedPathArray = sampleTranslationForPathFormatting[0].replace('[0]','').replace('{{','').replace('}}','').split('.')
+        var removedDottedPathProperty = dottedPathArray.pop()
+        var dottedPathString = dottedPathArray.join('.')
+        
+        //Dashed path for Array property variable
+        var dashedPathArray = sampleTranslationForPathFormatting[0].replace('[0]','').replace('{{','').replace('}}','').split('.')
+        var removedDashedPathProperty = dashedPathArray.pop();
+        var fullDashedPathString = dashedPathArray.join('_')
+
+        var schemaStringPrefix = JSON.stringify(schemaKey) + ":[{% for " + fullDashedPathString + " in " + dottedPathString + " %}{";
+        var schemaStringValue = "";
+        var schemaStringSuffix = "}{% endfor %}]";
+        
+        for (var i = 0; i < nextLevelKeys.length; i++){
+            if(schemaStringValue.length == 0){
+                schemaStringValue = processLiquidTemplateJsonProperties(nextLevelKeys[i], nextLevelValues[i], 'arrayItem', true, adaptions)
+            } else{
+                schemaStringValue = schemaStringValue + "," + processLiquidTemplateJsonProperties(nextLevelKeys[i], nextLevelValues[i], 'arrayItem', true, adaptions)
+            }
+            console.log(schemaStringValue)
+        }   
+        return schemaStringPrefix + schemaStringValue + schemaStringSuffix;
+        
+    } else { 
+        var propertyType = "" 
+        for (var i = 0; i < adaptions.length; i++){
+            if (schemaValues == adaptions[i].formula.inputFormula){
+                propertyType = adaptions[i].outputSchema.nodeData.type
+            } 
+        }
+
+        if (propertyType == 'string') {
+            if(isArraySchema){
+                var schemaStringPrefix = JSON.stringify(schemaKey) + ":";
+                var schemaStringValue = JSON.stringify(schemaValues);
+                var splitFormulaArray = schemaStringValue.split('{{')
+                var formattedSplitFormulaArray = [];
+                for (var i = 0; i < splitFormulaArray.length; i++){
+                    if (splitFormulaArray[i].includes('}}') && splitFormulaArray[i].includes('[0]')){
+                        var dashedPath = splitFormulaArray[i].split('.')
+                        var dottedPath = dashedPath.pop();
+                        var fullDashedPath = dashedPath.join('_') + '.' + dottedPath
+                        var formattedPath = fullDashedPath.replace('[0]','')
+                        formattedSplitFormulaArray.push(formattedPath);
+                    } else {
+                        formattedSplitFormulaArray.push(splitFormulaArray[i]);
+                    }
+                }
+    
+                var formattedSchemaStringValue = formattedSplitFormulaArray.join('{{');
+    
+                return schemaStringPrefix + formattedSchemaStringValue;
+    
+            } else {
+                var schemaStringPrefix = JSON.stringify(schemaKey) + ":";
+                var schemaStringValue = JSON.stringify(schemaValues);
+                
+                return schemaStringPrefix + schemaStringValue;
+            }
+           
+        } else if (propertyType == 'number' | propertyType == 'float' | propertyType == 'integer') {
+            if(isArraySchema){
+                var schemaStringPrefix = JSON.stringify(schemaKey) + ":";
+                var schemaStringValue = schemaValues;
+                var splitFormulaArray = schemaStringValue.split('{{')
+                var formattedSplitFormulaArray = [];
+                for (var i = 0; i < splitFormulaArray.length; i++){
+                    if (splitFormulaArray[i].includes('}}') && splitFormulaArray[i].includes('[0]')){
+                        var dashedPath = splitFormulaArray[i].split('.')
+                        var dottedPath = dashedPath.pop();
+                        var fullDashedPath = dashedPath.join('_') + '.' + dottedPath
+                        var formattedPath = fullDashedPath.replace('[0]','')
+                        formattedSplitFormulaArray.push(formattedPath);
+                    } else {
+                        formattedSplitFormulaArray.push(splitFormulaArray[i]);
+                    }
+                }
+    
+                var formattedSchemaStringValue = formattedSplitFormulaArray.join('{{');
+    
+                return schemaStringPrefix + formattedSchemaStringValue;
+    
+            } else{
+                var schemaStringPrefix = JSON.stringify(schemaKey) + ":";
+                var schemaStringValue = schemaValues;
+                
+                return schemaStringPrefix + schemaStringValue;
+            }
+            
+    
+        } else if (propertyType == 'boolean') {
+            var schemaStringPrefix = JSON.stringify(schemaKey) + ":";
+            var schemaStringValue = schemaValues;
+            
+            return schemaStringPrefix + schemaStringValue;
+    
+        } else {
+            console.log("Property Type Not Handled: " + schemaType )
+        }
+
+    }
+}
 
 
-export {generateSchemaTree, generateSchemaList, generateParameterSchemaTree}
+
+export {generateSchemaTree, generateSchemaList, generateParameterSchemaTree, generateLiquidTemplateString}

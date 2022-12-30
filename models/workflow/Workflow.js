@@ -27,7 +27,8 @@ var WorkflowTriggerSchema = new mongoose.Schema({
     parent_project_uuid: String,
     webhook: WorkflowWebhookTriggerSchema,
     translation: String,
-    function: String
+    function: String,
+    liquidTemplate: String
 });
 
 var WorkflowStepRequestSchema = new mongoose.Schema({

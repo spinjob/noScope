@@ -17,16 +17,6 @@ class SelectSchema extends React.PureComponent {
     }
   }
 
-  componentDidMount(){
-    if(
-        this.props.schemas.length > 0) {
-          console.log(this.props.schemas)
-    }
-    else {
-       console.log( "No schemas found")
-    };
-  }
-
 
   // Each of the Select2 components will display the same interface name BUT there will not be a UUID.  So, the user *must* select an interface for the UUID to pass through for the creation of the project on the back-end.
   render() {
