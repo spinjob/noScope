@@ -280,6 +280,10 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
         var path = pathKeys[i];
         var methods = Object.keys(pathValues[i]);
         var values = Object.values(pathValues[i]);
+        if(path == "/v1/auth/token"){
+            console.log('requestTokenAction')
+            console.log(pathValues[i])
+        }
 
         //iterate through Path Actions (i.e. HTTP Methods)
         for (var j = 0; j < methods.length; ++j){
@@ -545,7 +549,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                 function(err,interfaceAction){
                                     if (err) {
                                         console.log(err);
-                                        cconsole.log(path + "both requestBody (>1 schema + form-urlencoded) and parameters are present (ln 299)");
+                                        console.log(path + "both requestBody (>1 schema + form-urlencoded) and parameters are present (ln 299)");
                                         return; 
                                     }
                                 //    console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
@@ -564,6 +568,183 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                     method: methods[j],
                                     parameters: processReferences(values[j].parameters),
                                     parameterSchema: parameters,
+                                    requestBody: null,
+                                    responses: responsesArray
+                                },
+                                    function(err,interfaceAction){
+                                        if (err) {
+                                            console.log(err);
+                                            console.log(path + " requestBody is undefined but parameters are present (ln 166)");
+                                            return; 
+                                        }
+                                        
+                                });  
+                        }
+                
+                } else {
+                    console.log("not application/json or application/x-www-form-urlencoded");
+                }        
+            }  else if (values[j].requestBody !== undefined && values[j].parameters == undefined ) {
+                // Request Body and Parameters exist for the Action (i.e. POST, PUT, PATCH)
+                if (values[j].requestBody.content["application/json"] !== undefined) {
+                    var requestBodyKeys = Object.keys(values[j].requestBody.content["application/json"].schema);
+                    var requestBodyArray = [];
+                    var requestBody = values[j].requestBody.content["application/json"].schema;
+
+                    if(requestBodyKeys.length > 1 && requestBodyKeys.includes("$ref") == true) {
+                    
+                        for (var h = 0; h < requestBodyKeys.length; ++h){
+                            requestBodyArray.push(requestBody[h]);
+                        }
+                        InterfaceAction.create({
+                            uuid: actionUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: values[j].operationId,
+                            path: path,
+                            parameters: null,
+                            parameterSchema: null,
+                            method: methods[j],
+                            requestBody: {
+                                schema: processReferences(requestBodyArray),
+                                type: "json",
+                                required: values[j].requestBody.required
+                            },
+                            requestBody2: {
+                                type: "json",
+                                required: values[j].requestBody.required,
+                                schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
+                            },
+                            responses: responsesArray
+                        },
+                            function(err,interfaceAction){
+                                if (err) {
+                                    console.log(err);
+                                    return; 
+                                }
+                                
+                        });  
+
+                    } else if(requestBodyKeys.includes("$ref") == true) {
+                        requestBodyArray.push(requestBody);
+
+                        InterfaceAction.create({
+                            uuid: actionUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: values[j].operationId,
+                            path: path,
+                            parameters: null,
+                            parameterSchema: null,
+                            method: methods[j],
+                            requestBody: {
+                                schema: processReferences(requestBodyArray),
+                                type: "json",
+                                required: values[j].requestBody.required
+                            },
+                            requestBody2: {
+                                type: "json",
+                                required: values[j].requestBody.required,
+                                schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
+                            },
+                            responses: responsesArray
+                        },
+                            function(err,interfaceAction){
+                                if (err) {
+                                    console.log(err);
+                                    console.log(path + " request body and parameters exist (ln 443)")
+                                    return; 
+                                }
+                                // console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                
+                        });  
+
+                    } 
+                } else if (values[j].requestBody.content["application/x-www-form-urlencoded"] !== undefined) {
+                    var requestBodyKeys = Object.keys(values[j].requestBody.content["application/x-www-form-urlencoded"].schema);
+                    var requestBodyArray = [];
+                    var requestBody = values[j].requestBody.content["application/x-www-form-urlencoded"].schema;
+
+                        if(requestBodyKeys.length > 1 && requestBodyKeys.includes("$ref") == true) {
+                        
+                            for (var h = 0; h < requestBodyKeys.length; ++h){
+                                requestBodyArray.push(requestBody[h]);
+                            }
+
+                            InterfaceAction.create({
+                                uuid: actionUUID,
+                                parent_interface_uuid: parent_interface_uuid,
+                                name: values[j].operationId,
+                                path: path,
+                                parameters: null,
+                                parameterSchema: null,
+                                parameterSchema: parameters,
+                                requestBody: {
+                                    schema: processReferences(requestBodyArray),
+                                    type: "form-urlencoded",
+                                    required: values[j].requestBody.required
+                                },
+                                requestBody2: {
+                                    type: "form-urlencoded",
+                                    required: values[j].requestBody.required,
+                                    schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
+                                },
+                                responses: responsesArray
+                            },
+                                function(err,interfaceAction){
+                                    if (err) {
+                                        console.log(err);
+                                        console.log(path + "both requestBody (1 schema + form-urlencoded) and parameters are present (ln 264)");
+                                        return; 
+                                    }
+                                    // console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                    //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                    
+                            });  
+
+                        } else if (requestBodyKeys.includes("$ref") == true) {
+                            requestBodyArray.push(requestBody);
+                            InterfaceAction.create({
+                                uuid: actionUUID,
+                                parent_interface_uuid: parent_interface_uuid,
+                                name: values[j].operationId,
+                                path: path,
+                                method: methods[j],
+                                parameters: null,
+                                parameterSchema: null,
+                                requestBody:   {
+                                    schema: processReferences(requestBodyArray),
+                                    type: "form-urlencoded",
+                                    required: values[j].requestBody.required
+                                },
+                                requestBody2: {
+                                    type: "json",
+                                    required: values[j].requestBody.required,
+                                    schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
+                                },
+                                responses: responsesArray
+                            },
+                                function(err,interfaceAction){
+                                    if (err) {
+                                        console.log(err);
+                                        console.log(path + "both requestBody (>1 schema + form-urlencoded) and parameters are present (ln 299)");
+                                        return; 
+                                    }
+                                //    console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                    //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                    
+                            });  
+
+                        } else {
+                            ///Implement a function to validate new InterfaceEntity and add it as a Request Body Schema
+
+                            InterfaceAction.create({
+                                    uuid: actionUUID,
+                                    parent_interface_uuid: parent_interface_uuid,
+                                    name: values[j].operationId,
+                                    path: path,
+                                    method: methods[j],
+                                    parameters: null,
+                                    parameterSchema: null,
                                     requestBody: null,
                                     responses: responsesArray
                                 },
@@ -844,7 +1025,7 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
             inlineSchema = {...inlineSchema, ...schemaProperties}
 
         } else if (schemaValues.items && schemaValues.type == 'array'){
-                console.log("Top Level Array Schema")
+                // console.log("Top Level Array Schema")
         } else {
             //If the schema doesn't have a properties object, we'll need to process it differently.
             schemaValues = Object.assign(schemaObject, schemaValues);
@@ -859,11 +1040,6 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
             var propertyKeys = Object.keys(inlineSchemaProperties[i].properties);
             var propertyValues = Object.values(inlineSchemaProperties[i].properties);
             var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, null, schemaMap);
-            console.log("Inline Schema Properties")
-            console.log(schemaProperties)
-            console.log("Inline Schema Before")
-            console.log(inlineSchema)
-            
             var schemaPropertyKeys = Object.keys(schemaProperties);
             var schemaPropertyValues = Object.values(schemaProperties);
 
@@ -875,8 +1051,6 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
                     inlineSchema = {...inlineSchema, ...schemaProperties}
                 }
             }
-            console.log("Inline Schema After")
-            console.log(inlineSchema)
         }
     }
 
@@ -1157,12 +1331,12 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
                             }
                     })
                         const requestBody = JSON.parse(result)
-                        console.log("Translated Request Body:")
-                        console.log(requestBody)
-                        console.log("HEADER TEMPLATE: ")
-                        console.log(header)
-                        console.log("PATH TEMPLATE: ")
-                        console.log(path)
+                        // console.log("Translated Request Body:")
+                        // console.log(requestBody)
+                        // console.log("HEADER TEMPLATE: ")
+                        // console.log(header)
+                        // console.log("PATH TEMPLATE: ")
+                        // console.log(path)
 
                     // if Header Translation exists, apply it to the input JSON
                         

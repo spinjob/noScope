@@ -274,8 +274,8 @@ const generateParameterSchemaTree = function (schema){
     const headerNodes = [];
     const pathNodes = [];
     const parentNode = [];
-
-    if (schema.header){
+    
+    if (schema && schema.header){
         var headerKeys = Object.keys(schema.header);
         var headerValues = Object.values(schema.header);
     
@@ -296,7 +296,8 @@ const generateParameterSchemaTree = function (schema){
         }
         
     }
-    if (schema.path){
+
+    if (schema && schema.path){
 
         var pathKeys = Object.keys(schema.path);
         var pathValues = Object.values(schema.path);
@@ -317,7 +318,6 @@ const generateParameterSchemaTree = function (schema){
             pathNodes.push(pathNode);
         }
        
-
     }
 
     const pathTreeParent = {
@@ -344,22 +344,27 @@ const generateParameterSchemaTree = function (schema){
         }
     }
 
-    if (schema.header && schema.path){
+    if (schema && schema.header && schema.path){
         return  {
             header: headerTreeParent,
             path: pathTreeParent
         }
-    } else if (schema.header && !schema.path){
+    } else if (schema && schema.header && !schema.path){
         return  {
             header: headerTreeParent,
             path: null
         }
-    } else if (schema.path && !schema.header){
+    } else if (schema && schema.path && !schema.header){
         return {
             header: null,
             path: pathTreeParent
         }
-    } 
+    } else {
+        return {
+            header: null,
+            path: null
+        }
+    }
 }
 
 const generateLiquidTemplateString = function (json, path, adaptions){

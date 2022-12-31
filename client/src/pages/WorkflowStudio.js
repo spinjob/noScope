@@ -104,8 +104,7 @@ const WorkflowStudio = () => {
         const workflowUuid = uuidv4();
         const stepUuid = uuidv4();
         const triggerUuid = uuidv4()
-
-        console.log(generateParameterSchemaTree(action.parameterSchema))
+        console.log(action.parameterSchema)
         
         const workflowStep = {
             uuid: stepUuid,

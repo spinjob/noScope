@@ -1,4 +1,4 @@
-import { H1, Button } from "@blueprintjs/core"
+import { H1, Button, Divider } from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
@@ -78,9 +78,12 @@ const MyProjects = () => {
       ) : (
         <div style={{display: 'block', width: 500, padding: 30}}>
             <Navigation />
-            <H1>MY PROJECTS</H1>
+            <div>
+                <H1>My Applications</H1>
+            </div>
+            <Divider />
             <div style={{alignItems: 'left', display: 'block', paddingTop: 20}}>
-            <Button intent={'primary'}  text="NEW PROJECT" onClick={() => navigate("/projects/new")}> </Button>
+            <Button intent={'primary'}  text="NEW APPLICATION" onClick={() => navigate("/projects/new")}> </Button>
             </div>
             <MyProjectsTable />
        </div>     

@@ -193,7 +193,7 @@ const MyInterfaces = () => {
         <div>
         <Navigation />
         <div className="container" style={{padding:40}}>
-            <H1 >IMPORTED APIs</H1>
+            <H1>Imported APIs</H1>
         </div>
         <Divider />
         <div class="ManageInterfacesParent" >

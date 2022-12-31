@@ -10,6 +10,7 @@ var InterfaceSchema = new mongoose.Schema({
     deleted_at: String,
     production_server: String,
     sandbox_server: String,
+    credentials: Object,
     created_by: String,
     actions: Array
 });
