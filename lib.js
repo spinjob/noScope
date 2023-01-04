@@ -1,15 +1,14 @@
 const crypto = require('crypto');
 const Interface = require('./models/interface/Interface');
 const InterfaceEntity = require('./models/interface_entity/InterfaceEntity');
-const InterfaceProperty = require('./models/interface_property/InterfaceProperty');
 const InterfaceParameter = require('./models/interface_parameter/InterfaceParameter');
 const InterfaceAction = require('./models/interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
 const WorkflowLog = require('./models/workflow_log/WorkflowLog');
 const { castObject } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
-const Liquid = require('liquid');
-const engine = new Liquid.Engine()
+const {Liquid} = require('liquidjs');
+const engine = new Liquid();
 const axios = require('axios');
 
 function processOpenApiV3(json, userId) {
@@ -202,22 +201,6 @@ function createPropertyEntities(propertyValues, parent_object_uuid, parent_inter
                             return;
                         }
                     )
-                    //console.log("Interface Entity for Property Created "+ interfaceEntity._id);
-                    var propertyUUID = crypto.randomUUID();
-
-                    InterfaceProperty.create({
-                        uuid: propertyUUID,
-                        parent_interface_uuid: parent_interface_uuid,
-                        interface_entity_uuid: entityUUID,
-                        parent_entity: parent_object_uuid
-                    },
-                        function(err,interfaceProperty){
-                            if (err) {
-                                console.log(err);
-                            }
-                            //console.log("Interface Property Created with ID: " + interfaceProperty._id);
-                            return;
-                    });
             });
         } else {
             InterfaceEntity.create({
@@ -247,22 +230,6 @@ function createPropertyEntities(propertyValues, parent_object_uuid, parent_inter
                             return;
                         }
                     )
-                    //console.log("Interface Entity for Property Created "+ interfaceEntity._id);
-                    var propertyUUID = crypto.randomUUID();
-
-                    InterfaceProperty.create({
-                        uuid: propertyUUID,
-                        parent_interface_uuid: parent_interface_uuid,
-                        interface_entity_uuid: entityUUID,
-                        parent_entity: parent_object_uuid
-                    },
-                        function(err,interfaceProperty){
-                            if (err) {
-                                console.log(err);
-                            }
-                            //console.log("Interface Property Created with ID: " + interfaceProperty._id);
-                            return;
-                    });
             });
 
         }
@@ -1294,6 +1261,8 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
         }
     } else if (workflow.status === "active") {
         //Continue
+
+        console.log(workflow.trigger)
         const header = JSON.parse(workflow.trigger.translation).header ? JSON.parse(workflow.trigger.translation).header : {}
         const stringifiedHeaderTemplate = JSON.stringify(header)
         const path = JSON.parse(workflow.trigger.translation).path ? JSON.parse(workflow.trigger.translation).path : {}
@@ -1301,11 +1270,10 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
         const requestBodyTemplate = JSON.parse(workflow.trigger.translation)
         delete requestBodyTemplate["header"]
         delete requestBodyTemplate["path"]
-        const stringifiedTemplate = JSON.stringify(requestBodyTemplate)
+        const stringifiedTemplate = workflow.trigger.liquidTemplate
         const nextStep = workflow.steps[0]
         const nextStepSandboxUrl = actionInterface.sandbox_server + nextStep.request.path
         const nextStepProductionUrl = actionInterface.production_server + nextStep.request.path
-
 
         if (nextStep.type === 'httpRequest') {
             if (environment == "sandbox") {
@@ -1331,12 +1299,12 @@ function runWorkflow(workflow, actionInterface, environment, inputJSON){
                             }
                     })
                         const requestBody = JSON.parse(result)
-                        // console.log("Translated Request Body:")
-                        // console.log(requestBody)
-                        // console.log("HEADER TEMPLATE: ")
-                        // console.log(header)
-                        // console.log("PATH TEMPLATE: ")
-                        // console.log(path)
+                        console.log("Translated Request Body:")
+                        console.log(requestBody)
+                        console.log("HEADER TEMPLATE: ")
+                        console.log(header)
+                        console.log("PATH TEMPLATE: ")
+                        console.log(path)
 
                     // if Header Translation exists, apply it to the input JSON
                         

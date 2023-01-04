@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
-const Liquid = require('liquid')
-const engine = new Liquid.Engine()
+const {Liquid} = require('liquidjs');
+const engine = new Liquid();
 router.use(express.urlencoded({extended: true}));
 router.use(express.json());
 

@@ -11,10 +11,12 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
    
     const [userContext, setUserContext] = useContext(UserContext);
     const [isEditing, setIsEditing] = useState(false);
-    const [newSandboxServer, setNewSandboxServer] = useState("");
-    const [newProductionServer, setNewProductionServer] = useState("")
+    const [newSandboxServer, setNewSandboxServer] = useState(null);
+    const [newProductionServer, setNewProductionServer] = useState(null)
     const [credentialsMap, setCredentialsMap] = useState({"sandbox": {}, "production": {}});
     var authenticationFlowAction = null
+    var sandboxServer = ""
+    var productionServer = ""
 
     if(selectedInterfaceSecurityScheme) {
         authenticationFlowAction = selectedInterfaceActions.filter(function (action) {
@@ -23,7 +25,6 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
             return action.path == selectedInterfaceSecurityScheme[0].flows[0].tokenUrl
         })
     }
-
 
 
     const isEditHandler = () => {
@@ -44,7 +45,9 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
     }
 
     const setCredentialsMapHandler = (event) => {
-        var key = event.target.attributes.placeholder.value
+        console.log(event)
+        var placeholder = event.target.attributes.placeholder.value
+        var key = placeholder.split(" ")[2]
         var value = event.target.value
         var environment = event.target.id.split("-")[0]
         var map = credentialsMap
@@ -61,10 +64,11 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
 
     const handleServerSave = () => {
         var requestBody = {
-            sandboxServer: newSandboxServer ? newSandboxServer : "",
-            productionServer: newProductionServer ? newProductionServer : "",
+            sandboxServer: newSandboxServer,
+            productionServer: newProductionServer,
             credentials: credentialsMap ? credentialsMap : {}
         }
+        console.log(requestBody)
 
         axios.put(process.env.REACT_APP_API_ENDPOINT + "/interfaces/"+ interfaceSelected.uuid+ "/servers", requestBody)
         .then(response => {
@@ -121,8 +125,8 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
  
         }
         if(interfaceSelected && interfaceSelected.sandbox_server == "" && interfaceSelected.production_server == "") {
-            setNewSandboxServer("")
-            setNewProductionServer("")
+            // setNewSandboxServer("")
+            // setNewProductionServer("")
         } if(interfaceSelected && !interfaceSelected.credentials) {
             setCredentialsMap({"sandbox": {}, "production": {}})
         }

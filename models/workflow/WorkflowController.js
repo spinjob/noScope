@@ -83,15 +83,21 @@ router.put('/:workflowId/steps/1', function(req,res) {
 
 router.post('/:workflowId/trigger', function(req,res) {
     Workflow.findOne({uuid: req.params.workflowId}, function(err,workflow){
-        if (err) return res.status(500).send(err);
-        res.status(200).send(workflow);
-        var actionInterfaceUuid = workflow.steps[0].request.parent_interface_uuid
-        
-        Interface.findOne({uuid: actionInterfaceUuid}, function(err,interface){
-            if (err) return res.status(500).send(err);
-            var actionInterface = interface;
-            runWorkflow(workflow, actionInterface, "sandbox", req.body);
-        })
+        if (err) {
+            return res.status(500).send(err);
+        } else {
+            res.status(200).send(workflow);
+            console.log(workflow);
+            var actionInterfaceUuid = workflow.steps[0].request.parent_interface_uuid
+            
+            Interface.findOne({uuid: actionInterfaceUuid}, function(err,interface){
+                if (err) return res.status(500).send(err);
+                var actionInterface = interface;
+                runWorkflow(workflow, actionInterface, "sandbox", req.body);
+            })
+
+        }
+
     });
 });
 

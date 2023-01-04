@@ -245,10 +245,13 @@ const SchemaMapper = () => {
   
 
    const stringToObj = (path,value,obj,adaptions) => {
+      console.log("path: " + path)
+      console.log("value: " + value)
       set(obj, path, value)
+
+      console.log(obj)
       var liquidTemplateString = generateLiquidTemplateString(obj, path, adaptions)
       setLiquidTemplateString(liquidTemplateString)
-      console.log(liquidTemplateString)
       return obj
   }
 
@@ -257,12 +260,11 @@ const SchemaMapper = () => {
       .then(response => {
           setMappings(response.data[0].steps[0].adaptions)
           setWorkflow(response.data[0])
+          setRequiredActionFields(response.data[0].steps[0].request.schemaList.filter(schema => schema.required === true))
           setTriggerTree(response.data[0].trigger.webhook.schemaTree)
           setActionTree(response.data[0].steps[0].request.schemaTree)
           setTriggerSchema(response.data[0].trigger.webhook.schemaList)
           setActionSchema(response.data[0].steps[0].request.schemaList)
-
-
           updateLiquidTemplate(response.data[0].steps[0].adaptions)
           response.data[0].trigger.function ? setGeneratedFunction(response.data[0].trigger.function) : setGeneratedFunction("")
           setShouldFetchMappings(false);

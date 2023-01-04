@@ -21,7 +21,8 @@ const generateSchemaTree = function (type, schema){
                     childNodes: childPropertyNodes,
                     isExpanded: true,
                     nodeData:{
-                        fieldPath: "." + schemaKeys[index],
+                        // fieldPath: "." + schemaKeys[index],
+                        fieldPath: schemaKeys[index],
                         type: schemaValues[index].type,
                         description: schemaValues[index].description ? schemaValues[index].description : null                 
                     }
@@ -52,12 +53,17 @@ const generateSchemaTree = function (type, schema){
                 }
             
             } else {
+
+                var requiredLabel = schemaValues[index].required ? "Required" : null;
+
                 const parentObject = {
                     id: parentIdentifier,
                     label: schemaKeys[index],
                     icon: iconGenerator(schemaValues[index].type),
+                    secondaryLabel: requiredLabel,
                     nodeData:{
-                        fieldPath: "." + schemaKeys[index],
+                        // fieldPath: "." + schemaKeys[index],
+                        fieldPath: schemaKeys[index],
                         type: schemaValues[index].type,
                         enum: schemaValues[index].enum ? schemaValues[index].enum : null,
                         description: schemaValues[index].description ? schemaValues[index].description : null,
@@ -124,10 +130,14 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
         }
 
         if (!values[index].properties && !values[index].items){
+
+            var requiredLabel = values[index].required ? "Required" : null;
+
             const childNode = {
                 id: propertyNodeId,
                 label: key,
                 icon: iconGenerator(values[index].type),
+                secondaryLabel: requiredLabel,
                 nodeData: {
                     type: values[index].type,
                     fieldPath: parentPath + '.' + key,
@@ -143,12 +153,14 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
             var propertyKeys = Object.keys(values[index].properties);
             var propertyValues = Object.values(values[index].properties);
             var childPropertyNodes = processChildNodes(propertyKeys,propertyValues, parentPath + '.' + key);
+            var requiredLabel = values[index].required ? "Required" : null;
             const childNode = {
                 id: propertyNodeId,
                 label: key,
                 icon: iconGenerator(values[index].type),
                 childNodes: childPropertyNodes,
                 isExpanded: true,
+                secondaryLabel: requiredLabel,
                 nodeData: {
                     type: values[index].type,
                     fieldPath: parentPath + '.' + key,
@@ -165,12 +177,14 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
                 var propertyValues = Object.values(values[index].items.properties);
                 var arrayFieldPath = parentPath + '.' + key + '[0]';
                 var childPropertyNodes = processChildNodes(propertyKeys,propertyValues, arrayFieldPath, "array");
+                var requiredLabel = values[index].required ? "Required" : null;
                 const childNode = {
                     id: propertyNodeId,
                     label: key,
                     icon: iconGenerator(values[index].type),
                     childNodes: childPropertyNodes,
                     isExpanded: true,
+                    secondaryLabel: requiredLabel,
                     nodeData: {
                         type: values[index].type,
                         fieldPath: arrayFieldPath,
@@ -185,10 +199,12 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
             } else {
                 var inlinePropertyUUID = uuidv4();
                 var inlineLabel = values[index].items.schemaName ? values[index].items.schemaName : 'inlineSchema';
+                var requiredLabel = values[index].required ? "Required" : null;
                 const inlinePropertyNode = {
                     id: inlinePropertyUUID,
                     label: inlineLabel,
                     icon: iconGenerator(values[index].items.type),
+                    secondaryLabel: requiredLabel,
                     nodeData: {
                         type: values[index].items.type,
                         fieldPath: parentPath + '.' + key + "." + inlineLabel ,
@@ -200,12 +216,15 @@ const processChildNodes = function (keys, values, parentPath, parentType) {
                 }
                 const childrenNodes = [];
                 childrenNodes.push(inlinePropertyNode);
+                var requiredLabel = values[index].required ? "Required" : null;
 
                 const childNode = {
                     id: propertyNodeId,
                     label: key,
                     icon: iconGenerator(values[index].type),
                     childNodes: childrenNodes,
+                    isExpanded: true,
+                    secondaryLabel: requiredLabel,
                     nodeData: {
                         type: values[index].type,
                         fieldPath: parentPath + '.' + key + '[0]',
@@ -238,7 +257,8 @@ const generateSchemaList = function (schema){
         } else if(schemaValues[index].type != 'object') {
             var schema = {
                 fieldPath: schemaKeys[index],
-                type: schemaValues[index].type
+                type: schemaValues[index].type,
+                required: schemaValues[index].required ? schemaValues[index].required : false
             }
             schemaList.push(schema);
         }
@@ -254,7 +274,8 @@ const processPropertyPathArray = function (keys, values, parentPath) {
         if (!values[index].properties && values[index].type != 'object'){
             var schema = {
                 fieldPath: parentPath + '.' + key,
-                type: values[index].type
+                type: values[index].type,
+                required: values[index].required ? values[index].required : false
             }
             propertyList.push(schema);
         }
@@ -274,16 +295,18 @@ const generateParameterSchemaTree = function (schema){
     const headerNodes = [];
     const pathNodes = [];
     const parentNode = [];
-    
+
     if (schema && schema.header){
         var headerKeys = Object.keys(schema.header);
         var headerValues = Object.values(schema.header);
     
         for (var i = 0; i < headerKeys.length; i++){
+            var requiredLabel = headerValues[i].schema.required ? "Required" : null;
             var headerNode = {
                 id: uuidv4(),
                 label: headerKeys[i],
                 icon: iconGenerator(headerValues[i].schema.type),
+                secondaryLabel: requiredLabel,
                 nodeData: {
                     type: headerValues[i].schema.type,
                     fieldPath: "header." + headerKeys[i],
@@ -303,10 +326,12 @@ const generateParameterSchemaTree = function (schema){
         var pathValues = Object.values(schema.path);
     
         for (var i = 0; i < pathKeys.length; i++){
+            var requiredLabel = pathValues[i].schema.required ? "Required" : null;
             var pathNode = {
                 id: uuidv4(),
                 label: pathKeys[i],
                 icon: iconGenerator(pathValues[i].schema.type),
+                secondaryLabel: requiredLabel,
                 nodeData: {
                     type: pathValues[i].schema.type,
                     fieldPath: "path." + pathKeys[i],
@@ -370,7 +395,9 @@ const generateParameterSchemaTree = function (schema){
 const generateLiquidTemplateString = function (json, path, adaptions){
     const firstLevelKeys = Object.keys(json);
     const firstLevelValues = Object.values(json);
+
     var liquidTemplateString = "";
+
     for (var i = 0; i < firstLevelKeys.length; i++){
         var newStringComponent = processLiquidTemplateJsonProperties(firstLevelKeys[i], firstLevelValues[i], firstLevelKeys[i], false, adaptions) + ",";
         if (newStringComponent != undefined){
@@ -378,7 +405,6 @@ const generateLiquidTemplateString = function (json, path, adaptions){
         }
     }
     var formattedLiquidTemplateString = '{'+liquidTemplateString.substring(0, liquidTemplateString.length - 1)+'}';
-    console.log(formattedLiquidTemplateString)
     return formattedLiquidTemplateString;
 }
 //Need the full path for the array schema
@@ -398,7 +424,12 @@ const processLiquidTemplateJsonProperties = function (schemaKey, schemaValues, p
         var nextLevelKeys = Object.keys(schemaValues);
         var nextLevelValues = Object.values(schemaValues);
         for (var i = 0; i < nextLevelKeys.length; i++){
-            schemaStringValue = processLiquidTemplateJsonProperties(nextLevelKeys[i], nextLevelValues[i], parentPath + '.' + nextLevelKeys[i], false, adaptions)
+            if(schemaStringValue.length == 0){
+                schemaStringValue = processLiquidTemplateJsonProperties(nextLevelKeys[i], nextLevelValues[i], parentPath + '.' + nextLevelKeys[i], false, adaptions)
+            } else {
+                schemaStringValue = schemaStringValue + "," + processLiquidTemplateJsonProperties(nextLevelKeys[i], nextLevelValues[i], parentPath + '.' + nextLevelKeys[i], false, adaptions)
+
+            }
         }
         return schemaStringPrefix + schemaStringValue + schemaStringSuffix;
 
@@ -423,9 +454,11 @@ const processLiquidTemplateJsonProperties = function (schemaKey, schemaValues, p
         var removedDashedPathProperty = dashedPathArray.pop();
         var fullDashedPathString = dashedPathArray.join('_')
 
-        var schemaStringPrefix = JSON.stringify(schemaKey) + ":[{% for " + fullDashedPathString + " in " + dottedPathString + " %}{";
+        var schemaStringPrefix = JSON.stringify(schemaKey) + ":[{% for " + fullDashedPathString + " in " + dottedPathString + " %} {%- if forloop.length > 0 -%}{";
         var schemaStringValue = "";
-        var schemaStringSuffix = "}{% endfor %}]";
+        var schemaStringSuffix = "}{% unless forloop.last %},{% endunless -%}{%- endif -%}{% endfor %}]";
+
+
         
         for (var i = 0; i < nextLevelKeys.length; i++){
             if(schemaStringValue.length == 0){
@@ -433,7 +466,6 @@ const processLiquidTemplateJsonProperties = function (schemaKey, schemaValues, p
             } else{
                 schemaStringValue = schemaStringValue + "," + processLiquidTemplateJsonProperties(nextLevelKeys[i], nextLevelValues[i], 'arrayItem', true, adaptions)
             }
-            console.log(schemaStringValue)
         }   
         return schemaStringPrefix + schemaStringValue + schemaStringSuffix;
         
@@ -470,7 +502,6 @@ const processLiquidTemplateJsonProperties = function (schemaKey, schemaValues, p
             } else {
                 var schemaStringPrefix = JSON.stringify(schemaKey) + ":";
                 var schemaStringValue = JSON.stringify(schemaValues);
-                
                 return schemaStringPrefix + schemaStringValue;
             }
            
@@ -493,7 +524,7 @@ const processLiquidTemplateJsonProperties = function (schemaKey, schemaValues, p
                 }
     
                 var formattedSchemaStringValue = formattedSplitFormulaArray.join('{{');
-    
+                console.log(schemaStringPrefix + formattedSchemaStringValue)
                 return schemaStringPrefix + formattedSchemaStringValue;
     
             } else{
