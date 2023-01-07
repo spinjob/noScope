@@ -1,10 +1,12 @@
-import { Button, Card} from "@blueprintjs/core"
+import { Button, H1, H2, H3, H4, H5, Icon, Card, ButtonGroup} from "@blueprintjs/core"
 import React, { useCallback, useContext, useEffect, useState } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
 import Navigation from "../components/Navigation"
 import {useNavigate } from "react-router-dom";
 import SideBar from "../components/SideBar";
+import postmanLogo from "../assets/logo-postman.png"
+import openApiLogo from "../assets/logo-openapi.png"
 
 const Home = () => {
   const [userContext, setUserContext] = useContext(UserContext)
@@ -63,23 +65,29 @@ const Home = () => {
   ) : (
     <div style={{display: 'block', width: 500, padding: 30}}>
         <Navigation toggleSideBar={toggleSideBar} />
-        <SideBar isOpen={isSideBarOpen} setIsSideBarOpen={setIsSideBarOpen}/>
-        <body style={{padding: 30, align: 'left'}}>
-            <Card elevation="1">
-                <div className="user-details">
-                    <div>
-                    <p>
-                        Welcome&nbsp;
-                        <strong>
-                        {userContext.details.firstName}
-                        {userContext.details.lastName &&
-                            " " + userContext.details.lastName}
-                        </strong>!
-                    </p>
-                    </div>
-                </div>
-            </Card>
-        </body>   
+        <SideBar isOpen={isSideBarOpen} setIsSideBarOpen={setIsSideBarOpen}/> 
+            <div style={{width: '95vw', paddingLeft: 30}}>
+                 <H1 style={{paddingTop: 30}}>Import API</H1>
+                  <div style={{display: 'flex', paddingTop: 20}}>
+                    <Card style={{width: 400, height: 200}} interactive={true} elevation="1">
+                      <img src={openApiLogo} style={{width: 40, height: 40}} alt="logo"/>
+                      <H3 style={{paddingTop:20}}>Open API</H3> 
+                      <ButtonGroup style={{paddingTop: 20}}>
+                        <Button icon={'git-branch'} text='v3.0' intent={'primary'} outlined={true}/>
+                        <Button icon={'git-branch'} text='v2.0' intent={'primary'} outlined={true}/>
+                      </ButtonGroup>
+                    </Card>
+                    <div style={{width: 20}}></div>
+                    <Card style={{width: 400}} interactive={true} elevation="1">
+                      <img src={postmanLogo} alt="logo" style={{width: 40, height: 40}}/>
+                      <H3 style={{paddingTop:20}}>Postman Collection</H3>
+                      <ButtonGroup style={{paddingTop: 20}}>
+                        <Button icon={'git-branch'} text='v2' intent={'primary'} outlined={true}/>
+                      </ButtonGroup> 
+                    </Card>
+                  </div>
+          </div>
+        
    </div>     
     
   )

@@ -76,16 +76,18 @@ const MyProjects = () => {
       ) : !userContext.details ? (
         <Loader />
       ) : (
-        <div style={{display: 'block', width: 500, padding: 30}}>
+        <div style={{display: 'block', width: 500, padding: 50}}>
             <Navigation />
             <div>
                 <H1>My Applications</H1>
             </div>
-            <Divider />
             <div style={{alignItems: 'left', display: 'block', paddingTop: 20}}>
             <Button intent={'primary'}  text="NEW APPLICATION" onClick={() => navigate("/projects/new")}> </Button>
             </div>
-            <MyProjectsTable />
+            <div style={{paddingTop: 20}}>
+                <MyProjectsTable />
+            </div>
+           
        </div>     
         
       )

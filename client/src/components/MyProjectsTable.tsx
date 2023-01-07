@@ -69,9 +69,10 @@ export default function MyProjectsTable() {
       {/* <Table2 numRows={projects.length} getCellClipboardData={getCellData}>
         {columns}
       </Table2> */}
-       <div style={{paddingTop:20, width: '100%'}}>
+       <div style={{paddingTop:20}}>
         {projects.map((project, index) => (
-            <Card elevation={2}>
+        <div style={{paddingTop: 20}}>
+            <Card style={{width: '30vw'}} elevation={2}>
                 <div style={{display:"flex"}}>
                     <div style={{display:"block"}}>
                         <H3>
@@ -85,7 +86,7 @@ export default function MyProjectsTable() {
                     </div>
                 </div>
             </Card>
-
+            </div>
         ))}
       
       </div>
