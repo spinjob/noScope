@@ -128,7 +128,7 @@ const ManageProject = () => {
         <div>
             <Navigation />
             <div className="container" style={{padding:40}}>
-                <H1>Manage Application</H1>
+                <H1>Manage Partnership</H1>
             </div>
             <Divider />
             <H2 style={{paddingLeft:40, paddingTop: 40}}>{project.name}</H2>

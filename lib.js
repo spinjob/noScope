@@ -19,10 +19,22 @@ function processOpenApiV3(json, userId) {
     var pathValues = Object.values(json.paths);
     var parameterKeys = Object.keys(json.components.parameters);
     var parameterValues = Object.values(json.components.parameters);
-    var securitySchemeKeys = Object.keys(json.components.securitySchemes);
-    var securitySchemeValues = Object.values(json.components.securitySchemes);
-    var webhookKeys = Object.keys(json["x-webhooks"])
-    var webhookValues = Object.values(json["x-webhooks"])
+    var securitySchemeKeys = []
+    var securitySchemeValues = []
+
+    if(json.components.securitySchemes === undefined) {
+    } else {
+        securitySchemeKeys = Object.keys(json.components.securitySchemes);
+        securitySchemeValues = Object.values(json.components.securitySchemes);
+    }
+   
+    var webhookKeys = [];
+    var webhookValues = [];
+    if( json["x-webhooks"] === undefined) {
+    } else {
+        webhookKeys = Object.keys(json["x-webhooks"]);
+        webhookValues = Object.values(json["x-webhooks"])
+    }
 
     var interfaceUUID = crypto.randomUUID();
 
@@ -797,38 +809,64 @@ function processSecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_i
     //var securitySchemeAttributes = Object.values(securitySchemeValues);
 
     for (var i = 0; i < securitySchemeKeys.length; ++i) {
+        
         var securitySchemeUUID = crypto.randomUUID();
 
-        var flowKeys = Object.keys(securitySchemeValues[i].flows);
-        var flowValues = Object.values(securitySchemeValues[i].flows);
-        var flowsArray = [];
-    
-        for (var j = 0; j < flowKeys.length; ++j){
-    
-            var flow = {
-                "type": flowKeys[j],
-                "tokenUrl": flowValues[j].tokenUrl,
-                "scopes": flowValues[j].scopes,
-            }
+        if (securitySchemeValues[i].flows) {
 
-            flowsArray.push(flow);
-        }
+                var flowKeys = Object.keys(securitySchemeValues[i].flows);
+                var flowValues = Object.values(securitySchemeValues[i].flows);
+                var flowsArray = [];
+            
+                for (var j = 0; j < flowKeys.length; ++j){
+            
+                    var flow = {
+                        "type": flowKeys[j],
+                        "tokenUrl": flowValues[j].tokenUrl,
+                        "scopes": flowValues[j].scopes,
+                    }
 
-        InterfaceSecurityScheme.create({
-            uuid: securitySchemeUUID,
-            parent_interface_uuid: parent_interface_uuid,
-            name: securitySchemeKeys[i],
-            description: securitySchemeValues[i].description,
-            type: securitySchemeValues[i].type,
-            flows: flowsArray
-        },
-            function(err,interfaceSecurityScheme){
-                if (err) {
-                    console.log(err);
-                    return; 
+                    flowsArray.push(flow);
                 }
-                console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
-        });
+
+                InterfaceSecurityScheme.create({
+                    uuid: securitySchemeUUID,
+                    parent_interface_uuid: parent_interface_uuid,
+                    name: securitySchemeKeys[i],
+                    description: securitySchemeValues[i].description,
+                    type: securitySchemeValues[i].type,
+                    flows: flowsArray
+                },
+                    function(err,interfaceSecurityScheme){
+                        if (err) {
+                            console.log(err);
+                            return; 
+                        }
+                        console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
+                });
+
+        } else {
+
+            InterfaceSecurityScheme.create({
+                uuid: securitySchemeUUID,
+                parent_interface_uuid: parent_interface_uuid,
+                name: securitySchemeKeys[i],
+                description: securitySchemeValues[i].description ? securitySchemeValues[i].description : null,
+                type: securitySchemeValues[i].type,
+                flows: []
+            },
+                function(err,interfaceSecurityScheme){
+                    if (err) {
+                        console.log(err);
+                        return; 
+                    }
+                    console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
+            });
+
+
+        }
+       
+
     
     }
     
@@ -864,18 +902,32 @@ function processReferences(parameters){
             } else {
             //if this parameter isn't a top-level reference, we'll reach this statement. 
             if(parameters[i].type !== undefined && parameters[i].type == "object"){
+                console.log("object parameter schema");
+                console.log(parameters[i]);
                 //check if this schema is an object
                     var propertiesArray = [];
-                    var webhookPayload = parameters[i].properties.metadata.properties.payload
+                    var nestedReference = null
+                    if (parameters[i].properties.metadata !== undefined) {
+                        var webhookPayload = parameters[i].properties.metadata.properties.payload
                       
-                    var nestedReference = Object.keys(webhookPayload)
-                        .filter((key) => key.includes("$ref"))
-                        .reduce((obj, key) => {
-                            return Object.assign(obj, {
-                            "property": webhookPayload[key]
-                            });
-                    }, {});
-
+                        nestedReference = Object.keys(webhookPayload)
+                            .filter((key) => key.includes("$ref"))
+                            .reduce((obj, key) => {
+                                return Object.assign(obj, {
+                                "property": webhookPayload[key]
+                                });
+                        }, {});
+    
+                    } else {
+                        nestedReference = Object.keys(parameters[i].properties)
+                            .filter((key) => key.includes("$ref"))
+                            .reduce((obj, key) => {
+                                return Object.assign(obj, {
+                                "property": parameters[i].properties[key]
+                                });
+                        }, {});
+                    }
+                   
                      if (Object.keys(nestedReference).length > 0) {
                         //If this parameter is a reference (i.e. it wasn't filtered out), format it and add it to the references array.
                             nestedReference = nestedReference.property.split("/")[3]

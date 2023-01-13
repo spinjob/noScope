@@ -119,7 +119,7 @@ const Navigation = ({toggleSideBar}) => {
                 </NavbarHeading>
                     <NavbarDivider />
                         <Button icon="home" text="Home" minimal={true} onClick={homeHandler} />
-                        <Button icon="applications" text="My Apps"  minimal={true} onClick={projectHandler} />
+                        <Button icon="office" text="My Partnerships"  minimal={true} onClick={projectHandler} />
                         <Button icon="code" text="My APIs"  minimal={true} onClick={myInterfacesHandler}/>
                     <NavbarDivider />
                         <FileInput text={'Select an OpenAPI v3 file'} buttonText={'Upload'} onChange={uploadHandler}/>

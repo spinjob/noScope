@@ -105,8 +105,28 @@ const WorkflowStudio = () => {
         const stepUuid = uuidv4();
         const triggerUuid = uuidv4()
         console.log(action.parameterSchema)
-        
-        const workflowStep = {
+        console.log(action)
+
+        const workflowTrigger = {
+          uuid: triggerUuid,
+          sequence: 0,
+          type: 'httpWebhook',
+          parent_workflow_uuid: workflowUuid,
+          webhook: {
+              uuid: trigger.uuid,
+              name: trigger.name,
+              parameters: trigger.parameters,
+              method: trigger.method,
+              request_body: trigger.requestBody,
+              request_body2: trigger.requestBody2,
+              responses: trigger.responses,
+              schemaTree: generateSchemaTree('requestBody',trigger.requestBody2.schema)
+              ,schemaList: generateSchemaList(trigger.requestBody2.schema)
+          }
+      }
+
+        if (action.method == "get"){
+          const workflowStep = {
             uuid: stepUuid,
             sequence: 1,
             type: 'httpRequest',
@@ -117,28 +137,10 @@ const WorkflowStudio = () => {
                 method: action.method,
                 parent_interface_uuid: action.parent_interface_uuid,
                 parameterTree: generateParameterSchemaTree(action.parameterSchema),
-                request_body: action.requestBody,
-                request_body2: action.requestBody2,
-                schemaTree: generateSchemaTree('requestBody',action.requestBody2.schema),
-                schemaList: generateSchemaList(action.requestBody2.schema)
-            }
-        }
-
-        const workflowTrigger = {
-            uuid: triggerUuid,
-            sequence: 0,
-            type: 'httpWebhook',
-            parent_workflow_uuid: workflowUuid,
-            webhook: {
-                uuid: trigger.uuid,
-                name: trigger.name,
-                parameters: trigger.parameters,
-                method: trigger.method,
-                request_body: trigger.requestBody,
-                request_body2: trigger.requestBody2,
-                responses: trigger.responses,
-                schemaTree: generateSchemaTree('requestBody',trigger.requestBody2.schema)
-                ,schemaList: generateSchemaList(trigger.requestBody2.schema)
+                request_body: null,
+                request_body2: null,
+                schemaTree: null,
+                schemaList: null
             }
         }
 
@@ -175,6 +177,79 @@ const WorkflowStudio = () => {
             .catch(error => { 
                 console.log(error);
             })
+
+        } else {
+              const workflowStep = {
+                uuid: stepUuid,
+                sequence: 1,
+                type: 'httpRequest',
+                parent_workflow_uuid: workflowUuid,
+                request: {
+                    path: action.path,
+                    parameters: action.parameters,
+                    method: action.method,
+                    parent_interface_uuid: action.parent_interface_uuid,
+                    parameterTree: generateParameterSchemaTree(action.parameterSchema),
+                    request_body: action.requestBody,
+                    request_body2: action.requestBody2,
+                    schemaTree: generateSchemaTree('requestBody',action.requestBody2.schema),
+                    schemaList: generateSchemaList(action.requestBody2.schema)
+                }
+            }
+
+            const workflowTrigger = {
+                uuid: triggerUuid,
+                sequence: 0,
+                type: 'httpWebhook',
+                parent_workflow_uuid: workflowUuid,
+                webhook: {
+                    uuid: trigger.uuid,
+                    name: trigger.name,
+                    parameters: trigger.parameters,
+                    method: trigger.method,
+                    request_body: trigger.requestBody,
+                    request_body2: trigger.requestBody2,
+                    responses: trigger.responses,
+                    schemaTree: generateSchemaTree('requestBody',trigger.requestBody2.schema)
+                    ,schemaList: generateSchemaList(trigger.requestBody2.schema)
+                }
+            }
+
+            const workflow = {
+                uuid: workflowUuid,
+                name: workflowName,
+                parent_project_uuid: id,
+                steps: [workflowStep],
+                trigger: workflowTrigger,
+                created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                created_by: userContext.details._id,
+                nodes: nodes,
+                edges: edges,
+                status: "needs_mapping"
+            }
+
+            axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ id +"/workflows", workflow)
+                .then(response => {  
+                    axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+id, workflow)
+                    .then(response => {  
+
+                      console.log("Request Payload: " + workflow)
+
+                        navigate("/projects/" + id + "/workflows/"+workflowUuid,{state:{projectID: id, workflowID: workflowUuid}});
+                        console.log(workflow)
+                    })
+                    .catch(error => { 
+                        console.log(error);
+                    })
+
+
+                })
+                .catch(error => { 
+                    console.log(error);
+                })
+        } 
+
 
     }
 
