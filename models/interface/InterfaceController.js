@@ -30,8 +30,18 @@ router.post('/upload', verifyUser, (req,res, next) => {
               res.statusCode = 500
               res.send(err)
             } else {
-              var info = lib.processOpenApiV3(req.body, userIdString);
-              res.send({ success: true, info: info })
+
+              if(req.body.swagger == "2.0"){
+                console.log("SWAGGER 2.0")
+                var info = lib.processOpenApiV2(req.body, userIdString);
+                res.send({ success: true, info: info })
+
+              } else {
+                console.log("OPEN API 3.0")
+                var info = lib.processOpenApiV3(req.body, userIdString);
+                res.send({ success: true, info: info })
+              }
+            
             }
           })
         },

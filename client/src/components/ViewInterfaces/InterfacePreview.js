@@ -22,7 +22,10 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
         authenticationFlowAction = selectedInterfaceActions.filter(function (action) {
             // console.log(action.path)
             // console.log(selectedInterfaceSecurityScheme[0].flows[0].tokenUrl)
-            return action.path == selectedInterfaceSecurityScheme[0].flows[0].tokenUrl
+            if (selectedInterfaceSecurityScheme[0] && selectedInterfaceSecurityScheme[0].flows[0] && selectedInterfaceSecurityScheme[0].flows[0].tokenUrl) {
+                return action.path == selectedInterfaceSecurityScheme[0].flows[0].tokenUrl
+            }
+          
         })
     }
 
@@ -117,7 +120,40 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
         } else {
             return <p style={{color: 'grey'}}>No Authentication Credentials Documented</p>
         }
-}
+    }
+
+    const renderSecurityScheme = () => {
+        var securitySchemeType = selectedInterfaceSecurityScheme[0].type ? selectedInterfaceSecurityScheme[0].type : ""
+        var securitySchemeFlow = selectedInterfaceSecurityScheme[0].flows[0] ? selectedInterfaceSecurityScheme[0].flows[0] : null
+        if(securitySchemeFlow) {
+            var securitySchemeFlowType = securitySchemeFlow.type ? securitySchemeFlow.type : ""
+            var securitySchemeAuthorizationUrl = securitySchemeFlow.tokenUrl ? securitySchemeFlow.tokenUrl : ""
+            
+            return (
+                <div style={{paddingTop: 20}}>
+                    <Card elevation={2}>
+                        <H3>Security Scheme Documentation</H3>
+                        <H5>Type: {securitySchemeType}</H5>
+                        <p>FLow Type: {securitySchemeFlowType}</p>
+                        <p>Authorization URL: {securitySchemeAuthorizationUrl}</p>
+                        <ReactMarkdown>{selectedInterfaceSecurityScheme[0].description}</ReactMarkdown>
+                    </Card>
+                </div> 
+            )
+       } else {
+              return (
+                <div style={{paddingTop: 20}}>
+                     <Card elevation={2}>
+                          <H3>Security Scheme Documentation</H3>
+                          <H5>Type: {securitySchemeType}</H5>
+                          <ReactMarkdown>{selectedInterfaceSecurityScheme[0].description}</ReactMarkdown>
+                     </Card>
+                </div> 
+              )
+       }
+        
+       
+    }
 
     useEffect(() => {
         if(interfaceSelected && interfaceSelected.credentials) {
@@ -140,7 +176,7 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
             <H3>Select an API to Preview</H3>
          </div>
       ) 
-      : (
+      : selectedInterfaceSecurityScheme.length == 0 ? (
         <div>
             <div className="container" style={{padding:40}}>
             <H1>{interfaceSelected.name}</H1>
@@ -180,15 +216,6 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
                     {/* <ReactMarkdown>{interfaceSelected.description}</ReactMarkdown> */}
                 </div>
                 <div style={{paddingTop: 20}}>
-                    <Card elevation={2}>
-                        <H3>Security Scheme Documentation</H3>
-                        <H5>Type: {selectedInterfaceSecurityScheme[0].type}</H5>
-                        <p>FLow Type: {selectedInterfaceSecurityScheme[0].flows[0].type}</p>
-                        <p>Authorization URL: {selectedInterfaceSecurityScheme[0].flows[0].tokenUrl}</p>
-                        <ReactMarkdown>{selectedInterfaceSecurityScheme[0].description}</ReactMarkdown>
-                    </Card>
-                </div> 
-                <div style={{paddingTop: 20}}>
                         <Card elevation={2}>
                             <H3>Data Summary</H3>
                             <p># of Schema: {selectedInterfaceObjects.length}</p>
@@ -198,8 +225,66 @@ const InterfacePreview = ({interfaceSelected, selectedInterfaceSecurityScheme, s
                     </div>
             </div>
         </div>
-            
-
+      ) 
+      : (
+        <div>
+        <div className="container" style={{padding:40}}>
+        <H1>{interfaceSelected.name}</H1>
+            <div>
+                <div style={{paddingTop: 20}}>
+                    <Card elevation={2} style={{width: '100%'}}>
+                        <FormGroup disabled = {isEditHandler()} style={{width: '100%'}} label={<H3>API Settings</H3>} >
+                            <Card style={{paddingBottom: 40}}>
+                                <H5>Production</H5>
+                                <H6>Base URL: </H6>
+                                    <div style={{ width: '40%', flexDirection: 'row', alignItems: 'center', paddingBottom: 20}}>
+                                        <InputGroup style={{width: '100%'}} onChange={setProductionServer} defaultValue= {interfaceSelected.production_server} id="text-input" />
+                                    </div>
+                                    <H6>Authentication Configurations</H6>
+                                    <div style={{ width: '40%', flexDirection: 'row', alignItems: 'center'}}>
+                                        {renderAuthenticationInputs('production')}
+                                    </div>  
+                                <div/>
+                            </Card>
+                            <div style={{paddingTop: 20}}/>
+                            <Card style={{paddingBottom: 20}}>
+                                <H5>Sandbox</H5>
+                                    <H6>Base URL: </H6>
+                                        <div style={{ width: '40%', flexDirection: 'row', alignItems: 'center', paddingBottom: 20}}>
+                                            <InputGroup onChange={setSandboxServer} defaultValue= {interfaceSelected.sandbox_server} id="text-input" />
+                                        </div>
+                                        <H6>Authentication Configurations</H6>
+                                        <div style={{ width: '40%', flexDirection: 'row', alignItems: 'center'}}>
+                                            {renderAuthenticationInputs('sandbox')}
+                                        </div>  
+                                    <div/>
+                            </Card>
+                        </FormGroup>
+                        <Button text={"Save"} minimal={true} onClick={handleServerSave} outlined={true} d/>
+                    </Card>
+                </div>
+                {/* <ReactMarkdown>{interfaceSelected.description}</ReactMarkdown> */}
+            </div>
+            {renderSecurityScheme()}
+            {/* <div style={{paddingTop: 20}}>
+                <Card elevation={2}>
+                    <H3>Security Scheme Documentation</H3>
+                    <H5>Type: {selectedInterfaceSecurityScheme[0].type}</H5>
+                    <p>FLow Type: {selectedInterfaceSecurityScheme[0].flows[0].type}</p>
+                    <p>Authorization URL: {selectedInterfaceSecurityScheme[0].flows[0].tokenUrl}</p>
+                    <ReactMarkdown>{selectedInterfaceSecurityScheme[0].description}</ReactMarkdown>
+                </Card>
+            </div>  */}
+            <div style={{paddingTop: 20}}>
+                    <Card elevation={2}>
+                        <H3>Data Summary</H3>
+                        <p># of Schema: {selectedInterfaceObjects.length}</p>
+                        <p># of Actions: {selectedInterfaceActions.length}</p>
+                        <p># of Webhooks: {selectedInterfaceWebhooks.length}</p>
+                    </Card>
+                </div>
+        </div>
+        </div>
       )
 }
 

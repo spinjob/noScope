@@ -66,8 +66,6 @@ function processOpenApiV3(json, userId) {
 
 }
 
-
-
 function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMap) {
 
     for (var i = 0; i < schemaKeys.length; ++i) {
@@ -259,10 +257,6 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
         var path = pathKeys[i];
         var methods = Object.keys(pathValues[i]);
         var values = Object.values(pathValues[i]);
-        if(path == "/v1/auth/token"){
-            console.log('requestTokenAction')
-            console.log(pathValues[i])
-        }
 
         //iterate through Path Actions (i.e. HTTP Methods)
         for (var j = 0; j < methods.length; ++j){
@@ -750,7 +744,6 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
     return;
 }
 
-
 function processParameters(parameterKeys, parameterValues,parent_interface_uuid){
     var parameterNames = Object.keys(parameterKeys);
     var parameterAttributes = Object.values(parameterValues);
@@ -992,8 +985,7 @@ function processRequestParameterSchema(schemas, parameterMap, schemaMap){
     return parameters;
 }
 
-
-function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMap){
+function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMap, version){
    
     //We'll create two arrays to hold two types of schema we'll see at the top-level of a requestbody: a reference to a component.schema or an inline schema defined with a combination of references and inline properties.
     var schemaArray = []
@@ -1001,13 +993,18 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
 
     //This will build our two input arrays for their respective for loops.
         for (var i = 0; i < schemas.length; ++i) {
-            if(schemas[i]["$ref"] !== undefined){
+            console.log(schemas[i])
+            if(schemas[i] && schemas[i]["$ref"] !== undefined && version != 2){
                 schemaArray.push(schemas[i]["$ref"].split("/")[3]);
+            } else if (schemas[i] && schemas[i]["$ref"] !== undefined && version == 2) {
+                schemaArray.push(schemas[i]["$ref"].split("/")[2]);
             } else {
                 inlineSchemaProperties.push(schemas[i])
             }
         }
 
+    console.log("schemaArray")
+    console.log(schemaArray)
     //This is the object we'll use to build the schema for the requestBody.  We'll be using Object.assign to ensure any properties that are affected by both for loops are not updated and not overwritten.
     var inlineSchema = {}
 
@@ -1029,10 +1026,10 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
 
             var propertyKeys = Object.keys(schemaValues.properties);
             var propertyValues = Object.values(schemaValues.properties);
-            // console.log(schemaKey)
-            // console.log(propertyKeys)
-            // console.log(propertyValues)
-            var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, schemaKey, schemaMapCopy);
+
+            //Let's process the properties for the schema.
+
+            var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, schemaKey, schemaMapCopy, true, version);
             // schemaObject = {
             //     "schemaName": schemaKey,
             //     "type": schemaValues.type,
@@ -1055,10 +1052,10 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
     //This for loop will not assume a reference and will build out the schema object from the inline properties.
     for (var i = 0; i < inlineSchemaProperties.length; ++i){
 
-        if(inlineSchemaProperties[i].properties){
+        if(inlineSchemaProperties[i] && inlineSchemaProperties[i].properties){
             var propertyKeys = Object.keys(inlineSchemaProperties[i].properties);
             var propertyValues = Object.values(inlineSchemaProperties[i].properties);
-            var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, null, schemaMap);
+            var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, null, schemaMap, true, version);
             var schemaPropertyKeys = Object.keys(schemaProperties);
             var schemaPropertyValues = Object.values(schemaProperties);
 
@@ -1078,7 +1075,7 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
 
 }
 
-function processSchemaProperties(propertyKeys, propertyValues, parentSchema, schemaMap, debug){
+function processSchemaProperties(propertyKeys, propertyValues, parentSchema, schemaMap, debug, version){
 
     var schemaProperties = {};
 
@@ -1087,6 +1084,9 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
         for (var i = 0; i < propertyKeys.length; ++i){
                 var propertyKey = propertyKeys[i];
                 var propertyValue = propertyValues[i];
+
+                console.log("propertyKey: " + propertyKey)
+                console.log("propertyValue: " + JSON.stringify(propertyValue))
 
                 //Check for infinite loop and return an empty object if one is detected.
                 if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers"){
@@ -1101,10 +1101,10 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     var propertySchemaMapValues = propertySchemaMap[propertyReference];
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertySchemaMapValues};
 
-                    if(propertySchemaMapValues.properties){
+                    if(propertySchemaMapValues && propertySchemaMapValues.properties){
                         var nestedPropertyKeys = Object.keys(propertySchemaMapValues.properties);
                         var nestedPropertyValues = Object.values(propertySchemaMapValues.properties);
-                        var propertyProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap);
+                        var propertyProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap, false, version);
                         propertyObject[propertyKey].properties = {...propertyObject[propertyKey].properties, ...propertyProperties}
 
                         //schemaProperties = Object.assign(schemaProperties, propertyObject);
@@ -1123,7 +1123,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     var propertyObject = {};
                     var propertyKeys = Object.keys(propertyValue.properties);
                     var propertyValues = Object.values(propertyValue.properties);
-                    var propertyProperties = processSchemaProperties(propertyKeys, propertyValues, propertyKey, schemaMap);
+                    var propertyProperties = processSchemaProperties(propertyKeys, propertyValues, propertyKey, schemaMap, false, version);
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
                     propertyObject[propertyKey].properties = {...propertyObject[propertyKey].properties, ...propertyProperties}; 
                     //schemaProperties = Object.assign(schemaProperties, propertyObject);
@@ -1141,25 +1141,25 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                         // console.log("Property Key: " + propertyKey)
                         // console.log("Property Value: ")
                         // console.log(JSON.parse(JSON.stringify(propertyValue)))
-
-                        var propertyReference = propertyValue.items['$ref'].split("/")[3];
+                        var propertyReference = ""
+                        if(version == 2){
+                            propertyReference = propertyValue.items['$ref'].split("/")[2];
+                        } else {
+                            propertyReference = propertyValue.items['$ref'].split("/")[3];
+                        }
                         var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
                         var propertySchemaMapValues = propertySchemaMap[propertyReference];
-                        // console.log("Property Map Match: ")
-                        // console.log(JSON.parse(JSON.stringify(propertySchemaMapValues)))
+                        console.log("Property Map Match: ")
+                        console.log(propertyReference)
+                        console.log(propertySchemaMapValues)
                         
                         if(propertySchemaMapValues.properties){
-                            // console.log("Item Array Schema Properties Detected: ")
+
                             var itemArraySchemaProperties = JSON.parse(JSON.stringify(propertySchemaMapValues.properties));
                             var itemArraySchemaPropertyKeys = Object.keys(itemArraySchemaProperties);
                             var itemArraySchemaPropertyValues = Object.values(itemArraySchemaProperties);
 
-                            // console.log("Item Array Schema Property Keys: ")
-                            // console.log(itemArraySchemaPropertyKeys)
-                            // console.log("Item Array Schema Property Values: ")
-                            // console.log(itemArraySchemaPropertyValues)
-
-                            var itemArraySchemaPropertyMap = processSchemaProperties(itemArraySchemaPropertyKeys, itemArraySchemaPropertyValues, propertyReference, propertySchemaMap, true);
+                            var itemArraySchemaPropertyMap = processSchemaProperties(itemArraySchemaPropertyKeys, itemArraySchemaPropertyValues, propertyReference, propertySchemaMap, false, version);
                             
                             var itemsSchemaObject = {
                                     "type": propertySchemaMapValues.type ? propertySchemaMapValues.type : null,
@@ -1169,8 +1169,9 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                             }
                             propertyObject[propertyKey].items = itemsSchemaObject;
                             schemaProperties = Object.assign(schemaProperties, propertyObject);
-                            // console.log("Array Property Processed:")
-                            // console.log(JSON.parse(JSON.stringify(schemaProperties)))
+
+                            console.log("Array Property Processed:")
+                            console.log(JSON.parse(JSON.stringify(schemaProperties)))
 
                         } else {
                             var itemsSchemaObject = propertySchemaMapValues
@@ -1535,4 +1536,353 @@ function retrieveInterfaces(userId){
 
 }
 
-module.exports = { processOpenApiV3, retrieveInterfaces, runWorkflow };
+function processOpenApiV2(json, userId) {
+
+    var schemaKeys = Object.keys(json.definitions);
+    var schemaValues = Object.values(json.definitions);
+    var pathKeys = Object.keys(json.paths);
+    var pathValues = Object.values(json.paths);
+    var securitySchemeKeys = []
+    var securitySchemeValues = []
+    var server = json.host;
+
+    if(json.securityDefinitions === undefined) {
+    } else {
+        securitySchemeKeys = Object.keys(json.securityDefinitions);
+        securitySchemeValues = Object.values(json.securityDefinitions);
+    }
+
+    var interfaceUUID = crypto.randomUUID();
+
+        Interface.create({
+            uuid: interfaceUUID,
+            name: json.info.title,
+            description: json.info.description, 
+            version: json.info.version,
+            created_by: userId,
+            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+            updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+            deleted_at: null,
+            production_server: server,
+            sandbox_server: server
+        },
+            function(err,interface){
+                if (err) {
+                    console.log(err);
+                    return; 
+                }
+                console.log("Interface Created with ID: " + interface.uuid);
+                processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions);
+                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions);
+                processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
+                return;
+        });
+
+}
+
+function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap) {
+    //iterate through paths
+    for (var i = 0; i < pathKeys.length; ++i) {
+
+        var path = pathKeys[i];
+        var methods = Object.keys(pathValues[i]);
+        var values = Object.values(pathValues[i]);
+
+        //iterate through Path Actions (i.e. HTTP Methods)
+        for (var j = 0; j < methods.length; ++j){
+            var actionUUID = crypto.randomUUID();
+
+            //Adapt the Path+Method (i.e. Action) Responses into an Array
+            var responseKeys = Object.keys(values[j].responses);
+            var responseValues = Object.values(values[j].responses);
+            var responsesArray = [];
+            var responseSchemaArray = [];
+
+            var actionParameters = values[j].parameters.filter(function (parameter) {
+                return parameter.in == "header" || parameter.in == "path";
+            });
+
+            var actionRequestBody = values[j].parameters.filter(function (parameter) {
+                return parameter.in == "body";
+            });
+        
+            for (var k = 0; k < responseKeys.length; ++k){
+                if (responseValues[k].content !== undefined) {
+                
+                    var response = {
+                        "http_status_code": responseKeys[k],
+                        "content_type": "json",
+                        "schema": processReferences([responseValues[k].content["application/json"].schema])
+                    }
+
+                    responsesArray.push(response);
+        
+                } else {
+                       
+                        var response = {
+                            "http_status_code": responseKeys[k],
+                            "content_type": "json",
+                            "schema": []
+                        }
+                        responsesArray.push(response);
+        
+                }
+                
+             }
+              
+           // Handle cases where Request Body and/or Parameters are undefined
+           // Request Body schema is defined in the parameters array.
+
+            if (actionRequestBody.length == 0 && actionParameters.length == 0) {
+
+                // No Request Body or Parameters for the Action (i.e. GET request without ID in path)
+                
+                InterfaceAction.create({
+                    uuid: actionUUID,
+                    parent_interface_uuid: parent_interface_uuid,
+                    name: values[j].operationId,
+                    path: path,
+                    method: methods[j],
+                    parameters: null,
+                    requestBody: null,
+                    responses: responsesArray
+                },
+                    function(err,interfaceAction){
+                        if (err) {
+                            console.log()
+                            console.log(err);
+                            console.log(path + " both requestBody and parameters are undefined (ln 158)");
+                            return; 
+                        }
+                        else {
+                            console.log(interfaceAction)
+                        }
+                        
+                });  
+
+
+            } else if (actionRequestBody.length == 0 && actionParameters.length > 0) {
+
+                var parameters = processOpenApiV2RequestParameterSchema(actionParameters, schemaMap);
+             // No Request Body but Parameters exist for the Action (i.e. GET request with an ID in the path or a documented Header parameter) 
+                
+                InterfaceAction.create({
+                    uuid: actionUUID,
+                    parent_interface_uuid: parent_interface_uuid,
+                    name: values[j].operationId,
+                    path: path,
+                    method: methods[j],
+                    parameterSchema: parameters,
+                    requestBody: null,
+                    responses: responsesArray
+                },
+                    function(err,interfaceAction){
+                        if (err) {
+                            console.log(err);
+                            console.log(path + " requestBody is undefined but parameters exist (ln 366)");
+                            return; 
+                        } else {
+                            console.log(interfaceAction)
+                        }
+                        
+                });  
+            } else if (actionRequestBody.length > 0 && actionParameters.length > 0 ) {
+
+                // Request Body and Parameters exist for the Action (i.e. POST, PUT, PATCH)
+                    var parameters = processOpenApiV2RequestParameterSchema(actionParameters, schemaMap);
+    
+                    for (l = 0; l < actionRequestBody.length; ++l) {
+                    
+                        var requestBodyKeys = Object.keys(actionRequestBody[l].schema);
+                        var requestBody = actionRequestBody[l].schema;
+                        var requestBodyArray = [];
+                    
+                        if(requestBodyKeys.includes("$ref") == true) {
+                            if(requestBodyKeys.length == 1) {
+                                requestBodyArray.push(requestBody);
+                            } else {
+                                for (var m = 0; m < requestBodyKeys.length; ++m){
+                                    requestBodyArray.push(requestBody[m]);
+                                }
+                            }
+
+                            InterfaceAction.create({
+                                uuid: actionUUID,
+                                parent_interface_uuid: parent_interface_uuid,
+                                name: values[j].operationId,
+                                path: path,
+                                method: methods[j],
+                                parameterSchema: parameters,
+                                requestBody2: {
+                                    type: "json",
+                                    required: actionRequestBody[l].required,
+                                     schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap, 2)
+                                },
+                                responses: responsesArray
+                            },
+                                function(err,interfaceAction){
+                                    if (err) {
+                                        console.log(err);
+                                        console.log(path + " requestBody is undefined but parameters exist (ln 366)")
+                                        return; 
+                                    } else {
+                                        console.log(interfaceAction)
+                                    }
+                                    //  console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                    //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                    
+                            });  
+
+                        } else{
+                            console.log('OpenAPIV2 Request Body Schema is not a reference:')
+                            console.log(actionRequestBody[i])
+                        }
+
+                    } 
+
+            }  else if (actionRequestBody.length > 0 && actionParameters.length == 0 ) {
+                // Request Body and Parameters exist for the Action (i.e. POST, PUT, PATCH)
+               
+                for (n = 0; n < actionRequestBody.length; n++) {
+                    var requestBodyKeys = Object.keys(actionRequestBody[n].schema);
+                    var requestBody = actionRequestBody[n].schema;
+                    var requestBodyArray = [];
+                
+                    if(requestBodyKeys.includes("$ref") == true) {
+                        for (var o = 0; o < requestBodyKeys.length; ++o){
+                            requestBodyArray.push(requestBody[o]);
+                        }
+                        InterfaceAction.create({
+                            uuid: actionUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: values[j].operationId,
+                            path: path,
+                            method: methods[j],
+                            parameterSchema: null,
+                            requestBody2: {
+                                type: "json",
+                                required: actionRequestBody[n].required,
+                                schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap, 2)
+                            },
+                            responses: responsesArray
+                        },
+                            function(err,interfaceAction){
+                                if (err) {
+                                    console.log(err);
+                                    console.log(path + " requestBody is undefined but parameters exist (ln 366)")
+                                    return; 
+                                } else {
+                                    console.log(interfaceAction)
+                                }
+                                //  console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                
+                        });  
+
+                    } else{
+                        console.log('OpenAPIV2 Request Body Schema is not a reference:')
+                        console.log(actionRequestBody[i])
+                    }
+
+                } 
+               
+            }
+
+
+        }        
+    }
+
+    return;
+}
+
+function processOpenApiV2RequestParameterSchema(schemas,schemaMap){
+
+    var parameters = {
+        "header": {},
+        "path": {}
+    };
+
+    for (var i=0; i < schemas.length; ++i){
+        if(schemas[i].schema){
+            if(schemas[i].schema["$ref"] !== undefined){
+                var schemaMapCopy = JSON.parse(JSON.stringify(schemaMap));
+                var parameterSchema = schemaMapCopy[schemas[i].schema["$ref"].split("/")[2]]
+                parameters[schemas[i].in][schemas[i].name] = schemas[i];
+                parameters[schemas[i].in][schemas[i].name].schema = parameterSchema;
+
+            } else{
+                parameters[schemas[i].in][schemas[i].name] = schemas[i];
+            }
+        }
+        else {
+            parameters[schemas[i].in][schemas[i].name] = schemas[i];
+            parameters[schemas[i].in][schemas[i].name].schema = {type: schemas[i].type, format: schemas[i].format ? schemas[i].format : null, description: schemas[i].description ? schemas[i].description : null};
+        }
+    }
+
+    return parameters;
+}
+
+function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_interface_uuid){
+
+    for (var i = 0; i < securitySchemeKeys.length; ++i) {
+        
+        var securitySchemeUUID = crypto.randomUUID();
+
+        if (securitySchemeValues[i].flow) {
+
+                var flowsArray = [];
+               
+                var flow = {
+                    "type": securitySchemeValues[i].type,
+                    "tokenUrl": securitySchemeValues[i].tokenUrl,
+                    "scopes": securitySchemeValues[i].scopes,
+                }
+
+                flowsArray.push(flow);
+        
+                InterfaceSecurityScheme.create({
+                    uuid: securitySchemeUUID,
+                    parent_interface_uuid: parent_interface_uuid,
+                    name: securitySchemeKeys[i],
+                    description: securitySchemeValues[i].description,
+                    type: securitySchemeValues[i].type,
+                    flows: flowsArray
+                },
+                    function(err,interfaceSecurityScheme){
+                        if (err) {
+                            console.log(err);
+                            return; 
+                        }
+                        console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
+                });
+
+        } else {
+
+            InterfaceSecurityScheme.create({
+                uuid: securitySchemeUUID,
+                parent_interface_uuid: parent_interface_uuid,
+                name: securitySchemeKeys[i],
+                description: securitySchemeValues[i].description ? securitySchemeValues[i].description : null,
+                type: securitySchemeValues[i].type,
+                flows: []
+            },
+                function(err,interfaceSecurityScheme){
+                    if (err) {
+                        console.log(err);
+                        return; 
+                    }
+                    console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
+            });
+
+
+        }
+       
+
+    
+    }
+    
+    return;  
+}
+
+module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow };
