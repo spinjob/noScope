@@ -1,4 +1,4 @@
-import { Button, H1, H2, H3, H4, H5, Icon, Card, ButtonGroup} from "@blueprintjs/core"
+import { Button, H1, H2, H3, H4, H5, Icon, Tag, Card, ButtonGroup} from "@blueprintjs/core"
 import React, { useCallback, useContext, useEffect, useState } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
@@ -47,16 +47,10 @@ const Home = () => {
     // fetch only when user details are not present
     if (!userContext.details) {
       fetchUserDetails()
+    } else {
+      console.log(userContext)
     }
   }, [userContext.details, fetchUserDetails])
-
-  const newProjectHandler = () => {
-    navigate('/projects/new');
-  }
-
-  const toggleSideBar = () => {
-    setIsSideBarOpen(!isSideBarOpen);
-  }
 
   return userContext.details === null ? (
     "Error Loading User details"
@@ -64,27 +58,42 @@ const Home = () => {
     <Loader />
   ) : (
     <div style={{display: 'block', width: 500, padding: 30}}>
-        <Navigation toggleSideBar={toggleSideBar} />
-        <SideBar isOpen={isSideBarOpen} setIsSideBarOpen={setIsSideBarOpen}/> 
+        <Navigation />
             <div style={{width: '95vw', paddingLeft: 30}}>
-                 <H1 style={{paddingTop: 30}}>Import API</H1>
+                 <H1 style={{paddingTop: 30}}>Welcome, {userContext.details.firstName}</H1>
+                 <div style={{paddingTop: 30}}>
+                  <H2>Getting Started</H2>
                   <div style={{display: 'flex', paddingTop: 20}}>
-                    <Card style={{width: 400, height: 200}} interactive={true} elevation="1">
-                      <img src={openApiLogo} style={{width: 40, height: 40}} alt="logo"/>
-                      <H3 style={{paddingTop:20}}>Open API</H3> 
-                      <ButtonGroup style={{paddingTop: 20}}>
-                        <Button icon={'git-branch'} text='v3.0' intent={'primary'} outlined={true}/>
-                        <Button icon={'git-branch'} text='v2.0' intent={'primary'} outlined={true}/>
-                      </ButtonGroup>
+                    <Card style={{width: 400}} interactive={true} elevation="1">
+                        {/* <img src={openApiLogo} style={{width: 40, height: 40}} alt="logo"/> */}
+                        <Icon icon="import" iconSize={30} style={{color:'#004D46'}}/>
+                        <H3 style={{paddingTop:20,paddingBottom: 20}}>1. Import Open API Spec</H3> 
+                        <p>Supported Open API versions:</p>
+                        <div style={{display: 'flex', paddingTop: 2}}>
+                          <Tag large={true} leftIcon={'git-branch'} minimal={true} key={'v2'}>v2.X</Tag>
+                          <div style={{width: 5}}></div>
+                          <Tag large={true} leftIcon={'git-branch'} minimal={true} key={'v3'}>v3.X</Tag>
+                        </div>
+                    </Card>
+                    <div style={{width: 20}}></div>
+                    <Card style={{width: 400}} interactive={true} onClick={() => navigate('/projects/new')} elevation="1">
+                      <Icon icon="add-location" iconSize={30} style={{color:'#007067'}}/>
+                      <H3 style={{paddingTop:20, paddingBottom: 20}}>2. Create a new Partnership</H3>
+                      <p>Start a technical partnership in Scope to store shared documentation and build workflows between your APIs.</p>
                     </Card>
                     <div style={{width: 20}}></div>
                     <Card style={{width: 400}} interactive={true} elevation="1">
-                      <img src={postmanLogo} alt="logo" style={{width: 40, height: 40}}/>
-                      <H3 style={{paddingTop:20}}>Postman Collection</H3>
-                      <ButtonGroup style={{paddingTop: 20}}>
-                        <Button icon={'git-branch'} text='v2' intent={'primary'} outlined={true}/>
-                      </ButtonGroup> 
+                      <Icon icon="flow-branch" iconSize={30} style={{color:'#00A396'}}/>
+                      <H3 style={{paddingTop:20, paddingBottom: 20}}>3. Create a Workflow</H3>
+                      <p>Design your workflow by selecting a webhook trigger and a series of API requests for Scope to perform.</p>
                     </Card>
+                    <div style={{width: 20}}></div>
+                    <Card style={{width: 400}} interactive={true} elevation="1">
+                      <Icon icon="many-to-one" iconSize={30} style={{color:'#13C9BA'}}/>
+                      <H3 style={{paddingTop:20, paddingBottom: 20}}>4. Map your data & deploy</H3>
+                      <p>Between each step, there will be data to process, map, or ignore. Map the required data for each API request and go live with your workflow.</p>
+                    </Card>
+                  </div>
                   </div>
           </div>
         

@@ -50,14 +50,13 @@ function CreateProjectForm({ params, setParams }) {
       
     return (
         <div className="create-project-form-container">
-          <FormGroup label="Project Name" labelFor="text-input" labelInfo="(required)">
+          <FormGroup label="Partnership Name" labelFor="text-input" labelInfo="(required)">
               <InputGroup 
               id="text-input" 
-              placeholder="Project Name" 
+              placeholder="Partnership Name" 
               onChange={e => setProjectName(e.target.value)}
               value={projectName} />
             </FormGroup>
-          
           <div className="select-primary-api">
             <FormGroup
               intent={primaryApiIntent}

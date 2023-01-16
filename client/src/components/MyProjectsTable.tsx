@@ -81,7 +81,7 @@ export default function MyProjectsTable() {
                     </div>
                     <div style={{display:"block", marginLeft:"auto"}}>
                          <Button intent={'primary'} minimal={true} outlined={true} onClick={() => navigate("/projects/" + project[2])} >
-                                    View Details
+                                    Manage
                           </Button>
                     </div>
                 </div>
