@@ -20,6 +20,7 @@
     "lodash.set": "^4.3.2",
     "node-sass": "^7.0.3",
     "openai": "^3.1.0",
+    "pdfmake": "^0.2.7",
     "prettier": "^2.8.1",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.0.1",

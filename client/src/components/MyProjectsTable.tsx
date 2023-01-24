@@ -30,6 +30,7 @@ export default function MyProjectsTable() {
       axios.get(process.env.REACT_APP_API_ENDPOINT + "/projects")
       .then(response => {
           setProjects(formatProjectData(response.data));
+          console.log(response.data)
           return formatProjectData(response.data)
       }
       )

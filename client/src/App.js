@@ -16,6 +16,8 @@ import MyInterfaces from "./pages/MyInterfaces"
 import logoCopy from "./assets/copy_logo.png"
 import logoIcon from "./assets/logo_web.png"
 import fullLogo from "./assets/full_logo@1x.png"
+import MyOrganization from './pages/MyOrganization'
+import ManageOrganizationCustomers from "./pages/ManageOrganizationCustomers"
 
 
 function App() {
@@ -91,6 +93,9 @@ function App() {
       <Route path="/projects/:id/workflows/:workflowId" exact={true} element={<ManageWorkflow />} />
       <Route path="/projects/:id/workflows/:workflowId/mapper" exact={true} element={<SchemaMapper />} />
       <Route path="/interfaces" exact={true} element={<MyInterfaces />} />
+      <Route path="/organization" exact={true} element={<MyOrganization />} />
+      <Route path="/customers" exact={true} element={<ManageOrganizationCustomers />} />
+
     </Routes> 
   ) : (
     <Loader />

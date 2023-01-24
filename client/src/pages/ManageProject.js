@@ -1,4 +1,4 @@
-import { Card, Divider, Button, H1, H2, H3} from "@blueprintjs/core"
+import { Card, Divider, Button, H1, H2, H3, Tabs, Tab} from "@blueprintjs/core"
 import React, { useContext, useState, useCallback, useEffect } from "react"
 import { UserContext } from "../context/UserContext"
 import Loader from "../components/Loader"
@@ -7,6 +7,7 @@ import axios from 'axios';
 import ProjectWorkflows from "../components/ViewProject/ProjectWorkflows"
 import ProjectInterfaces from "../components/ViewProject/ProjectInterfaces"
 import ProjectConfigurations from "../components/ViewProject/ProjectConfigurations"
+import ManagePartnershipCustomers from "../components/ViewCustomers/ManagePartnershipCustomers"
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import "../styles/workflowStudioStyles.css";
 
@@ -17,6 +18,7 @@ const ManageProject = () => {
     const [interfaces, setInterfaces] = useState([]);
     const [userContext, setUserContext] = useContext(UserContext)
     const [isEditing, setIsEditing] = useState(false);
+    const [navBarTabId, setNavBarTabId] = useState("overview");
     const navigate = useNavigate();
 
     let { id } = useParams();
@@ -80,6 +82,42 @@ const ManageProject = () => {
       })
   });
 
+  const handleTabChange = (e) => {
+        setNavBarTabId(e);
+    }
+
+  const renderWorkflowPanel = () => {
+    return (
+         <div class="ManageProjectParent" >
+              <div class="ManageProjectChild1">
+                <Card elevation={3}>
+                 <H3>APIs</H3>
+                    <ProjectInterfaces project={project}/>
+                </Card> 
+                <div style={{paddingTop: 30}}/>
+                <Card elevation={3}>
+                  <div class="ManageProjectConfigurationParent">
+                    <div class="ManageProjectConfigurationChild1">
+                        <H3>Partnership Configurations</H3>
+                    </div>
+                    <div class="ManageProjectConfigurationChild2">
+                       <Button icon={handleEditIcon()} onClick={handleEdit} minimal={true}/>
+                    </div>
+                  </div>
+                    <ProjectConfigurations interfaces={project.interfaces} project={project} isEditing={isEditing} /> 
+                </Card>  
+                </div>
+                <div class="ManageProjectChild2">
+                <Card elevation={3}>
+                    <H3>Workflows</H3>
+                        <Button intent={'primary'} text="New Workflow" onClick={() => navigate("/projects/"+project.uuid+"/workflows/new")}> </Button>
+                        <ProjectWorkflows projectId={id} />
+                  </Card>
+                </div>
+          </div>
+    )
+  }
+
     const handleEdit = () => {
       console.log(isEditing)
         if (isEditing == true) {
@@ -132,32 +170,14 @@ const ManageProject = () => {
             </div>
             <Divider />
             <H2 style={{paddingLeft:40, paddingTop: 40}}>{project.name}</H2>
-            <div class="ManageProjectParent" >
-                <div class="ManageProjectChild1">
-                <Card elevation={3}>
-                 <H3>APIs</H3>
-                    <ProjectInterfaces project={project}/>
-                </Card> 
-                <div style={{paddingTop: 30}}/>
-                <Card elevation={3}>
-                  <div class="ManageProjectConfigurationParent">
-                    <div class="ManageProjectConfigurationChild1">
-                        <H3>Configurations</H3>
-                    </div>
-                    <div class="ManageProjectConfigurationChild2">
-                       <Button icon={handleEditIcon()} onClick={handleEdit} minimal={true}/>
-                    </div>
-                  </div>
-                    <ProjectConfigurations interfaces={project.interfaces} project={project} isEditing={isEditing} /> 
-                </Card>  
-                </div>
-                <div class="ManageProjectChild2">
-                <Card elevation={3}>
-                    <H3>Workflows</H3>
-                        <Button intent={'primary'} text="New Workflow" onClick={() => navigate("/projects/"+project.uuid+"/workflows/new")}> </Button>
-                        <ProjectWorkflows projectId={id} />
-                  </Card>
-                </div>
+            <div style={{paddingLeft: 40, paddingTop: 20}}/>
+           <div style={{paddingLeft: 40}}>
+              <Tabs onChange={handleTabChange} selectedTabId={navBarTabId} animate={true}>
+                  <Tab id="overview" title="Overview" panel={renderWorkflowPanel()} />
+                  <Tab id="customers" title="Customers" panel={<ManagePartnershipCustomers/>} />
+                  <Tab id="onboarding" title="Onboarding" panel={"test"} />
+                  <Tab id="support" title="Support" panel={"test"} />
+              </Tabs>
             </div>
         </div>
       )

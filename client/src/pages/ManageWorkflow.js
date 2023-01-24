@@ -224,7 +224,10 @@ const ManageWorkflow = () => {
           
             <div class="ManageProjectParent" >
                 <div class="ManageProjectChild1">
-                <H3 style={{padding:15}}>Workflow Diagram</H3>   
+                <H3 style={{padding:15}}>Workflow Overview</H3> 
+                <div style={{paddingLeft:15, paddingBottom: 20}}>
+                  <Button outlined={true} style={{height: 5}} intent="primary" icon="manual" text="Generate Documentation" />
+                </div>
                 <Card elevation={3} style={{display: 'flex', alignItems: 'center', margin: 10, height: "90vh"}}>
                     <ReactFlow
                         nodes={workflow.nodes}

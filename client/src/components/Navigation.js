@@ -105,6 +105,14 @@ const Navigation = ({toggleSideBar}) => {
     navigate("/interfaces");
   }
 
+  const customerHandler = () => {
+    navigate("/customers");
+  }
+
+  const organizationHandler = () => {
+    navigate("/organization");
+  }
+
   return userContext.details === null ? (
     "Error Loading User details"
   ) : !userContext.details ? (
@@ -119,12 +127,14 @@ const Navigation = ({toggleSideBar}) => {
                 </NavbarHeading>
                     <NavbarDivider />
                         <Button icon="home" text="Home" minimal={true} onClick={homeHandler} />
+                        <Button icon="people" text="My Customers"  minimal={true} onClick={customerHandler} />
                         <Button icon="office" text="My Partnerships"  minimal={true} onClick={projectHandler} />
                         <Button icon="code" text="My APIs"  minimal={true} onClick={myInterfacesHandler}/>
                     <NavbarDivider />
                         <FileInput text={'Choose an API Spec'} buttonText={'Upload'} onChange={uploadHandler}/>
             </NavbarGroup>
             <NavbarGroup align={'right'}>
+                <Button icon="desktop" text="Admin"  minimal={true} onClick={organizationHandler} />
                 <Button text="Logout" onClick={logoutHandler} minimal intent="primary"/>
             </NavbarGroup>
         </Navbar>

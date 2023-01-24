@@ -17,13 +17,13 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    organization: {
+        type: String,
+        default: ""
+    },
     authStrategy: {
         type: String,
         default: "local"
-    },
-    points: {
-        type: Number,
-        default: 50
     },
     refreshToken: {
         type: [Session]
