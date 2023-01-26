@@ -123,7 +123,8 @@ const Navigation = ({toggleSideBar}) => {
             <NavbarGroup align={'left'}>
                 <Button icon={'menu'} onClick={toggleSideBar} minimal={true} paddingRight={3}/>
                 <NavbarHeading>
-                    <img src={logoCopy} alt="logo" style={{height: 25, paddingLeft: 10, paddingRight: 10}}/>
+                    {/* <img src={logoCopy} alt="logo" style={{height: 25, paddingLeft: 10, paddingRight: 10}}/> */}
+                 Tandem
                 </NavbarHeading>
                     <NavbarDivider />
                         <Button icon="home" text="Home" minimal={true} onClick={homeHandler} />

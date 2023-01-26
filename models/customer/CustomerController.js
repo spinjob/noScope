@@ -12,6 +12,7 @@ router.post('/', function(req,res) {
         uuid: req.body.uuid,
         name: req.body.name,
         email: req.body.email,
+        key: req.body.key,
         notes: req.body.notes,
         configurations: req.body.configurations,
         parent_organizations: req.body.parent_organizations,

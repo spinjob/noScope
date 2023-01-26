@@ -1,5 +1,5 @@
 import { Button, Card, H3, Icon, FormGroup, InputGroup, TextArea } from "@blueprintjs/core"
-import React, { useCallback, useContext, useEffect, useState} from "react"
+import React, { useCallback, useContext, useEffect, useRef, useState} from "react"
 import { UserContext } from "../../context/UserContext"
 import Loader from "../Loader"
 import { useNavigate, useParams} from "react-router-dom";
@@ -13,8 +13,9 @@ const CreateCustomer = ({toggleOverlay}) => {
     const [customerName, setCustomerName] = useState('')
     const [customerKey, setCustomerKey] = useState('')
     const [customerNotes, setCustomerNotes] = useState('')
+    const [customerEmail, setCustomerEmail] = useState('')
     const [customerConfigurations, setCustomerConfigurations] = useState({})
-
+    
     const navigate = useNavigate();
     
     const updateConfigurations = (configurations) => {
@@ -26,13 +27,15 @@ const CreateCustomer = ({toggleOverlay}) => {
         axios.post(process.env.REACT_APP_API_ENDPOINT + "/customers", 
         {
             name: customerName, 
-            key: customerKey, 
+            key: customerKey,
             notes: customerNotes,
+            email: customerEmail,
             configurations: customerConfigurations,
             parent_organizations: [userContext.details.organization]
         })
             .then(response => {
                 console.log(response.data)
+                toggleOverlay()
                 return(response.data)
             })
             .catch(error => {
@@ -55,6 +58,11 @@ const CreateCustomer = ({toggleOverlay}) => {
                 <FormGroup label="Customer Name">
                     <InputGroup placeholder="Individual or Company Name" id="customerName" onChange={e =>setCustomerName(e.target.value)} value={customerName}/>
                 </FormGroup>
+
+                <FormGroup label="Customer Email">
+                    <InputGroup placeholder="Email for the primary point-of-contact" id="customerEmail" onChange={e =>setCustomerEmail(e.target.value)} value={customerEmail}/>
+                </FormGroup>
+
 
                 <FormGroup label="Customer Notes">
                     <TextArea style={{width: '75vw'}} placeholder="Any unstructured notes for this customer." id="customerNotes" onChange={e =>setCustomerNotes(e.target.value)} value={customerNotes}/>
