@@ -9,6 +9,7 @@ var ProjectSchema = new mongoose.Schema({
     deleted_at: String,
     created_by: String,
     workflows: Array,
+    customers: Array,
     configuration: Object
 });
 

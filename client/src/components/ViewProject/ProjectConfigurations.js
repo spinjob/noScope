@@ -1,4 +1,4 @@
-import { Button, FormGroup, Divider, InputGroup, Intent, Card, H3, H4 } from "@blueprintjs/core"
+import { Button, FormGroup, Divider, InputGroup, Intent, Card, H3, H4, H5, Tabs, Tab} from "@blueprintjs/core"
 import React, { useCallback, useContext, useEffect, useState} from "react"
 import Loader from "../Loader"
 import axios from 'axios';
@@ -9,6 +9,7 @@ function ProjectConfigurations ({ project, isEditing}) {
     const [configurations, setConfigurations] = useState(project.configuration);
     const [newConfigKey, setNewConfigKey] = useState("");
     const [newConfigValue, setNewConfigValue] = useState("");
+    const [navBarTabId, setNavBarTabId] = useState("globalConfigs");
 
     const setConfigKey = (event) => {
         setNewConfigKey(event.target.value)
@@ -47,12 +48,10 @@ function ProjectConfigurations ({ project, isEditing}) {
         })
     });
 
+    const handleTabChange = (e) => {
+        setNavBarTabId(e);
+    }
 
-   useEffect(() => {
-        if(!configurations) {
-            fetchProjectDetails()
-        }
-        }, [configurations, fetchProjectDetails])
 
     const isEditHandler = () => {
         if (isEditing) {
@@ -62,6 +61,13 @@ function ProjectConfigurations ({ project, isEditing}) {
             return true
          }
     }
+
+
+   useEffect(() => {
+        if(!configurations) {
+            fetchProjectDetails()
+        }
+        }, [configurations, fetchProjectDetails])
 
     useEffect(() => {
         if (!project.configuration) {
@@ -104,25 +110,48 @@ function ProjectConfigurations ({ project, isEditing}) {
        
     }
 
-    return (
-        <div>
+    const renderPartnershipConfigurationTab = () => {
+
+        return (
+            
             <div>
-                <div style={{display:'flex', flexDirection: 'row', alignItems: 'center'}}>
-                    <FormGroup label= "New Config Key" >
-                        <InputGroup placeholder= "Value" id="text-input" onChange={e => setConfigKey(e)} />
-                    </FormGroup>
-                    <div style={{paddingLeft:20}}/>
-                        <FormGroup label= "New Config Value" >
-                        <InputGroup placeholder= "Value" id="text-input" onChange={e => setConfigValue(e)} />
-                    </FormGroup>
-                    <div style={{paddingLeft:20}}>
-                        <Button outlined={true} style={{height: 30}} icon="plus" minimal={true} onClick={addConfiguration}>Add Config</Button>
-                    </div>
+                <i>Global configuration keys and values are set here and are assumed to be the same across all Partnership Customers.</i>
+                <div style={{paddingTop: 20}}/>
+            <div style={{display:'flex', flexDirection: 'row', alignItems: 'center'}}>
+                <FormGroup label= "New Config Key" >
+                    <InputGroup placeholder= "Value" id="text-input" onChange={e => setConfigKey(e)} />
+                </FormGroup>
+                <div style={{paddingLeft:20}}/>
+                    <FormGroup label= "New Config Value" >
+                    <InputGroup placeholder= "Value" id="text-input" onChange={e => setConfigValue(e)} />
+                </FormGroup>
+                <div style={{paddingLeft:20}}>
+                    <Button outlined={true} style={{height: 30}} icon="plus" minimal={true} onClick={addConfiguration}>Add Config</Button>
                 </div>
             </div>
             {renderConfigurations()}
             <Button text="Save Changes" outlined={true} onClick={handleConfigurationSave} intent="success" minimal={true} />
-            
+         </div>
+        
+        )
+    }
+
+    return (
+        <div>
+            <Tabs onChange={handleTabChange} selectedTabId={navBarTabId} animate={true}>
+                <Tab id="globalConfigs" title="Global" panel={renderPartnershipConfigurationTab()} />
+                <Tab id="customerConfigs" title="Customer Specific" panel={
+                    <div>
+                        <i>Customer configuration values are set in the 'Partnership Customers' tab. The values are assumed to be customer-specific.</i>
+                        <div style={{paddingTop: 20}}/>
+                        <div style={{display:'flex', flexDirection: 'row', alignItems: 'center'}}>
+                            <FormGroup label= "New Config Key" >
+                                <InputGroup placeholder= "Value" id="text-input"/>
+                            </FormGroup>
+                    </div>
+                    </div>
+                } />
+            </Tabs>
         </div>
     )
 }
