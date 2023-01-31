@@ -83,7 +83,7 @@ router.put('/:id/customers', function (req,res){
 })
 
 router.put('/:id/configuration', function (req,res){
-    Project.findOneAndUpdate({uuid: req.params.id}, {"configuration": req.body.configurations}, function (err, project) {
+    Project.findOneAndUpdate({uuid: req.params.id}, {"configuration": req.body.configurations, "customer_configuration": req.body.customerConfigurations}, function (err, project) {
         if (err) return res.status(500).send("There was a problem updating the project.");
         res.status(200).send(project);
     });

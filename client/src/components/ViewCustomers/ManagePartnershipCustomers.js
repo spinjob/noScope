@@ -7,15 +7,15 @@ import axios from 'axios';
 import "../../styles/workflowStudioStyles.css";
 import CustomerTable from "./CustomerTable";
 
-const ManagePartnershipCustomers = ({projectCustomers, setShouldUpdateProject}) => {
+const ManagePartnershipCustomers = ({projectCustomers, customerConfigurations, setShouldUpdateProject}) => {
 
   const navigate = useNavigate();
   const [userContext, setUserContext] = useContext(UserContext)
   const [organizationCustomers, setOrganizationCustomers] = useState([]);
   const [customerState, setCustomerState] = useState({});
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-  let {id} = useParams();
 
+  let {id} = useParams();
 
   const toggleOverlay = () => {
     if(isOverlayOpen){
@@ -77,6 +77,7 @@ const ManagePartnershipCustomers = ({projectCustomers, setShouldUpdateProject}) 
     })
   }
 
+
   const fetchUserDetails = useCallback(() => {
     fetch(process.env.REACT_APP_API_ENDPOINT + "/users/me", {
       method: "GET",
@@ -136,13 +137,13 @@ const ManagePartnershipCustomers = ({projectCustomers, setShouldUpdateProject}) 
           </Card>
         </div>
       </Overlay>
-      <div style={{display: 'flex', width: 500, paddingTop: 10}}>
+      <div style={{display: 'flex', width: 600, paddingTop: 10}}>
               <Button onClick={toggleOverlay} icon={'search'} outlined={true} intent={'none'} text="Add Customer" />
               <div style={{paddingLeft:10}}/>
               <Button icon={'new-person'} outlined={true} intent={'primary'} text="Create & Add Customer" />
       </div> 
       <div style={{paddingTop:10}}>
-      <CustomerTable customers={projectCustomers} state={'Viewing'} />
+      <CustomerTable customerConfigurations={customerConfigurations} customers={projectCustomers} state={'Viewing'} />
       </div>
     </div>
        

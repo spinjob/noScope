@@ -20,6 +20,7 @@ const ManageProject = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [navBarTabId, setNavBarTabId] = useState("overview");
     const [shouldUpdateProject, setShouldUpdateProject] = useState(false);
+
     const navigate = useNavigate();
 
     let { id } = useParams();
@@ -75,7 +76,6 @@ const ManageProject = () => {
       
       .then(response => {
           setInterfaces(response.data)
-          console.log(response.data)
           return response
       }
       )
@@ -177,7 +177,7 @@ const ManageProject = () => {
            <div style={{paddingLeft: 40}}>
               <Tabs onChange={handleTabChange} selectedTabId={navBarTabId} animate={true}>
                   <Tab id="overview" title="Overview" panel={renderWorkflowPanel()} />
-                  <Tab id="customers" title="Customers" panel={<ManagePartnershipCustomers setShouldUpdateProject={setShouldUpdateProject} projectCustomers={project.customers} />} />
+                  <Tab id="customers" title="Partnership Customers" panel={<ManagePartnershipCustomers setShouldUpdateProject={setShouldUpdateProject} projectCustomers={project.customers} customerConfigurations={project.customer_configuration} />} />
                   <Tab id="onboarding" title="Onboarding" panel={"test"} />
                   <Tab id="support" title="Support" panel={"test"} />
               </Tabs>

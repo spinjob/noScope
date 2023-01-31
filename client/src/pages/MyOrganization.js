@@ -17,7 +17,6 @@ const MyOrganization = () => {
         axios.get(process.env.REACT_APP_API_ENDPOINT + "/organizations/"+userContext.details.organization)
         .then(response => {
             setMyOrganization(response.data)
-            console.log(response.data)
             return response
         }
         )
@@ -65,7 +64,7 @@ const MyOrganization = () => {
       }, [userContext.details, fetchUserDetails])
       
         useEffect(() => {
-         if (userContext.details) {
+         if (userContext.details && !myOrganization) {
             fetchMyOrganization()
          }
         }, [myOrganization, fetchMyOrganization])

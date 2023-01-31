@@ -18,7 +18,6 @@ const ManageOrganizationCustomers = (interfaces) => {
 
   let {id} = useParams();
 
-
   const fetchOrganizationCustomers = useCallback(() => { 
 
     axios.get(process.env.REACT_APP_API_ENDPOINT + "/customers", {params: {organization:userContext.details.organization}})

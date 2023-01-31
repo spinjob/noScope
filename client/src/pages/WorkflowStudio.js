@@ -158,11 +158,12 @@ const WorkflowStudio = () => {
             status: "needs_mapping"
         }
 
+        const workflows = [workflow]
+
         axios.post(process.env.REACT_APP_API_ENDPOINT + "/projects/"+ id +"/workflows", workflow)
             .then(response => {  
-                axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+id, workflow)
+                axios.put(process.env.REACT_APP_API_ENDPOINT + "/projects/"+id, {workflows: workflows})
                 .then(response => {  
-
                   console.log("Request Payload: " + workflow)
 
                     navigate("/projects/" + id + "/workflows/"+workflowUuid,{state:{projectID: id, workflowID: workflowUuid}});

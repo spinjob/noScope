@@ -7,7 +7,8 @@ var OrganizationSchema = new mongoose.Schema({
     deleted_at: String,
     created_by: String,
     configurations: Object,
-    partners: Array
+    interfaces: Array,
+    partnerships: Array
 });
 
 mongoose.model('Organization', OrganizationSchema);
