@@ -8,6 +8,8 @@ import ProjectWorkflows from "../components/ViewProject/ProjectWorkflows"
 import ProjectInterfaces from "../components/ViewProject/ProjectInterfaces"
 import ProjectConfigurations from "../components/ViewProject/ProjectConfigurations"
 import ManagePartnershipCustomers from "../components/ViewCustomers/ManagePartnershipCustomers"
+import ProjectOnboarding from "../components/ViewProject/ProjectOnboarding"
+import ProjectSupport from "../components/ViewProject/ProjectSupport"
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import "../styles/workflowStudioStyles.css";
 
@@ -178,8 +180,8 @@ const ManageProject = () => {
               <Tabs onChange={handleTabChange} selectedTabId={navBarTabId} animate={true}>
                   <Tab id="overview" title="Overview" panel={renderWorkflowPanel()} />
                   <Tab id="customers" title="Partnership Customers" panel={<ManagePartnershipCustomers setShouldUpdateProject={setShouldUpdateProject} projectCustomers={project.customers} customerConfigurations={project.customer_configuration} />} />
-                  <Tab id="onboarding" title="Onboarding" panel={"test"} />
-                  <Tab id="support" title="Support" panel={"test"} />
+                  <Tab id="onboarding" title="Onboarding" panel={<ProjectOnboarding />} />
+                  <Tab id="support" title="Support" panel={<ProjectSupport />} />
               </Tabs>
             </div>
         </div>
