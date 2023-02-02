@@ -10,7 +10,7 @@ const {verifyUser} = require('../../authenticate.js');
 
 // IMPORT AN INTERFACE FROM SWAGGER
 router.post('/upload', verifyUser, (req,res, next) => {
-
+    console.log("UPLOADING INTERFACE")
     const { signedCookies = {} } = req
     const { refreshToken } = signedCookies
     var userIdString = JSON.stringify(req.user._id).replace('"', '').replace('"', '');
@@ -36,9 +36,14 @@ router.post('/upload', verifyUser, (req,res, next) => {
                 var info = lib.processOpenApiV2(req.body, userIdString);
                 res.send({ success: true, info: info })
 
-              } else {
+              } else if (req.body.openapi == "3.0.0" || req.body.openapi == "3.0.1"){
                 console.log("OPEN API 3.0")
                 var info = lib.processOpenApiV3(req.body, userIdString);
+                res.send({ success: true, info: info })
+              } else {
+                console.log("NOT SWAGGER")
+                var info = lib.convertPostmanCollection(req.body, userIdString);
+                
                 res.send({ success: true, info: info })
               }
             

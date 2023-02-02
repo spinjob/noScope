@@ -10,6 +10,10 @@ const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
 const {Liquid} = require('liquidjs');
 const engine = new Liquid();
 const axios = require('axios');
+const postmanToOpenApi = require('postman-to-openapi');
+const outputFile = 'openApi.json'
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 function processOpenApiV3(json, userId) {
 
@@ -1885,4 +1889,17 @@ function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues
     return;  
 }
 
-module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow };
+function convertPostmanCollection(collection, userId){
+    var json = JSON.stringify(collection);
+    postmanToOpenApi(json, null, {defaultTag: 'General'} )
+    .then(result => {
+        var parsedJson = JSON.parse(JSON.stringify(yaml.load(result),null,2));
+        if(parsedJson.openapi == "3.0.0"){
+            processOpenApiV3(parsedYaml, userId);
+        }
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
+module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection };
