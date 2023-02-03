@@ -2,6 +2,9 @@ const { v4: uuidv4 } = require('uuid');
 
 const generateSchemaTree = function (type, schema){
     const schemaTree = [];
+    console.log("GENERATING SCHEMA TREE: ")
+    console.log("TYPE: " + type)
+    console.log("SCHEMA: " + schema)
 
     if(type == 'requestBody'){
         const schemaKeys = Object.keys(schema);

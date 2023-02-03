@@ -990,7 +990,7 @@ function processRequestParameterSchema(schemas, parameterMap, schemaMap){
 }
 
 function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMap, version){
-   
+    
     //We'll create two arrays to hold two types of schema we'll see at the top-level of a requestbody: a reference to a component.schema or an inline schema defined with a combination of references and inline properties.
     var schemaArray = []
     var inlineSchemaProperties = []
@@ -1006,9 +1006,6 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
                 inlineSchemaProperties.push(schemas[i])
             }
         }
-
-    console.log("schemaArray")
-    console.log(schemaArray)
     //This is the object we'll use to build the schema for the requestBody.  We'll be using Object.assign to ensure any properties that are affected by both for loops are not updated and not overwritten.
     var inlineSchema = {}
 
@@ -1073,7 +1070,6 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
             }
         }
     }
-
     
     return inlineSchema;
 
@@ -1082,15 +1078,15 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
 function processSchemaProperties(propertyKeys, propertyValues, parentSchema, schemaMap, debug, version){
 
     var schemaProperties = {};
-
     //example propertyKeys: [deliveryStatus, estimatedDeliveryTime]
     //example propertyValues: [{ '$ref': '#/components/schemas/DeliveryStatus' }, {type: 'string',nullable: true,description: 'The expected delivery time.',format: 'date-time',example: '2007-12-03T10:15:30+01:00'}]  
         for (var i = 0; i < propertyKeys.length; ++i){
                 var propertyKey = propertyKeys[i];
                 var propertyValue = propertyValues[i];
-
-                console.log("propertyKey: " + propertyKey)
-                console.log("propertyValue: " + JSON.stringify(propertyValue))
+                if(propertyKey == "price"){
+                    console.log("Price Property Value:")
+                    console.log(propertyValue)
+                }
 
                 //Check for infinite loop and return an empty object if one is detected.
                 if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers"){
@@ -1104,7 +1100,6 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
                     var propertySchemaMapValues = propertySchemaMap[propertyReference];
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertySchemaMapValues};
-
                     if(propertySchemaMapValues && propertySchemaMapValues.properties){
                         var nestedPropertyKeys = Object.keys(propertySchemaMapValues.properties);
                         var nestedPropertyValues = Object.values(propertySchemaMapValues.properties);
@@ -1135,7 +1130,41 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     // console.log("Schema Properties: ")
                     // console.log(JSON.parse(JSON.stringify(schemaProperties)))
 
-                } else if (propertyValue.type == 'array'){
+                } else if (propertyValue.type == 'object' && propertyValue.additionalProperties) {
+                    //object for the map
+                    var propertyObject = {};
+                    
+                    //object for the key value pairs
+                    var mapPropertyObject = {}
+
+                    //Add curly brackets to indicate the key is a variable and can be set during the mapping process.
+                    var mapPropertyKey = "{{" + propertyValue.additionalProperties["x-additionalPropertiesName"] + "}}";
+
+                    //If the values for the map are a reference, process the reference 
+                    if(propertyValue.additionalProperties['$ref']){
+                       
+                        var propertyReference = propertyValue.additionalProperties['$ref'].split("/")[3];
+                        var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
+                        var mapPropertyValueSchema = propertySchemaMap[propertyReference]
+                        mapPropertyObject[mapPropertyKey] = mapPropertyValueSchema;
+
+                        //With the schema reference details, we can now process the schema properties if they exist.
+                        if(mapPropertyValueSchema.properties){
+                            var nestedPropertyKeys = Object.keys(propertySchemaMap[propertyReference].properties);
+                            var nestedPropertyValues = Object.values(propertySchemaMap[propertyReference].properties);
+                            var mappedPropertyValueNestedProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap, false, version);
+                            mapPropertyObject[mapPropertyKey].properties = {...mapPropertyObject[mapPropertyKey].properties, ...mappedPropertyValueNestedProperties}
+                        }
+
+                        propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
+                        propertyObject[propertyKey].properties = {...propertyObject[propertyKey].properties, ...mapPropertyObject};
+                        schemaProperties = {...schemaProperties, ...propertyObject}
+
+                    } else {
+                        console.log("Map Detected with no schema defined inline: " + propertyKey)
+                    }
+                }
+                else if (propertyValue.type == 'array'){
 
                     var propertyObject = {};
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
@@ -1153,9 +1182,6 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                         }
                         var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
                         var propertySchemaMapValues = propertySchemaMap[propertyReference];
-                        console.log("Property Map Match: ")
-                        console.log(propertyReference)
-                        console.log(propertySchemaMapValues)
                         
                         if(propertySchemaMapValues.properties){
 
@@ -1173,9 +1199,6 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                             }
                             propertyObject[propertyKey].items = itemsSchemaObject;
                             schemaProperties = Object.assign(schemaProperties, propertyObject);
-
-                            console.log("Array Property Processed:")
-                            console.log(JSON.parse(JSON.stringify(schemaProperties)))
 
                         } else {
                             var itemsSchemaObject = propertySchemaMapValues
@@ -1720,7 +1743,7 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                                 requestBody2: {
                                     type: "json",
                                     required: actionRequestBody[l].required,
-                                     schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap, 2)
+                                    schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap, 2)
                                 },
                                 responses: responsesArray
                             },
