@@ -7,7 +7,6 @@ import { IconNames } from "@blueprintjs/icons";
 import axios from "axios";
 import _ from "lodash";
 import Loader from '../Loader';
-import { hasTypescriptData } from '@blueprintjs/docs-theme/lib/esm/common/context';
 import {v4 as uuidv4} from 'uuid';
 
 function ActionStepSchemaMapper ({mappings, schemaTree, selectActionNode, updateRequiredSchema, storeSchemaTree, parameterTrees}) {

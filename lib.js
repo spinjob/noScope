@@ -275,11 +275,12 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
 
             for (var k = 0; k < responseKeys.length; ++k){
                 if (responseValues[k].content !== undefined) {
-                
+                    var responseSchema = responseValues[k].content["application/json"].schema;
+                    responseSchemaArray.push(responseSchema);
                     var response = {
                         "http_status_code": responseKeys[k],
                         "content_type": "json",
-                        "schema": processReferences([responseValues[k].content["application/json"].schema])
+                        "schema": processRequestBodySchema("action",responseSchemaArray, parent_interface_uuid, schemaMap, "response")                    
                     }
 
                     responsesArray.push(response);
@@ -994,6 +995,13 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
     //We'll create two arrays to hold two types of schema we'll see at the top-level of a requestbody: a reference to a component.schema or an inline schema defined with a combination of references and inline properties.
     var schemaArray = []
     var inlineSchemaProperties = []
+    if(version=="response"){
+        console.log("Response Schema")
+        console.log(schemas)
+    } else {
+        console.log("Request Schema")
+        console.log(schemas)
+    }
 
     //This will build our two input arrays for their respective for loops.
         for (var i = 0; i < schemas.length; ++i) {
@@ -1260,7 +1268,7 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
                             responsesArray.push(response); 
                      }
                         
-                        InterfaceWebhook.create({
+                    InterfaceWebhook.create({
                             uuid: webhookUUID,
                             parent_interface_uuid: parent_interface_uuid,
                             name: thisWebhookValues.operationId,
@@ -1285,7 +1293,7 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
                                 }
                             // console.log("Interface Webhook Created With Responses"+ interfaceWebhook._id);
                             // console.log(interfaceWebhook);
-                        });
+                    });
                     
 
             } else {
