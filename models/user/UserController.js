@@ -8,6 +8,7 @@ const {getToken, COOKIE_OPTIONS, getRefreshToken, verifyUser} = require('../../a
 const { Error } = require('mongoose');
 
 router.post("/signup", (req, res, next) => {
+    
     // Verify that first name is not empty
     if (!req.body.firstName) {
       res.statusCode = 500
@@ -24,9 +25,12 @@ router.post("/signup", (req, res, next) => {
             res.statusCode = 500
             res.send(err)
           } else {
-            user.firstName = req.body.firstName
+            user.firstName = req.body.firstName || ""
             user.lastName = req.body.lastName || ""
             user.organization = req.body.organization || ""
+            user.name = req.body.name || ""
+            user.auth0Id = req.body.auth0Id || ""
+            user.email = req.body.email || ""
             const token = getToken({ _id: user._id })
             const refreshToken = getRefreshToken({ _id: user._id })
             user.refreshToken.push({ refreshToken })
@@ -119,7 +123,21 @@ router.post("/login", passport.authenticate("local"), (req, res, next) => {
 router.get("/me", verifyUser, (req, res, next) => {
     res.send(req.user)
   })  
-  
+
+router.post('/find', function(req,res) {
+    User.findOne({username: req.body.email}, function (err, user) {
+        if (err) return res.status(500).send("There was a problem finding the user.");
+        res.status(200).send(user);
+    });
+});
+
+router.put('/:userId', function(req,res) {
+  User.updateOne({_id: req.params.userId},{organization: req.body.organization, auth0Id: req.body.auth0Id, name: req.body.name}, function (err, user) {
+      if (err) return res.status(500).send("There was a problem finding the user.");
+      res.status(200).send(user);
+  });
+});
+
 router.get("/logout", verifyUser, (req, res, next) => {
     const { signedCookies = {} } = req
     const { refreshToken } = signedCookies

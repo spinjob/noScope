@@ -21,8 +21,8 @@ function processOpenApiV3(json, userId) {
     var schemaValues = Object.values(json.components.schemas);
     var pathKeys = Object.keys(json.paths);
     var pathValues = Object.values(json.paths);
-    var parameterKeys = Object.keys(json.components.parameters);
-    var parameterValues = Object.values(json.components.parameters);
+    var parameterKeys = []
+    var parameterValues = []
     var securitySchemeKeys = []
     var securitySchemeValues = []
 
@@ -30,6 +30,12 @@ function processOpenApiV3(json, userId) {
     } else {
         securitySchemeKeys = Object.keys(json.components.securitySchemes);
         securitySchemeValues = Object.values(json.components.securitySchemes);
+    }
+
+    if(json.components.parameters === undefined) {
+    } else {
+        parameterKeys = Object.keys(json.components.parameters);
+        parameterValues = Object.values(json.components.parameters);
     }
    
     var webhookKeys = [];
