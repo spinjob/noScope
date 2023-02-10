@@ -9,7 +9,7 @@
         "contact": {
             "email": "support@giphy.com"
         },
-        "description": "Giphy API",
+        "description": "Next JS API",
         "termsOfService": "https://developers.giphy.com/",
         "title": "Giphy API",
         "version": "1.0",

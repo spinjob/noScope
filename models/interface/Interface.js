@@ -12,7 +12,8 @@ var InterfaceSchema = new mongoose.Schema({
     sandbox_server: String,
     credentials: Object,
     created_by: String,
-    actions: Array
+    actions: Array,
+    owning_organization: String
 });
 
 mongoose.model('Interface', InterfaceSchema);

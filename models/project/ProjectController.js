@@ -45,7 +45,14 @@ router.get('/:id/details', function(req,res) {
 
 //GET PROJECTS
 router.get('/', function (req,res){
+    Project.find({}, function (err, projects) {
+                if (err) return res.status(500).send("There was a problem finding the interfaces.");
+                res.status(200).send(projects);
+    });
+})
 
+//GET ORGANIZATION PROJECTS
+router.get('/', function (req,res){
     Project.find({}, function (err, projects) {
                 if (err) return res.status(500).send("There was a problem finding the interfaces.");
                 res.status(200).send(projects);

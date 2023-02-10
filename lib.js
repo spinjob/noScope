@@ -15,7 +15,7 @@ const outputFile = 'openApi.json'
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-function processOpenApiV3(json, userId) {
+function processOpenApiV3(json, userId, orgId) {
 
     var schemaKeys = Object.keys(json.components.schemas);
     var schemaValues = Object.values(json.components.schemas);
@@ -58,7 +58,8 @@ function processOpenApiV3(json, userId) {
             updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             deleted_at: null,
             production_server: "",
-            sandbox_server: ""
+            sandbox_server: "",
+            owning_organization: orgId
         },
             function(err,interface){
                 if (err) {

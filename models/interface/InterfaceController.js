@@ -9,49 +9,23 @@ const User = require('../user/User');
 const {verifyUser} = require('../../authenticate.js');
 
 // IMPORT AN INTERFACE FROM SWAGGER
-router.post('/upload', verifyUser, (req,res, next) => {
+router.post('/upload', (req,res, next) => {
     console.log("UPLOADING INTERFACE")
-    const { signedCookies = {} } = req
-    const { refreshToken } = signedCookies
-    var userIdString = JSON.stringify(req.user._id).replace('"', '').replace('"', '');
+      if(req.body.spec.openapi?.split('.')[0] == "2" || req.body.spec.swagger?.split('.')[0] == "2"){
+        console.log("OPEN API 2.X")
+        var info = lib.processOpenApiV2(req.body.spec, req.body.userId, req.body.organizationId);
+        res.send({ success: true, info: info })
 
-    User.findById(req.user._id).then(
-        user => {
-          const tokenIndex = user.refreshToken.findIndex(
-            item => item.refreshToken === refreshToken
-          )
-    
-          if (tokenIndex !== -1) {
-            user.refreshToken.id(user.refreshToken[tokenIndex]._id).remove()
-          }
-    
-          user.save((err, user) => {
-            if (err) {
-              res.statusCode = 500
-              res.send(err)
-            } else {
+      } else if (req.body.spec.openapi?.split('.')[0] == "3" || req.body.spec.swagger?.split('.')[0] == "3"){
+        console.log("OPEN API 3.X")
+        var info = lib.processOpenApiV3(req.body.spec, req.body.userId, req.body.organizationId);
+        res.send({ success: true, info: info })
 
-              if(req.body.swagger == "2.0"){
-                console.log("SWAGGER 2.0")
-                var info = lib.processOpenApiV2(req.body, userIdString);
-                res.send({ success: true, info: info })
-
-              } else if (req.body.openapi == "3.0.0" || req.body.openapi == "3.0.1"){
-                console.log("OPEN API 3.0")
-                var info = lib.processOpenApiV3(req.body, userIdString);
-                res.send({ success: true, info: info })
-              } else {
-                console.log("NOT SWAGGER")
-                var info = lib.convertPostmanCollection(req.body, userIdString);
-                
-                res.send({ success: true, info: info })
-              }
-            
-            }
-          })
-        },
-        err => next(err)
-      )
+      } else {
+        console.log("NOT SWAGGER, TRYING POSTMAN")
+        var info = lib.convertPostmanCollection(req.body.spec, req.body.userId, req.body.organizationId);
+        res.send({ success: true, info: info })
+      }
     
 });
 
@@ -70,23 +44,21 @@ router.post('/', function(req,res) {
     });
 });
 
-// GET MY INTERFACES
-// router.get('/', verifyUser, (req,res, next) => {
-//     const { signedCookies = {} } = req
 
-//     Interface.find({created_by: req.user._id}, function (err, interfaces) {
-//         if (err) return res.status(500).send("There was a problem finding the interfaces.");
-//         res.status(200).send(interfaces);
-//     });
-// });
 
 //GET ALL INTERFACES (NO USER AUTH)
 router.get('/', (req,res) => {
+    if (req.query.organization) {
+      console.log("ORGANIZATION QUERY: " + req.query.organization)
+        Interface.find({owning_organization: req.query.organization}, function (err, interfaces) {
+            if (err) return res.status(404).send("There was a problem finding the interfaces with the provided organization ID.");
+            res.status(200).send(interfaces);
+        })
+    } else {
+        res.status(400).send({message: "No organization ID provided."})
+      }
 
-    Interface.find({}, function (err, interfaces) {
-        if (err) return res.status(500).send("There was a problem finding the interfaces.");
-        res.status(200).send(interfaces);
-    });
+    
 });
 
 // GET AN INTERFACE
