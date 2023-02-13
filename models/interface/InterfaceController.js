@@ -36,7 +36,7 @@ router.post('/', function(req,res) {
         name: req.body.name,
         description: req.body.description,
         version: req.body.version,
-
+        owning_organization: req.body.organizationId
     },
     function (err,interface) {
         if (err) return res.status(500).send("There was a problem adding the information to the database.");

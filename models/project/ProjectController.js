@@ -10,12 +10,16 @@ const Interface = require('../interface/Interface');
 // CREATE A PROJECT
 router.post('/new', function(req,res) {
     
+    var projectUUID = crypto.randomUUID();
+
     Project.create({
-        uuid: req.body.uuid,
+        uuid: projectUUID,
         name: req.body.name,
         interfaces: req.body.interfaces,
         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        workflows: req.body.workflows,
+        owning_organization: req.body.organizationId,
         created_by: req.body.created_by
     },
     function (err,project) {
@@ -33,31 +37,26 @@ router.get('/:id/details', function(req,res) {
     });
 });
 
-// GET USER PROJECTS
-// router.get('/', verifyUser, (req,res, next) => {
-//     const { signedCookies = {} } = req
+// FIND PROJECTS BY ORGANIZATION
+router.get('/', (req,res) => {
+    if (req.query.organization) {
+      console.log("ORGANIZATION QUERY: " + req.query.organization)
+        Project.find({owning_organization: req.query.organization}, function (err, projects) {
+            if (err) return res.status(404).send("There was a problem finding the projects with the provided organization ID.");
+            res.status(200).send(projects);
+        })
+    } else {
+        res.status(400).send({message: "No organization ID provided."})
+      }   
+});
 
-//     Project.find({created_by: req.user._id}, function (err, projects) {
+//GET PROJECTS
+// router.get('/', function (req,res){
+//     Project.find({}, function (err, projects) {
 //                 if (err) return res.status(500).send("There was a problem finding the interfaces.");
 //                 res.status(200).send(projects);
 //     });
 // })
-
-//GET PROJECTS
-router.get('/', function (req,res){
-    Project.find({}, function (err, projects) {
-                if (err) return res.status(500).send("There was a problem finding the interfaces.");
-                res.status(200).send(projects);
-    });
-})
-
-//GET ORGANIZATION PROJECTS
-router.get('/', function (req,res){
-    Project.find({}, function (err, projects) {
-                if (err) return res.status(500).send("There was a problem finding the interfaces.");
-                res.status(200).send(projects);
-    });
-})
 
 /// GET PROJECT INTERFACES
 router.post('/interfaces', function(req,res){

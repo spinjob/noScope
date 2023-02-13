@@ -11,7 +11,8 @@ var ProjectSchema = new mongoose.Schema({
     workflows: Array,
     customers: Array,
     configuration: Object,
-    customer_configuration: Object
+    customer_configuration: Object,
+    owning_organization: String
 });
 
 mongoose.model('Project', ProjectSchema);

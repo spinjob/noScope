@@ -1578,7 +1578,7 @@ function retrieveInterfaces(userId){
 
 }
 
-function processOpenApiV2(json, userId) {
+function processOpenApiV2(json, userId, orgId) {
 
     var schemaKeys = Object.keys(json.definitions);
     var schemaValues = Object.values(json.definitions);
@@ -1606,7 +1606,8 @@ function processOpenApiV2(json, userId) {
             updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
             deleted_at: null,
             production_server: server,
-            sandbox_server: server
+            sandbox_server: server,
+            organization_uuid: orgId
         },
             function(err,interface){
                 if (err) {
