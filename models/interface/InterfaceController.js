@@ -56,14 +56,12 @@ router.get('/', (req,res) => {
         })
     } else {
         res.status(400).send({message: "No organization ID provided."})
-      }
-
-    
+      }   
 });
 
 // GET AN INTERFACE
 router.get('/:id', function(req,res){
-    Interface.findById(req.params.id, function (err, interface) {
+    Interface.findOne({uuid: req.params.id}, function (err, interface) {
         if (err) return res.status(500).send("There was a problem find the interface.");
         res.status(200).send(interface);
     });
