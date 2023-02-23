@@ -10,9 +10,9 @@ const {runWorkflow} = require('../../lib.js');
 
 // CREATE A WORKFLOW
 router.post('/', function(req,res) {
-    
+    var workflowUUID = crypto.randomUUID();
     Workflow.create({
-        uuid: req.body.uuid,
+        uuid: workflowUUID,
         name: req.body.name,
         interfaces: req.body.interfaces,
         parent_project_uuid: req.body.parent_project_uuid,
@@ -68,7 +68,27 @@ router.put('/:workflowId/map/:mapId', function(req,res) {
 });
 
 router.put('/:workflowId/steps/0', function(req,res) {
-    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {'trigger.translation': req.body.fullFormula, 'trigger.function': req.body.function, 'trigger.schema_tree': req.body.schemaTree, 'trigger.liquidTemplate': req.body.liquidTemplate}, function (err,workflow){
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, 
+        {
+            'trigger.translation': req.body.fullFormula,
+             'trigger.function': req.body.function, 
+             'trigger.schema_tree': req.body.schemaTree, 
+             'trigger.liquidTemplate': req.body.liquidTemplate
+        }, function (err,workflow){
+        if (err) return res.status(500).send(err);
+        res.status(200).send(workflow);
+    });
+});
+
+router.put('/:workflowId', function(req,res) {
+    console.log(req.body.trigger)
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId},{ 
+        name: req.body.name,
+        nodes: req.body.nodes,
+        edges: req.body.edges,
+        updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        trigger: req.body.trigger
+    }, {new: true, upsert: true}, function(err,workflow){
         if (err) return res.status(500).send(err);
         res.status(200).send(workflow);
     });

@@ -19,17 +19,17 @@ var WorkflowWebhookTriggerSchema = new mongoose.Schema({
     schemaList: Array
 });
 
-var WorkflowTriggerSchema = new mongoose.Schema({
-    uuid: String,
-    sequence: Number,
-    type: String,
-    parent_workflow_uuid: String,
-    parent_project_uuid: String,
-    webhook: WorkflowWebhookTriggerSchema,
-    translation: String,
-    function: String,
-    liquidTemplate: String
-});
+// var WorkflowTriggerSchema = new mongoose.Schema({
+//     uuid: String,
+//     sequence: Number,
+//     type: String,
+//     parent_workflow_uuid: String,
+//     parent_project_uuid: String,
+//     webhook: WorkflowWebhookTriggerSchema,
+//     translation: String,
+//     function: String,
+//     liquidTemplate: String
+// });
 
 var WorkflowStepRequestSchema = new mongoose.Schema({
     path: String,
@@ -60,9 +60,7 @@ var WorkflowStepSchema = new mongoose.Schema({
 var ReactFlowNodeSchema = new mongoose.Schema({
     id: String,
     type: String,
-    data: {
-        label: String
-    },
+    data: Object,
     position: {
         x: Number,
         y: Number
@@ -76,7 +74,8 @@ var ReactFlowNodeSchema = new mongoose.Schema({
     parentNode: String,
     draggable: Boolean,
     connectable: Boolean,
-    extent: String
+    extent: String,
+    
 });
 
 var ReactFlowEdgeSchema = new mongoose.Schema({
@@ -84,16 +83,18 @@ var ReactFlowEdgeSchema = new mongoose.Schema({
     source: String,
     target: String,
     label: String,
-    animated: Boolean
+    animated: Boolean,
+    data: Object,
 })
 
 
 var WorkflowSchema = new mongoose.Schema({
     uuid: String,
     name: String,
+    flow: Object,
     interfaces: Array,
     parent_project_uuid: String,
-    trigger: WorkflowTriggerSchema,
+    trigger: Object,
     steps: [WorkflowStepSchema],
     status: String,
     nodes: [ReactFlowNodeSchema],
