@@ -99,6 +99,7 @@ var WorkflowSchema = new mongoose.Schema({
     status: String,
     nodes: [ReactFlowNodeSchema],
     edges: [ReactFlowEdgeSchema],
+    definition: Object,
     created_at: String,
     updated_at: String,
     deleted_at: String,

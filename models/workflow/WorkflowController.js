@@ -47,10 +47,16 @@ router.get('/:workflowId/details', function(req,res) {
 });
 
 router.put('/:workflowId/map', function(req,res) {
+    // Workflow.findOneAndUpdate({uuid: req.params.workflowId}, { $push: {'steps.0.adaptions': req.body}}, function (err,workflow){
+    //     if (err) return res.status(500).send(err);
+    //     res.status(200).send(workflow);
+    // });
+
     Workflow.findOneAndUpdate({uuid: req.params.workflowId}, { $push: {'steps.0.adaptions': req.body}}, function (err,workflow){
         if (err) return res.status(500).send(err);
         res.status(200).send(workflow);
     });
+
 });
 
 router.delete('/:workflowId/map/:mapId', function(req,res) {
@@ -81,13 +87,14 @@ router.put('/:workflowId/steps/0', function(req,res) {
 });
 
 router.put('/:workflowId', function(req,res) {
-    console.log(req.body.trigger)
+    console.log(req.body)
     Workflow.findOneAndUpdate({uuid: req.params.workflowId},{ 
         name: req.body.name,
         nodes: req.body.nodes,
         edges: req.body.edges,
         updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-        trigger: req.body.trigger
+        trigger: req.body.trigger,
+        definition: req.body.definition,
     }, {new: true, upsert: true}, function(err,workflow){
         if (err) return res.status(500).send(err);
         res.status(200).send(workflow);

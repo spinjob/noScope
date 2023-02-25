@@ -10,7 +10,6 @@ const {verifyUser} = require('../../authenticate.js');
 
 // IMPORT AN INTERFACE FROM SWAGGER
 router.post('/upload', (req,res, next) => {
-    console.log("UPLOADING INTERFACE")
       if(req.body.spec.openapi?.split('.')[0] == "2" || req.body.spec.swagger?.split('.')[0] == "2"){
         console.log("OPEN API 2.X")
         var info = lib.processOpenApiV2(req.body.spec, req.body.userId, req.body.organizationId);
@@ -22,7 +21,7 @@ router.post('/upload', (req,res, next) => {
         res.send({ success: true, info: info })
 
       } else {
-        console.log("NOT SWAGGER, TRYING POSTMAN")
+        console.log("NOT OPENAPI OR SWAGGER, TRYING POSTMAN")
         var info = lib.convertPostmanCollection(req.body.spec, req.body.userId, req.body.organizationId);
         res.send({ success: true, info: info })
       }
