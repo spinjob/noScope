@@ -131,6 +131,15 @@ router.post('/find', function(req,res) {
     });
 });
 
+router.get('/', function(req,res) {
+  if(req.query.organization){
+    User.find({organization: req.query.organization}, function (err, users) {
+      if (err) return res.status(500).send("There was a problem finding users for the provided organization.");
+      res.status(200).send(users);
+    });
+  }
+});
+
 router.put('/:userId', function(req,res) {
   User.updateOne({_id: req.params.userId},{organization: req.body.organization, auth0Id: req.body.auth0Id, name: req.body.name}, function (err, user) {
       if (err) return res.status(500).send("There was a problem finding the user.");

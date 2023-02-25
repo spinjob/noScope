@@ -48,7 +48,6 @@ router.post('/', function(req,res) {
 //GET ALL INTERFACES (NO USER AUTH)
 router.get('/', (req,res) => {
     if (req.query.organization) {
-      console.log("ORGANIZATION QUERY: " + req.query.organization)
         Interface.find({owning_organization: req.query.organization}, function (err, interfaces) {
             if (err) return res.status(404).send("There was a problem finding the interfaces with the provided organization ID.");
             res.status(200).send(interfaces);
