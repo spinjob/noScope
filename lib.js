@@ -1607,7 +1607,7 @@ function processOpenApiV2(json, userId, orgId) {
             deleted_at: null,
             production_server: server,
             sandbox_server: server,
-            organization_uuid: orgId
+            owning_organization: orgId
         },
             function(err,interface){
                 if (err) {
