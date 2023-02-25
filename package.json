@@ -31,7 +31,8 @@
     "passport-local-mongoose": "^5.0.1",
     "postman-to-openapi": "^3.0.1",
     "react-router-dom": "^6.4.2",
-    "sass-loader": "^13.1.0"
+    "sass-loader": "^13.1.0",
+    "typescript-eslint": "^0.0.1-alpha.0"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.2"
