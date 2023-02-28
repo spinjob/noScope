@@ -1,0 +1,5019 @@
+{
+	"openapi": "3.0.1",
+	"info": {
+		"title": "Order v3",
+		"description": "Order Service v3",
+		"contact": {},
+		"license": {
+			"name": "NCR Corporation - Copyright 2021"
+		},
+		"version": "3.21.0-24-08-2022184338-f62328cb2"
+	},
+	"servers": [{
+		"url": "https://api.ncr.com/order/v3"
+	}],
+	"tags": [{
+		"name": "orders",
+		"description": "Service API for handling orders."
+	}, {
+		"name": "subscriptions",
+		"description": "Service API for handling order subscriptions."
+	}, {
+		"name": "support",
+		"description": "Service API for handling support operations with orders."
+	}],
+	"paths": {
+		"/orders": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Create a new order",
+				"description": "Creates a new order with an automatically generated ID",
+				"operationId": "create",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "nep-source-organization",
+					"in": "header",
+					"description": "Indicates the order's source organization disregarding user's organization",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrderData"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/find": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Find all orders matching the specified criteria",
+				"description": "Finds all orders that match ALL criteria provided in the request",
+				"operationId": "findByCriteria",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "pageNumber",
+					"in": "query",
+					"description": "The requested page number (starting from zero)",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 2147483647,
+						"minimum": 0,
+						"type": "integer",
+						"format": "int32",
+						"default": 0
+					},
+					"example": 0
+				}, {
+					"name": "pageSize",
+					"in": "query",
+					"description": "The page size",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 10000,
+						"minimum": 1,
+						"type": "integer",
+						"format": "int32",
+						"default": 10
+					},
+					"example": 20
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrderFinderCriteria"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FindOrdersResult"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_VIEWER"]
+				}
+			}
+		},
+		"/orders/find-by-additional-reference-id": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Find orders by a value in the Additional Reference Id field",
+				"description": "Find orders by additional reference id.  Only matches orders which contain the additional reference id. Time boxing is strongly recommended for performance",
+				"operationId": "findByAdditionalReferenceId",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "pageNumber",
+					"in": "query",
+					"description": "The requested page number (starting from zero)",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 2147483647,
+						"minimum": 0,
+						"type": "integer",
+						"format": "int32",
+						"default": 0
+					},
+					"example": 0
+				}, {
+					"name": "pageSize",
+					"in": "query",
+					"description": "The page size",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 10000,
+						"minimum": 1,
+						"type": "integer",
+						"format": "int32",
+						"default": 10
+					},
+					"example": 20
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/FindOrdersByAdditionalReferenceIdCriteria"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FindOrdersResult"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/find-unacknowledged": {
+			"get": {
+				"tags": ["orders"],
+				"summary": "Find unacknowledged orders",
+				"description": "Returns all unacknowledged orders for the specified enterprise unit",
+				"operationId": "resync",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "pageNumber",
+					"in": "query",
+					"description": "Page number requested (default = 0)",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 214748,
+						"minimum": 0,
+						"type": "integer",
+						"format": "int32",
+						"default": 0
+					}
+				}, {
+					"name": "pageSize",
+					"in": "query",
+					"description": "Page size requested (default = 10)",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 50,
+						"minimum": 1,
+						"type": "integer",
+						"format": "int32",
+						"default": 10
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResyncResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found: Enterprise unit does not exist"
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_SITE_VIEWER"]
+				}
+			}
+		},
+		"/orders/{id}": {
+			"get": {
+				"tags": ["orders"],
+				"summary": "Get an order",
+				"description": "Retrieves an order by the specified ID",
+				"operationId": "get",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_VIEWER"]
+				}
+			},
+			"put": {
+				"tags": ["orders"],
+				"summary": "Replace an order",
+				"description": "Replaces the entire order object with the submitted data",
+				"operationId": "update",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with (required if the order is locked)",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrderData"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"412": {
+						"description": "Precondition Failed: Order was updated since last read.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceStaleException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			},
+			"patch": {
+				"tags": ["orders"],
+				"summary": "Patch an order",
+				"description": "Fields not sent in the body remain unchanged. Collection objects with provided LineIDs will be updated. New collection objects will be merged with the existing collection. Fields can be removed by setting them to null.",
+				"operationId": "patch",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with (required if the order is locked)",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"additionalProperties": {
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"412": {
+						"description": "Precondition Failed: Order was updated since last read.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceStaleException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/{id}/acks": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Acknowledge an order",
+				"description": "Acknowledges receipt of an order",
+				"operationId": "acknowledge",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"412": {
+						"description": "Precondition Failed: Order was updated since last read.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceStaleException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_SITE_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/{id}/force-lock": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Force lock an order",
+				"description": "Overrides any existing locks on an order and locks it",
+				"operationId": "forceLock",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"412": {
+						"description": "Precondition Failed: Order was updated since last read.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceStaleException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_LOCK_ADMIN"]
+				}
+			}
+		},
+		"/orders/{id}/force-unlock": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Force unlock an order",
+				"description": "Overrides any existing locks on an order and unlocks it",
+				"operationId": "forceUnlock",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"412": {
+						"description": "Precondition Failed: Order was updated since last read.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceStaleException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_LOCK_ADMIN"]
+				}
+			}
+		},
+		"/orders/{id}/lock": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Lock an order",
+				"description": "Locks an Order if it is not currently locked by another device",
+				"operationId": "lock",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"412": {
+						"description": "Precondition Failed: Order was updated since last read.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceStaleException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/{id}/order-lines": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Add a new Order line to an Order",
+				"description": "Adds a new Order line to an Order with an automatically generated ID",
+				"operationId": "createOrderLine",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with (required if the order is locked)",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrderLineData"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLineData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/{id}/order-lines/{lineId}": {
+			"get": {
+				"tags": ["orders"],
+				"summary": "Get an Order line from an Order",
+				"description": "Retrieves an Order line from the specified Order by the specified lineId",
+				"operationId": "getOrderLine",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "lineId",
+					"in": "path",
+					"description": "The line identifier. Must be unique for this order. Will be generated if not specified.",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLineData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_VIEWER"]
+				}
+			},
+			"put": {
+				"tags": ["orders"],
+				"summary": "Replace an Order line on an Order",
+				"description": "Replaces the entire Order line object with the submitted data",
+				"operationId": "updateOrderLine",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with (required if the order is locked)",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "lineId",
+					"in": "path",
+					"description": "The line identifier. Must be unique for this order. Will be generated if not specified.",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrderLineData"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLineData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			},
+			"delete": {
+				"tags": ["orders"],
+				"summary": "Delete an Order line from an Order",
+				"description": "Deletes an Order line from a specified Order by the specified lineId",
+				"operationId": "deleteOrderLine",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with (required if the order is locked)",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "lineId",
+					"in": "path",
+					"description": "The line identifier. Must be unique for this order. Will be generated if not specified.",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}],
+				"responses": {
+					"204": {
+						"description": "Success"
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			},
+			"patch": {
+				"tags": ["orders"],
+				"summary": "Patch an Order line on an Order",
+				"description": "Patches an Order line on a specified Order by the specified lineId. Fields not sent in the body remain unchanged. Collection objects with provided LineIDs will be updated. New collection objects will be merged with the existing collection. Fields can be removed by setting them to null.",
+				"operationId": "patchOrderLine",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with (required if the order is locked)",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "lineId",
+					"in": "path",
+					"description": "The line identifier. Must be unique for this order. Will be generated if not specified.",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"additionalProperties": {
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLineData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/{id}/unlock": {
+			"post": {
+				"tags": ["orders"],
+				"summary": "Unlock an order",
+				"description": "Unlocks the Order only if the device ID specified matches the ID on the lock",
+				"operationId": "unlock",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nr1-device-id",
+					"in": "header",
+					"description": "ID of the device to lock the order with",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "If-Match",
+					"in": "header",
+					"description": "ETag description used for optimistic locking",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string",
+						"default": ""
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderLockedException"
+								}
+							}
+						}
+					},
+					"412": {
+						"description": "Precondition Failed: Order was updated since last read.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceStaleException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/orders/{id}/versions": {
+			"get": {
+				"tags": ["orders"],
+				"summary": "Get order versions",
+				"description": "Returns the current and previous versions of an order",
+				"operationId": "getVersions",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "pageNumber",
+					"in": "query",
+					"description": "Page number requested (default = 0)",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 214748,
+						"minimum": 0,
+						"type": "integer",
+						"format": "int32",
+						"default": 0
+					}
+				}, {
+					"name": "pageSize",
+					"in": "query",
+					"description": "Page size requested (default = 10)",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 50,
+						"minimum": 1,
+						"type": "integer",
+						"format": "int32",
+						"default": 10
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderVersionsResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_VIEWER"]
+				}
+			}
+		},
+		"/orders/{id}/versions/{versionId}": {
+			"get": {
+				"tags": ["orders"],
+				"summary": "Get specified order version",
+				"description": "Returns the specified version of an Order",
+				"operationId": "getSingleVersion",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "id",
+					"in": "path",
+					"description": "Order unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "versionId",
+					"in": "path",
+					"description": "Version ID unique identifier",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderVersionResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_VIEWER"]
+				}
+			}
+		},
+		"/subscriptions": {
+			"get": {
+				"tags": ["subscriptions"],
+				"summary": "View all subscriptions to order change topics",
+				"description": "Returns all subscriptions in an organization to order change topics",
+				"operationId": "getAllSubscriptions",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "pageNumber",
+					"in": "query",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 214748,
+						"minimum": 0,
+						"type": "integer",
+						"format": "int32",
+						"default": 0
+					}
+				}, {
+					"name": "pageSize",
+					"in": "query",
+					"required": false,
+					"style": "form",
+					"explode": true,
+					"schema": {
+						"maximum": 10000,
+						"minimum": 10,
+						"type": "integer",
+						"format": "int32",
+						"default": 200
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FindSubscriptionsResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			},
+			"post": {
+				"tags": ["subscriptions"],
+				"summary": "Create subscription to specific order service topics",
+				"description": "Creates a custom subscription that is subscribed to the order service topic",
+				"operationId": "create_1",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "Allows a consumer to specify that the request should be processed within the context of a specific enterprise unit.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "Content-Type",
+					"in": "header",
+					"description": "The media type of the entity-body, this endpoint only allows application/json as body",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "application/json"
+				}],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateOrderSubscriptionRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrderUrlSubscriptionsViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		},
+		"/subscriptions/{name}": {
+			"get": {
+				"tags": ["subscriptions"],
+				"summary": "Get a subscription to order change topics",
+				"description": "Retrieves a subscription by the specified name",
+				"operationId": "getSubscription",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "name",
+					"in": "path",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"maxLength": 200,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					}
+				}],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UrlSubscriptionViewData"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			},
+			"delete": {
+				"tags": ["subscriptions"],
+				"summary": "Delete subscription to specific order service topics",
+				"description": "Deletes the specified subscription",
+				"operationId": "delete",
+				"parameters": [{
+					"name": "nep-organization",
+					"in": "header",
+					"description": "Used to access data for a specific tenant. This is also used to specify the login organization for a user in a tenant. If not provided, the user's parent organization is used.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					}
+				}, {
+					"name": "nep-service-version",
+					"in": "header",
+					"description": "Identifies the application version to route the incoming request.",
+					"required": false,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"type": "string"
+					},
+					"example": "3:1"
+				}, {
+					"name": "name",
+					"in": "path",
+					"required": true,
+					"style": "simple",
+					"explode": false,
+					"schema": {
+						"maxLength": 200,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					}
+				}],
+				"responses": {
+					"204": {
+						"description": "Success"
+					},
+					"400": {
+						"description": "Bad Request: The request is invalid",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BusinessException"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized: The request requires user authentication",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InvalidCredentialsException"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Access denied due to insufficient privileges",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessDeniedException"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Resource not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResourceDoesNotExistException"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error"
+					},
+					"503": {
+						"description": "Service unavailable"
+					}
+				},
+				"x-authorities": {
+					"roles": ["R1_ORDER_ADMINISTRATOR"]
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"AccessDeniedException": {
+				"type": "object",
+				"properties": {
+					"businessMessage": {
+						"type": "string"
+					},
+					"details": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"errorType": {
+						"type": "string"
+					}
+				}
+			},
+			"AdjustmentData": {
+				"type": "object",
+				"properties": {
+					"applied": {
+						"type": "boolean",
+						"description": "Indicates whether an order has a loyalty ID applied to it or not."
+					},
+					"level": {
+						"type": "string",
+						"description": "Identifies how the adjustment is applied to the order",
+						"enum": ["ITEM", "ORDER"]
+					},
+					"type": {
+						"type": "string",
+						"description": "Identifies the adjustment type",
+						"enum": ["PROMO", "COMP", "LOYALTY"]
+					}
+				},
+				"description": "Identify the adjustment"
+			},
+			"AuthenticationData": {
+				"required": ["authenticationType", "credentials"],
+				"type": "object",
+				"properties": {
+					"authenticationType": {
+						"type": "string",
+						"enum": ["BASIC"]
+					},
+					"credentials": {
+						"maxLength": 500,
+						"minLength": 1,
+						"type": "string"
+					}
+				},
+				"description": "Authentication credentials needed for endpoint"
+			},
+			"BusinessException": {
+				"type": "object",
+				"properties": {
+					"businessMessage": {
+						"type": "string"
+					},
+					"details": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"errorType": {
+						"type": "string"
+					}
+				}
+			},
+			"CheckInDetailsData": {
+				"type": "object",
+				"properties": {
+					"application": {
+						"type": "string",
+						"description": "Name of the application used to initiate the check in event",
+						"example": "POS"
+					},
+					"location": {
+						"type": "string",
+						"description": "CheckIn location from where order can be picked up",
+						"example": "Store Front"
+					},
+					"origin": {
+						"$ref": "#/components/schemas/CheckInOriginData"
+					},
+					"vector": {
+						"$ref": "#/components/schemas/CheckInVectorData"
+					}
+				},
+				"description": "CheckIn details for the order"
+			},
+			"CheckInOriginData": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"description": "A specific number of the origin type to help identify it",
+						"format": "int32"
+					},
+					"type": {
+						"type": "string",
+						"description": "Check-in origin type",
+						"example": "mobile or web"
+					}
+				},
+				"description": "Checkin origin"
+			},
+			"CheckInVectorData": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"description": "A specific number of the vector type to help identify it",
+						"format": "int32"
+					},
+					"type": {
+						"type": "string",
+						"description": "Check-in vector type",
+						"example": "printer, queue, terminal, display or kiosk"
+					}
+				},
+				"description": "Checkin vector"
+			},
+			"CreateOrderSubscriptionRequest": {
+				"required": ["description", "endpoint", "name"],
+				"type": "object",
+				"properties": {
+					"authenticationCredentials": {
+						"$ref": "#/components/schemas/AuthenticationData"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the subscription"
+					},
+					"endpoint": {
+						"$ref": "#/components/schemas/UrlEndpointData"
+					},
+					"messageAttributePatterns": {
+						"type": "array",
+						"description": "The message attribute patterns to use when selecting messages published on a topic. If patterns are specified, the subscription will receive only those messages that are published with attributes that match the subscription's patterns. Each attribute pattern specified must be matched against the message's attribute values for the message to be delivered to the subscriber. Each message attribute pattern value must be a valid regular expression pattern",
+						"items": {
+							"$ref": "#/components/schemas/KeyValueData"
+						},
+						"enum": ["channel", "channel-label", "fulfillment-address-country", "fulfillment-type", "fulfillment-type-label", "source"]
+					},
+					"name": {
+						"maxLength": 200,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					},
+					"payloadDelivered": {
+						"type": "boolean",
+						"description": "Indicates if payload should be delivered"
+					}
+				}
+			},
+			"CrossStreetData": {
+				"required": ["name"],
+				"type": "object",
+				"properties": {
+					"lineId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string",
+						"description": "Near by or cross street name for address",
+						"example": "Peachtree St"
+					}
+				},
+				"description": "List of streets that intersect this address"
+			},
+			"CustomerData": {
+				"type": "object",
+				"properties": {
+					"email": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "Email address, for identification and contact purposes"
+					},
+					"externalIds": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/CustomerIdData"
+						}
+					},
+					"firstName": {
+						"type": "string",
+						"description": "The customer's first name"
+					},
+					"fiscalId": {
+						"type": "string",
+						"description": "Fiscal identification of the customer"
+					},
+					"id": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "The customer identifier, referencing the NCR platform customer data"
+					},
+					"lastName": {
+						"type": "string",
+						"description": "The customer's last name"
+					},
+					"name": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "The customer name is used for groups, organizations or usernames. If specifying an individual’s name, use the first and last name fields."
+					},
+					"phone": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "Phone number, for identification and contact purposes"
+					},
+					"phoneExtension": {
+						"type": "string",
+						"description": "Phone extension, for contact purposes"
+					}
+				},
+				"description": "The customer of this order"
+			},
+			"CustomerIdData": {
+				"type": "object",
+				"properties": {
+					"lineId": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"description": "The type of customer ID",
+						"example": "Other",
+						"enum": ["Reference", "Tax", "Loyalty", "Other"]
+					},
+					"typeLabel": {
+						"type": "string",
+						"description": "If the 'Other' type is used, then provide a label specifying the type"
+					},
+					"value": {
+						"type": "string",
+						"description": "The customer id description"
+					}
+				}
+			},
+			"ExpirationData": {
+				"type": "object",
+				"properties": {
+					"month": {
+						"type": "integer",
+						"description": "Expiration month.",
+						"format": "int32"
+					},
+					"year": {
+						"type": "integer",
+						"description": "Expiration year.",
+						"format": "int32"
+					}
+				},
+				"description": "Date of expiration of the payment method like Credit card or Gift card or Debit Card"
+			},
+			"FeeData": {
+				"type": "object",
+				"properties": {
+					"amount": {
+						"type": "number",
+						"description": "Amount of the fee"
+					},
+					"groupMemberId": {
+						"type": "string",
+						"description": "ID of the group member to which this order line item belongs"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"override": {
+						"type": "boolean",
+						"description": "Indicates this fee amount should be used instead of a calculated fee"
+					},
+					"provider": {
+						"type": "string",
+						"description": "The service provider charging the fee"
+					},
+					"type": {
+						"type": "string",
+						"description": "The type of fee",
+						"example": "Web",
+						"enum": ["None", "CallIn", "Catering", "WalkIn", "Delivery", "EatIn", "DriveThru", "Curbside", "FaxedIn", "Web", "ModeCharge", "Other"]
+					},
+					"typeLabel": {
+						"type": "string",
+						"description": "If the 'Other' type is used, then provide a label specifying the type"
+					}
+				},
+				"description": "Fees charged to this order, such as delivery or setup fees"
+			},
+			"FindOrdersByAdditionalReferenceIdCriteria": {
+				"required": ["referenceIdName", "referenceIdValue"],
+				"type": "object",
+				"properties": {
+					"fromCreatedDate": {
+						"type": "string",
+						"description": "Search orders starting at this date",
+						"format": "date-time"
+					},
+					"referenceIdName": {
+						"type": "string",
+						"description": "Name of the field to search on"
+					},
+					"referenceIdValue": {
+						"type": "string",
+						"description": "Value of the field to search for"
+					},
+					"toCreatedDate": {
+						"type": "string",
+						"description": "Search orders ending at this date",
+						"format": "date-time"
+					}
+				}
+			},
+			"FindOrdersResult": {
+				"type": "object",
+				"properties": {
+					"lastPage": {
+						"type": "boolean"
+					},
+					"pageContent": {
+						"type": "array",
+						"description": "List of orders that matches the find criteria, limited by pageSize.",
+						"items": {
+							"$ref": "#/components/schemas/OrderViewData"
+						}
+					},
+					"pageNumber": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"totalPages": {
+						"minimum": 0,
+						"type": "integer",
+						"format": "int64"
+					},
+					"totalResults": {
+						"minimum": 0,
+						"type": "integer",
+						"format": "int64"
+					}
+				},
+				"description": "The result of a find operation on the orders resource."
+			},
+			"FindSubscriptionsResponse": {
+				"type": "object",
+				"properties": {
+					"lastPage": {
+						"type": "boolean"
+					},
+					"pageContent": {
+						"maxItems": 10000,
+						"minItems": 0,
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/SubscriptionBasicViewData"
+						}
+					},
+					"pageNumber": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"totalPages": {
+						"minimum": 0,
+						"type": "integer",
+						"format": "int64"
+					},
+					"totalResults": {
+						"minimum": 0,
+						"type": "integer",
+						"format": "int64"
+					}
+				}
+			},
+			"FulfillmentAddressBusinessData": {
+				"type": "object",
+				"properties": {
+					"department": {
+						"type": "string",
+						"description": "Specific department name."
+					},
+					"name": {
+						"type": "string",
+						"description": "Business name."
+					}
+				},
+				"description": "Additional business data if this is a business address."
+			},
+			"FulfillmentAddressData": {
+				"type": "object",
+				"properties": {
+					"businessInfo": {
+						"$ref": "#/components/schemas/FulfillmentAddressBusinessData"
+					},
+					"city": {
+						"type": "string",
+						"description": "City of the address"
+					},
+					"coordinates": {
+						"$ref": "#/components/schemas/GeolocationCoordinatesData"
+					},
+					"country": {
+						"maxLength": 128,
+						"minLength": 0,
+						"pattern": "\\p{Alpha}[\\p{Alpha}'-\\., ]*",
+						"type": "string",
+						"description": "Country of the address."
+					},
+					"crossStreets": {
+						"type": "array",
+						"description": "List of streets that intersect this address",
+						"items": {
+							"$ref": "#/components/schemas/CrossStreetData"
+						}
+					},
+					"line1": {
+						"type": "string",
+						"description": "First line of the address."
+					},
+					"line2": {
+						"type": "string",
+						"description": "Second line of the address."
+					},
+					"notes": {
+						"type": "string",
+						"description": "Delivery notes for the address (e.g. Use entrance on east side)."
+					},
+					"postalCode": {
+						"type": "string",
+						"description": "Postal code of the address."
+					},
+					"state": {
+						"type": "string",
+						"description": "State or province of the address."
+					},
+					"type": {
+						"type": "string",
+						"description": "The type of address.",
+						"example": "Other",
+						"enum": ["Business", "Residential", "Other"]
+					},
+					"typeLabel": {
+						"type": "string",
+						"description": "If type is 'Other', optionally specify the address type."
+					}
+				},
+				"description": "Address information used in fulfillment (e.g. a delivery address)"
+			},
+			"FulfillmentData": {
+				"type": "object",
+				"properties": {
+					"address": {
+						"$ref": "#/components/schemas/FulfillmentAddressData"
+					},
+					"autoClose": {
+						"type": "boolean",
+						"description": "Indicates if the order is fulfilled as an open check"
+					},
+					"autoRelease": {
+						"type": "boolean",
+						"description": "Indicates if the order should be auto released for fulfillment"
+					},
+					"catering": {
+						"type": "boolean",
+						"description": "Indicates if the order is fulfilled by catering"
+					},
+					"fulfillmentTime": {
+						"type": "string",
+						"description": "Indicates the time at which an order should be fulfilled",
+						"format": "date-time",
+						"example": "2018-01-31T12:34:56.789Z"
+					},
+					"leadTimes": {
+						"type": "array",
+						"description": "Fulfillment lead time expected for the order, such as delivery time or preparation time",
+						"items": {
+							"$ref": "#/components/schemas/FulfillmentLeadTimeData"
+						}
+					},
+					"notes": {
+						"type": "string",
+						"description": "Notes added to aid in fulfillment (e.g. customer delivery instructions)"
+					},
+					"pickupDate": {
+						"type": "string",
+						"description": "The date when the customer is due to collect the order",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"pickupLocation": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "The store where the customer will collect his order"
+					},
+					"tableId": {
+						"type": "string",
+						"description": "The id of the table where the open check is coming from.",
+						"example": "Table4"
+					},
+					"type": {
+						"type": "string",
+						"description": "The type of fulfillment needed for this order",
+						"example": "Pickup",
+						"enum": ["Delivery", "Pickup", "Notification", "Curbside", "DineIn", "DriveThru", "Other"]
+					},
+					"typeLabel": {
+						"type": "string",
+						"description": "If 'Other' is the declared type, use typeLabel to specify the actual type"
+					}
+				},
+				"description": "Information needed to fulfill the order delivery"
+			},
+			"FulfillmentLeadTimeData": {
+				"type": "object",
+				"properties": {
+					"interval": {
+						"type": "integer",
+						"description": "The measure for the lead time.",
+						"format": "int32"
+					},
+					"intervalUnits": {
+						"type": "string",
+						"description": "The unit of measure for the lead time",
+						"example": "Minutes",
+						"enum": ["Seconds", "Minutes", "Hours", "Days"]
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"description": "The type of the lead time.",
+						"example": "Other",
+						"enum": ["Transit", "Preparation", "Setup", "Other"]
+					},
+					"typeLabel": {
+						"type": "string",
+						"description": "If the 'Other' type is used, then provide a label specifying the lead time."
+					}
+				},
+				"description": "Fulfillment lead time expected for the order, such as delivery time or preparation time"
+			},
+			"GeolocationCoordinatesData": {
+				"required": ["latitude", "longitude"],
+				"type": "object",
+				"properties": {
+					"latitude": {
+						"maximum": 90,
+						"minimum": -90,
+						"type": "number",
+						"description": "Represents the latitude degrees of the geographic coordinates",
+						"format": "double",
+						"example": 33.6817952
+					},
+					"longitude": {
+						"maximum": 180,
+						"minimum": -180,
+						"type": "number",
+						"description": "Represents the longitude degrees of the geographic coordinates",
+						"format": "double",
+						"example": -84.4239568
+					}
+				},
+				"description": "Geolocation coordinates for the address"
+			},
+			"GroupMemberData": {
+				"type": "object",
+				"properties": {
+					"externalIds": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string",
+							"description": "Set of group member IDs for externals systems."
+						},
+						"description": "Set of group member IDs for externals systems."
+					},
+					"firstName": {
+						"type": "string",
+						"description": "The group member's first name."
+					},
+					"fiscalId": {
+						"type": "string",
+						"description": "Fiscal identification of the group member"
+					},
+					"lastName": {
+						"type": "string",
+						"description": "The group member's last name."
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string",
+						"description": "The group name for groups, organizations or usernames"
+					}
+				},
+				"description": "List of group members for group ordering on line items"
+			},
+			"InvalidCredentialsException": {
+				"type": "object",
+				"properties": {
+					"businessMessage": {
+						"type": "string"
+					},
+					"details": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"errorType": {
+						"type": "string"
+					}
+				}
+			},
+			"JsonNode": {
+				"type": "object",
+				"description": "RFC 6902 JSON Patch Diff"
+			},
+			"KeyValueData": {
+				"required": ["key"],
+				"type": "object",
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"value": {
+						"maxLength": 512,
+						"minLength": 1,
+						"type": "string"
+					}
+				}
+			},
+			"LinePriceModifierData": {
+				"type": "object",
+				"properties": {
+					"amount": {
+						"type": "number",
+						"description": "The discount or surcharge amount"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the price change"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"referenceId": {
+						"type": "string",
+						"description": "The price change reference, like a promotion id"
+					}
+				},
+				"description": "The price modifiers for this line only"
+			},
+			"LineTaxData": {
+				"type": "object",
+				"properties": {
+					"amount": {
+						"type": "number",
+						"description": "The tax amount"
+					},
+					"code": {
+						"type": "string",
+						"description": "The tax code"
+					},
+					"isIncluded": {
+						"type": "boolean",
+						"description": "Indicate if the tax is included in the item price"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"percentage": {
+						"type": "number",
+						"description": "Tax percentage for presentation purposes. May be null"
+					}
+				},
+				"description": "The taxes for this line only"
+			},
+			"LockData": {
+				"type": "object",
+				"properties": {
+					"lockedBy": {
+						"type": "string",
+						"description": "The unique Id/Name of the touchpoint that locked the customer order"
+					},
+					"lockedDate": {
+						"type": "string",
+						"description": "The Date/Time when the locked happened, in ISO 8601 format",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					}
+				},
+				"description": "Orders' owner locking information"
+			},
+			"OrderAdditionalUrlSubscriptionViewData": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"topicId": {
+						"$ref": "#/components/schemas/TopicIdData"
+					}
+				}
+			},
+			"OrderCriteriaSort": {
+				"type": "object",
+				"properties": {
+					"column": {
+						"type": "string",
+						"description": "The column to sort the results by",
+						"enum": ["CreatedDate", "UpdatedDate"]
+					},
+					"direction": {
+						"type": "string",
+						"description": "The direction to sort the results",
+						"enum": ["Asc", "Desc"]
+					}
+				},
+				"description": "The sort order for the paged find response"
+			},
+			"OrderData": {
+				"type": "object",
+				"properties": {
+					"additionalReferenceIds": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string",
+							"description": "Map of additional Reference ID strings for the order"
+						},
+						"description": "Map of additional Reference ID strings for the order"
+					},
+					"bagCount": {
+						"minimum": 1,
+						"type": "integer",
+						"description": "Number of bags in the order",
+						"format": "int32"
+					},
+					"channel": {
+						"type": "string",
+						"description": "Channel through which the Order was placed",
+						"example": "Web",
+						"enum": ["PhoneIn", "WalkIn", "Web", "eMail", "CallCenter", "Mobile", "DriveThru", "Forecourt", "Fax", "Other"]
+					},
+					"channelLabel": {
+						"type": "string",
+						"description": "If 'Other' is the declared type, use channelLabel to specify the actual type"
+					},
+					"checkInDetails": {
+						"$ref": "#/components/schemas/CheckInDetailsData"
+					},
+					"comments": {
+						"maxLength": 4000,
+						"minLength": 0,
+						"type": "string",
+						"description": "General comments for whole order"
+					},
+					"currency": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "The currency of all money values in the order. This is the currency code as defined in ISO 4217"
+					},
+					"customer": {
+						"$ref": "#/components/schemas/CustomerData"
+					},
+					"dateClosed": {
+						"type": "string",
+						"description": "The date and time when order was closed.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"dateFulfilled": {
+						"type": "string",
+						"description": "The date and time when order status was changed to FINISHED.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"dateInTransit": {
+						"type": "string",
+						"description": "The date and time when order status was changed to IN_TRANSIT.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"errorDescription": {
+						"maxLength": 4000,
+						"minLength": 0,
+						"type": "string",
+						"description": "Description for an error"
+					},
+					"expireAt": {
+						"type": "string",
+						"description": "The expiration date of the order. If the provided date is in the past, the expiration date will be set to 12 hours in the future.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"fees": {
+						"type": "array",
+						"description": "Fees charged to this order, such as delivery or setup fees",
+						"items": {
+							"$ref": "#/components/schemas/FeeData"
+						}
+					},
+					"fulfillment": {
+						"$ref": "#/components/schemas/FulfillmentData"
+					},
+					"groupMembers": {
+						"type": "array",
+						"description": "List of group members for group ordering on line items",
+						"items": {
+							"$ref": "#/components/schemas/GroupMemberData"
+						}
+					},
+					"orderLines": {
+						"type": "array",
+						"description": "The order line items",
+						"items": {
+							"$ref": "#/components/schemas/OrderLineData"
+						}
+					},
+					"owner": {
+						"type": "string",
+						"description": "Responsible party for this order, where party can be application, site, person"
+					},
+					"partySize": {
+						"minimum": 0,
+						"type": "integer",
+						"description": "Party size for the order",
+						"format": "int32"
+					},
+					"payments": {
+						"type": "array",
+						"description": "Payments information assigned to the order",
+						"items": {
+							"$ref": "#/components/schemas/PaymentData"
+						}
+					},
+					"pickupContact": {
+						"$ref": "#/components/schemas/PickupContactData"
+					},
+					"promotions": {
+						"type": "array",
+						"description": "Promotions information assigned to the order",
+						"items": {
+							"$ref": "#/components/schemas/PromotionData"
+						}
+					},
+					"referenceId": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "External reference identifier"
+					},
+					"revenueCenter": {
+						"type": "string",
+						"description": "The revenue center information.",
+						"example": "bar"
+					},
+					"source": {
+						"type": "string",
+						"description": "Retail origin of the order, such as an order aggregator or third party ordering system."
+					},
+					"status": {
+						"type": "string",
+						"description": "Status this order is in",
+						"example": "OrderPlaced",
+						"enum": ["Canceled", "Finished", "OrderPlaced", "ReadyForPickup", "Error", "InProgress", "ReceivedForFulfillment", "InFulfillment", "InTransit", "Abandoned", "Expired", "ReadyForValidation", "Validated", "OrderUpdated", "RejectedForFulfillment"]
+					},
+					"taxExempt": {
+						"type": "boolean",
+						"description": "Indicates that this order should be tax exempt. The point of sale should verify the customer is qualified for the order to be exempted."
+					},
+					"taxExemptId": {
+						"type": "string",
+						"description": "Tax Exemption Identifier to verify tax exempt status of an order"
+					},
+					"taxes": {
+						"type": "array",
+						"description": "The taxes calculated for the order",
+						"items": {
+							"$ref": "#/components/schemas/TaxData"
+						}
+					},
+					"totalModifiers": {
+						"type": "array",
+						"description": "Modifiers on the orders' lines total",
+						"items": {
+							"$ref": "#/components/schemas/TicketTotalModifierData"
+						}
+					},
+					"totals": {
+						"type": "array",
+						"description": "List of customer order totals",
+						"items": {
+							"$ref": "#/components/schemas/TotalData"
+						}
+					}
+				},
+				"description": "Represents the order."
+			},
+			"OrderFinderCriteria": {
+				"type": "object",
+				"properties": {
+					"addressCity": {
+						"type": "string",
+						"description": "City of the address"
+					},
+					"addressCountry": {
+						"type": "string",
+						"description": "Country of the address."
+					},
+					"addressLine1": {
+						"type": "string",
+						"description": "First line of the address."
+					},
+					"addressLine2": {
+						"type": "string",
+						"description": "Second line of the address."
+					},
+					"addressPostalCode": {
+						"type": "string",
+						"description": "Postal code of the address."
+					},
+					"addressState": {
+						"type": "string",
+						"description": "State or province of the address."
+					},
+					"customerEmail": {
+						"type": "string",
+						"description": "The Email of the the Customer associated with the order"
+					},
+					"customerFirstName": {
+						"type": "string",
+						"description": "The First Name of the Customer associated with the order"
+					},
+					"customerFiscalId": {
+						"type": "string",
+						"description": "The Fiscal ID of the Customer associated with the order"
+					},
+					"customerFullName": {
+						"type": "string",
+						"description": "The Full Name of the Customer associated with the order"
+					},
+					"customerId": {
+						"type": "string",
+						"description": "The Id of the Customer associated with the order"
+					},
+					"customerLastName": {
+						"type": "string",
+						"description": "The Last Name of the Customer associated with the order"
+					},
+					"enterpriseUnitId": {
+						"type": "string",
+						"description": "The enterprise unit of the order"
+					},
+					"excludeLockedOrders": {
+						"type": "boolean",
+						"description": "Boolean value to specify whether or not to exclude locked orders returned."
+					},
+					"expiredByDate": {
+						"type": "string",
+						"description": "Order has expired by this date or later",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"fromCreatedDate": {
+						"type": "string",
+						"description": "Order was created on this date",
+						"format": "date-time"
+					},
+					"fromPickupDate": {
+						"type": "string",
+						"description": "Order was picked up on this date or later",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"fromUpdatedDate": {
+						"type": "string",
+						"description": "Order was last updated on this date, or later",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"phoneNumber": {
+						"type": "string",
+						"description": "The Phone of the Customer associated with the order"
+					},
+					"pickupLocationId": {
+						"type": "string",
+						"description": "The location in which the order was picked"
+					},
+					"referenceId": {
+						"type": "string",
+						"description": "The order reference id"
+					},
+					"returnFullOrders": {
+						"type": "boolean",
+						"description": "Boolean value to specify the content of the orders returned."
+					},
+					"sort": {
+						"$ref": "#/components/schemas/OrderCriteriaSort"
+					},
+					"sourceOrganization": {
+						"type": "string",
+						"description": "The source organization of the order"
+					},
+					"status": {
+						"type": "string",
+						"description": "The order status",
+						"example": "OrderPlaced"
+					},
+					"toCreatedDate": {
+						"type": "string",
+						"description": "Order was created on this date, or ealier",
+						"format": "date-time"
+					},
+					"toPickupDate": {
+						"type": "string",
+						"description": "Order was picked up on this date or earlier",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"toUpdatedDate": {
+						"type": "string",
+						"description": "Order was last updated on this date, or earlier",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					}
+				},
+				"description": "Criteria details to search orders. Order will have to match ALL provided fields in order to be in the result."
+			},
+			"OrderLineData": {
+				"type": "object",
+				"properties": {
+					"comments": {
+						"maxLength": 4000,
+						"minLength": 0,
+						"type": "string",
+						"description": "General comments for each line item of an order. Comments has been deprecated, in favor of using the typed notes feature."
+					},
+					"description": {
+						"type": "string",
+						"description": "The line's description"
+					},
+					"extendedAmount": {
+						"type": "number",
+						"description": "The Line extended amount. That is: Quantity X Unit price"
+					},
+					"fulfillmentResult": {
+						"type": "string",
+						"description": "Indicates the fulfillment result of line item",
+						"example": "Replaced",
+						"enum": ["Replaced", "Failed", "Fulfilled"]
+					},
+					"groupMemberId": {
+						"type": "string",
+						"description": "ID of the group member to which this order line item belongs"
+					},
+					"itemType": {
+						"type": "string",
+						"description": "The order line item type. e.g. Fee, Tare, Fuel..."
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"lineReplaced": {
+						"type": "string"
+					},
+					"linkGroupCode": {
+						"type": "string",
+						"description": "Hospitality linkGroupCode, such as codes for 'toppings', 'sides', or Retail 'substitution'"
+					},
+					"modifierCode": {
+						"type": "string",
+						"description": "The modifier code associated with the item, typically as defined in the POS system, to indicate e.g. 'well done', 'extra ketchup'"
+					},
+					"notes": {
+						"type": "array",
+						"description": "The notes applying to this line item, such as cooking instructions, or customer substitutions preferred",
+						"items": {
+							"$ref": "#/components/schemas/OrderLineNoteData"
+						}
+					},
+					"overridePrice": {
+						"type": "boolean",
+						"description": "Set to true to indicate that the item's current price should override any other local prices"
+					},
+					"parentLineId": {
+						"type": "string",
+						"description": "The line identifier for the parent item. Parents are used to set up linkage between items, and to build a hierarchy of items."
+					},
+					"priceModifiers": {
+						"type": "array",
+						"description": "The price modifiers for this line only",
+						"items": {
+							"$ref": "#/components/schemas/LinePriceModifierData"
+						}
+					},
+					"productId": {
+						"$ref": "#/components/schemas/ProductIdData"
+					},
+					"quantity": {
+						"$ref": "#/components/schemas/QuantityData"
+					},
+					"scanData": {
+						"maxLength": 2710,
+						"minLength": 0,
+						"type": "string",
+						"description": "Applicable for POS where picker writes composite barcode instead of overwriting product ID field. Maximum allowable length is 2710 characters."
+					},
+					"substitutionAllowed": {
+						"type": "boolean",
+						"description": "Substitution Allowed for an item"
+					},
+					"supplementalData": {
+						"maxLength": 2710,
+						"minLength": 0,
+						"type": "string",
+						"description": "Use for capturing gift payment (track data), product serial number, IMEI. Maximum allowable length is 2710 characters."
+					},
+					"taxes": {
+						"type": "array",
+						"description": "The taxes for this line only",
+						"items": {
+							"$ref": "#/components/schemas/LineTaxData"
+						}
+					},
+					"unitPrice": {
+						"type": "number",
+						"description": "The price per unit"
+					}
+				}
+			},
+			"OrderLineGroupData": {
+				"type": "object",
+				"properties": {
+					"lineId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string",
+						"description": "OrderLineGroup name"
+					},
+					"orderLineIds": {
+						"type": "array",
+						"description": "List of Order Line Item IDs. Items must exist on the order",
+						"items": {
+							"type": "string",
+							"description": "List of Order Line Item IDs. Items must exist on the order"
+						}
+					}
+				},
+				"description": "Line item(s) to which the promotion is applied"
+			},
+			"OrderLineNoteData": {
+				"type": "object",
+				"properties": {
+					"lineId": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"description": "The type of the note.",
+						"example": "Substitutions",
+						"enum": ["Substitutions", "Preferences", "Other", "Replaced", "Failed", "Fulfilled"]
+					},
+					"typeLabel": {
+						"type": "string",
+						"description": "If the 'Other' type is used, then provide a label specifying the type."
+					},
+					"value": {
+						"type": "string",
+						"description": "The note itself."
+					}
+				},
+				"description": "The notes applying to this line item, such as cooking instructions, or customer substitutions preferred"
+			},
+			"OrderLockedException": {
+				"type": "object",
+				"properties": {
+					"businessMessage": {
+						"type": "string"
+					},
+					"details": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"errorType": {
+						"type": "string"
+					}
+				}
+			},
+			"OrderUrlSubscriptionsViewData": {
+				"type": "object",
+				"properties": {
+					"additionalSubscriptions": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/OrderAdditionalUrlSubscriptionViewData"
+						}
+					},
+					"description": {
+						"type": "string"
+					},
+					"endpoint": {
+						"$ref": "#/components/schemas/UrlEndpointData"
+					},
+					"enterpriseUnitId": {
+						"type": "string"
+					},
+					"messageAttributePatterns": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/KeyValueData"
+						}
+					},
+					"name": {
+						"maxLength": 200,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					},
+					"payloadDelivered": {
+						"type": "boolean"
+					},
+					"topicId": {
+						"$ref": "#/components/schemas/TopicIdData"
+					}
+				}
+			},
+			"OrderVersionResponse": {
+				"type": "object",
+				"properties": {
+					"dateUpdated": {
+						"type": "string",
+						"description": "The datetime this order update occurred",
+						"format": "date-time"
+					},
+					"deviceId": {
+						"type": "string",
+						"description": "The deviceId making the order update"
+					},
+					"diff": {
+						"$ref": "#/components/schemas/JsonNode"
+					},
+					"id": {
+						"type": "string",
+						"description": "A generated unique identifier for the order version object"
+					},
+					"updatingOrganization": {
+						"type": "string",
+						"description": "The organization responsible for this version"
+					},
+					"user": {
+						"type": "string",
+						"description": "The user that made the order update"
+					}
+				},
+				"description": "List of order version objects"
+			},
+			"OrderVersionsResponse": {
+				"type": "object",
+				"properties": {
+					"lastPage": {
+						"type": "boolean",
+						"description": "Last page indicator"
+					},
+					"orderId": {
+						"type": "string",
+						"description": "Order ID"
+					},
+					"pageNumber": {
+						"type": "integer",
+						"description": "The page number of the response",
+						"format": "int32"
+					},
+					"sourceOrganization": {
+						"type": "string",
+						"description": "The organization that originally created the order"
+					},
+					"totalPages": {
+						"type": "integer",
+						"description": "The total number of pages",
+						"format": "int32"
+					},
+					"totalResults": {
+						"type": "integer",
+						"description": "The total count of unacknowledged orders for the specified enterprise unit id",
+						"format": "int64"
+					},
+					"versions": {
+						"type": "array",
+						"description": "List of order version objects",
+						"items": {
+							"$ref": "#/components/schemas/OrderVersionResponse"
+						}
+					}
+				},
+				"description": "Response containing all versions of the specified order"
+			},
+			"OrderViewData": {
+				"type": "object",
+				"properties": {
+					"additionalReferenceIds": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string",
+							"description": "Map of additional Reference ID strings for the order"
+						},
+						"description": "Map of additional Reference ID strings for the order"
+					},
+					"bagCount": {
+						"minimum": 1,
+						"type": "integer",
+						"description": "Number of bags in the order",
+						"format": "int32"
+					},
+					"channel": {
+						"type": "string",
+						"description": "Channel through which the Order was placed",
+						"example": "Web",
+						"enum": ["PhoneIn", "WalkIn", "Web", "eMail", "CallCenter", "Mobile", "DriveThru", "Forecourt", "Fax", "Other"]
+					},
+					"channelLabel": {
+						"type": "string",
+						"description": "If 'Other' is the declared type, use channelLabel to specify the actual type"
+					},
+					"checkInDetails": {
+						"$ref": "#/components/schemas/CheckInDetailsData"
+					},
+					"comments": {
+						"maxLength": 4000,
+						"minLength": 0,
+						"type": "string",
+						"description": "General comments for whole order"
+					},
+					"currency": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "The currency of all money values in the order. This is the currency code as defined in ISO 4217"
+					},
+					"customer": {
+						"$ref": "#/components/schemas/CustomerData"
+					},
+					"dateAcknowledged": {
+						"type": "string",
+						"description": "The date and time that an order was acknowledged as received by an NEP Enterprise Unit. If null, order has not been acknowledged by the target NEP Enterprise Unit.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"dateClosed": {
+						"type": "string",
+						"description": "The date and time when order was closed.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"dateCreated": {
+						"type": "string",
+						"description": "The date the order was created. A read only value that is handled internally, and will be disregarded if sent in a message",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"dateFulfilled": {
+						"type": "string",
+						"description": "The date and time when order status was changed to FINISHED.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"dateInTransit": {
+						"type": "string",
+						"description": "The date and time when order status was changed to IN_TRANSIT.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"dateUpdated": {
+						"type": "string",
+						"description": "The last date the order was changed. A read only value that is handled internally, and will be disregarded if sent in a message",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"enterpriseUnitId": {
+						"type": "string",
+						"description": "Site for which order is placed."
+					},
+					"errorDescription": {
+						"maxLength": 4000,
+						"minLength": 0,
+						"type": "string",
+						"description": "Description for an error"
+					},
+					"etag": {
+						"type": "string",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"expireAt": {
+						"type": "string",
+						"description": "The expiration date of the order. If the provided date is in the past, the expiration date will be set to 12 hours in the future.",
+						"format": "date-time",
+						"example": "2017-07-06T21:03:46.514Z"
+					},
+					"fees": {
+						"type": "array",
+						"description": "Fees charged to this order, such as delivery or setup fees",
+						"items": {
+							"$ref": "#/components/schemas/FeeData"
+						}
+					},
+					"fulfillment": {
+						"$ref": "#/components/schemas/FulfillmentData"
+					},
+					"groupMembers": {
+						"type": "array",
+						"description": "List of group members for group ordering on line items",
+						"items": {
+							"$ref": "#/components/schemas/GroupMemberData"
+						}
+					},
+					"id": {
+						"type": "string",
+						"description": "Unique identifier. A read only description that is handled internally, and will be disregarded if sent in a message"
+					},
+					"lock": {
+						"$ref": "#/components/schemas/LockData"
+					},
+					"orderLines": {
+						"type": "array",
+						"description": "The order line items",
+						"items": {
+							"$ref": "#/components/schemas/OrderLineData"
+						}
+					},
+					"owner": {
+						"type": "string",
+						"description": "Responsible party for this order, where party can be application, site, person"
+					},
+					"partySize": {
+						"minimum": 0,
+						"type": "integer",
+						"description": "Party size for the order",
+						"format": "int32"
+					},
+					"payments": {
+						"type": "array",
+						"description": "Payments information assigned to the order",
+						"items": {
+							"$ref": "#/components/schemas/PaymentData"
+						}
+					},
+					"pickupContact": {
+						"$ref": "#/components/schemas/PickupContactData"
+					},
+					"promotions": {
+						"type": "array",
+						"description": "Promotions information assigned to the order",
+						"items": {
+							"$ref": "#/components/schemas/PromotionData"
+						}
+					},
+					"referenceId": {
+						"maxLength": 255,
+						"minLength": 0,
+						"type": "string",
+						"description": "External reference identifier"
+					},
+					"revenueCenter": {
+						"type": "string",
+						"description": "The revenue center information.",
+						"example": "bar"
+					},
+					"source": {
+						"type": "string",
+						"description": "Retail origin of the order, such as an order aggregator or third party ordering system."
+					},
+					"sourceOrganization": {
+						"type": "string",
+						"description": "Order's source organization name. A read only description that is handled internally"
+					},
+					"status": {
+						"type": "string",
+						"description": "Status this order is in",
+						"example": "OrderPlaced",
+						"enum": ["Canceled", "Finished", "OrderPlaced", "ReadyForPickup", "Error", "InProgress", "ReceivedForFulfillment", "InFulfillment", "InTransit", "Abandoned", "Expired", "ReadyForValidation", "Validated", "OrderUpdated", "RejectedForFulfillment"]
+					},
+					"taxExempt": {
+						"type": "boolean",
+						"description": "Indicates that this order should be tax exempt. The point of sale should verify the customer is qualified for the order to be exempted."
+					},
+					"taxExemptId": {
+						"type": "string",
+						"description": "Tax Exemption Identifier to verify tax exempt status of an order"
+					},
+					"taxes": {
+						"type": "array",
+						"description": "The taxes calculated for the order",
+						"items": {
+							"$ref": "#/components/schemas/TaxData"
+						}
+					},
+					"totalModifiers": {
+						"type": "array",
+						"description": "Modifiers on the orders' lines total",
+						"items": {
+							"$ref": "#/components/schemas/TicketTotalModifierData"
+						}
+					},
+					"totals": {
+						"type": "array",
+						"description": "List of customer order totals",
+						"items": {
+							"$ref": "#/components/schemas/TotalData"
+						}
+					}
+				},
+				"description": "Represents information of the order that is used for viewing purposes."
+			},
+			"PaymentData": {
+				"type": "object",
+				"properties": {
+					"accountNumber": {
+						"maxLength": 20,
+						"minLength": 0,
+						"type": "string",
+						"description": "An account number like house account or a customer number."
+					},
+					"amount": {
+						"type": "number",
+						"description": "The amount paid"
+					},
+					"description": {
+						"type": "string",
+						"description": "The payment description"
+					},
+					"expiration": {
+						"$ref": "#/components/schemas/ExpirationData"
+					},
+					"gratuity": {
+						"type": "number",
+						"description": "The amount tipped"
+					},
+					"groupMemberId": {
+						"type": "string",
+						"description": "ID of the group member to which this order line item belongs"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"maskedPAN": {
+						"type": "string",
+						"description": "Masked Personal Account number. Only valid with payment types AccountsReceivable, CreditDebit."
+					},
+					"payBalance": {
+						"type": "boolean",
+						"description": "Indicates if remaining balance should be charged to the user"
+					},
+					"paymentTime": {
+						"type": "string",
+						"description": "Timestamp when the most recent order payment was submitted",
+						"format": "date-time",
+						"example": "2019-07-06T21:03:46.514Z"
+					},
+					"referenceId": {
+						"type": "string",
+						"description": "External reference identifier, to relate the payment line to the payment system"
+					},
+					"status": {
+						"type": "string",
+						"description": "The payment status. i.e. PreAuthorized, Authorized, Paid, PendingVerification"
+					},
+					"subType": {
+						"type": "string",
+						"description": "The payment's subType. Here subType is required for CreditDebit card type. Return error if subType is not given for CreditDebit card type input."
+					},
+					"token": {
+						"type": "string",
+						"description": "Token for payment validation"
+					},
+					"type": {
+						"type": "string",
+						"description": "The payment's type.",
+						"example": "Cash",
+						"enum": [" AccountsReceivable, AirmilesConversion, CapitalBond, Cash, Check, CheckCard, CoPay, Coupon, CustomerAccount, ElectronicTollCollection, FoodStamps, GiftCertificate, HouseAccount, InternationalMaestro, Loyalty, ManufacturerCoupon, PurchaseOrder, StaffDressAllowance, StoredValue, TravelersCheck, UKMaestro, Voucher, WICCheck, CreditDebit, Other"]
+					}
+				},
+				"description": "Payments information assigned to the order"
+			},
+			"PickupContactData": {
+				"type": "object",
+				"properties": {
+					"company": {
+						"type": "string",
+						"description": "Company associated with pickup contact"
+					},
+					"hasArrived": {
+						"type": "boolean",
+						"description": "Indicates if the pickup contact has arrived at the site"
+					},
+					"imageLink": {
+						"type": "string",
+						"description": "Link to an image of the pickup contact"
+					},
+					"name": {
+						"type": "string",
+						"description": "Name for the pickup contact"
+					},
+					"phone": {
+						"type": "string",
+						"description": "Phone number for the pickup contact"
+					},
+					"vehicle": {
+						"$ref": "#/components/schemas/VehicleData"
+					}
+				},
+				"description": "Pickup contact for the order"
+			},
+			"ProductIdData": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"description": "The identifier type. i.e. UPC, SKU, EAN"
+					},
+					"value": {
+						"type": "string",
+						"description": "The identifier description"
+					}
+				},
+				"description": "The identifier of the product used to create the order line"
+			},
+			"PromotionData": {
+				"type": "object",
+				"properties": {
+					"adjustment": {
+						"$ref": "#/components/schemas/AdjustmentData"
+					},
+					"amount": {
+						"type": "number",
+						"description": "Total amount discounted by the promotion"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"numGuests": {
+						"minimum": 0,
+						"type": "integer",
+						"description": "The number of guests for which this promotion is applicable",
+						"format": "int32"
+					},
+					"orderLineGroups": {
+						"type": "array",
+						"description": "Line item(s) to which the promotion is applied",
+						"items": {
+							"$ref": "#/components/schemas/OrderLineGroupData"
+						}
+					},
+					"referenceId": {
+						"type": "string",
+						"description": "Customer identifier for a specific promotion"
+					},
+					"supportingData": {
+						"type": "string",
+						"description": "Additional information required by some promotion types"
+					}
+				},
+				"description": "Promotions information assigned to the order"
+			},
+			"QuantityData": {
+				"type": "object",
+				"properties": {
+					"unitOfMeasure": {
+						"type": "string",
+						"description": "The unit of measure. Returns exceptions when this unit of measure contains invalid code.",
+						"example": "EA",
+						"enum": ["EA, GLI, GLL, LTR, INH, FOT, MMT, CMQ, CMT, MTR, MTK, MTQ, GRM, KGM, LBR, ANN, CEL, FAH, OTHER "]
+					},
+					"unitOfMeasureLabel": {
+						"type": "string",
+						"description": "The unit of measure label. This field can be populated when unitOfMeasure  is selected/entered as other description."
+					},
+					"value": {
+						"type": "number",
+						"description": "The units description per unit-of-measure. Required field when unitOfMeasure is entered. Accepted decimal and positive/negative numerical value. "
+					}
+				},
+				"description": "The line quantity"
+			},
+			"ResourceDoesNotExistException": {
+				"type": "object",
+				"properties": {
+					"businessMessage": {
+						"type": "string"
+					},
+					"details": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"errorType": {
+						"type": "string"
+					}
+				}
+			},
+			"ResourceStaleException": {
+				"type": "object",
+				"properties": {
+					"businessMessage": {
+						"type": "string"
+					},
+					"details": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"errorType": {
+						"type": "string"
+					}
+				}
+			},
+			"ResyncResponse": {
+				"type": "object",
+				"properties": {
+					"lastPage": {
+						"type": "boolean",
+						"description": "Last page indicator"
+					},
+					"orders": {
+						"type": "array",
+						"description": "List of unacknowledged orders for the specified enterprise unit id",
+						"items": {
+							"$ref": "#/components/schemas/OrderViewData"
+						}
+					},
+					"pageNumber": {
+						"type": "integer",
+						"description": "The page number of the response",
+						"format": "int32"
+					},
+					"totalPages": {
+						"type": "integer",
+						"description": "The total number of pages",
+						"format": "int32"
+					},
+					"totalResults": {
+						"type": "integer",
+						"description": "The total count of unacknowledged orders for the specified enterprise unit id",
+						"format": "int64"
+					}
+				},
+				"description": "Response containing all unacknowledged orders for the specified enterprise unit id"
+			},
+			"SubscriptionBasicViewData": {
+				"required": ["description", "name", "subscriptionType", "topicId"],
+				"type": "object",
+				"properties": {
+					"description": {
+						"type": "string"
+					},
+					"enterpriseUnitId": {
+						"type": "string"
+					},
+					"name": {
+						"maxLength": 200,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					},
+					"subscriptionType": {
+						"type": "string",
+						"enum": ["SERVICE", "URL", "KAFKA"]
+					},
+					"topicId": {
+						"$ref": "#/components/schemas/TopicIdData"
+					}
+				}
+			},
+			"TaxData": {
+				"type": "object",
+				"properties": {
+					"active": {
+						"type": "boolean",
+						"description": "Determines if this tax is in effect"
+					},
+					"amount": {
+						"type": "number",
+						"description": "The tax amount"
+					},
+					"code": {
+						"type": "string",
+						"description": "The tax code"
+					},
+					"description": {
+						"type": "string",
+						"description": "The tax description"
+					},
+					"groupMemberId": {
+						"type": "string",
+						"description": "ID of the group member to which this order line item belongs"
+					},
+					"isIncluded": {
+						"type": "boolean",
+						"description": "Indicates if the tax is included in the item price. Note: the name is for backward compatibility with the v1.1 OrderService API"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"percentage": {
+						"type": "number",
+						"description": "Tax percentage for presentation purposes. May be null"
+					},
+					"source": {
+						"type": "string",
+						"description": "The source of the tax"
+					}
+				},
+				"description": "The taxes calculated for the order"
+			},
+			"TicketTotalModifierData": {
+				"type": "object",
+				"properties": {
+					"amount": {
+						"type": "number",
+						"description": "The discount or surcharge amount"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the price change"
+					},
+					"groupMemberId": {
+						"type": "string",
+						"description": "ID of the group member to which this order line item belongs"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"referenceId": {
+						"type": "string",
+						"description": "The price change reference, like a promotion id"
+					}
+				},
+				"description": "Modifiers on the orders' lines total"
+			},
+			"TopicIdData": {
+				"required": ["name"],
+				"type": "object",
+				"properties": {
+					"name": {
+						"maxLength": 256,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					}
+				}
+			},
+			"TotalData": {
+				"type": "object",
+				"properties": {
+					"groupMemberId": {
+						"type": "string",
+						"description": "ID of the group member to which this order line item belongs"
+					},
+					"lineId": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"description": "The type of the total",
+						"example": "Net",
+						"enum": ["Net", "TaxExcluded", "TaxIncluded"]
+					},
+					"value": {
+						"type": "number",
+						"description": "The description of the total"
+					}
+				},
+				"description": "List of customer order totals"
+			},
+			"UrlEndpointData": {
+				"required": ["description", "destinationUrl", "name"],
+				"type": "object",
+				"properties": {
+					"description": {
+						"type": "string"
+					},
+					"destinationUrl": {
+						"type": "string"
+					},
+					"name": {
+						"maxLength": 200,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					}
+				}
+			},
+			"UrlSubscriptionViewData": {
+				"required": ["description", "endpoint", "name", "topicId"],
+				"type": "object",
+				"properties": {
+					"description": {
+						"type": "string"
+					},
+					"endpoint": {
+						"$ref": "#/components/schemas/UrlEndpointData"
+					},
+					"enterpriseUnitId": {
+						"type": "string"
+					},
+					"messageAttributePatterns": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/KeyValueData"
+						}
+					},
+					"name": {
+						"maxLength": 200,
+						"minLength": 1,
+						"pattern": "\\p{Alpha}[\\w-]*",
+						"type": "string"
+					},
+					"payloadDelivered": {
+						"type": "boolean"
+					},
+					"topicId": {
+						"$ref": "#/components/schemas/TopicIdData"
+					}
+				}
+			},
+			"VehicleData": {
+				"type": "object",
+				"properties": {
+					"color": {
+						"type": "string",
+						"description": "The vehicle's color",
+						"example": "Silver"
+					},
+					"licensePlate": {
+						"type": "string",
+						"description": "The vehicle's license plate",
+						"example": "ABC1234"
+					},
+					"make": {
+						"type": "string",
+						"description": "The vehicle's make",
+						"example": "Porsche"
+					},
+					"model": {
+						"type": "string",
+						"description": "The vehicle's model",
+						"example": "911 Turbo"
+					},
+					"year": {
+						"type": "string",
+						"description": "The vehicle's year",
+						"example": "2017"
+					}
+				},
+				"description": "Vehicle information of the pickup contact"
+			}
+		}
+	}
+}

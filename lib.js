@@ -169,9 +169,13 @@ function processProperties(properties, required){
 }
 
 function processArrayItemsReferences(items, schemaMap) {
- var itemsKey = Object.keys(items);
- var itemsValue = Object.values(items);
- var schemaObject = {}
+
+    if(items === undefined) {
+        return
+    }
+    var itemsKey = Object.keys(items);
+    var itemsValue = Object.values(items);
+    var schemaObject = {}
 
     if (itemsKey[0] === "$ref") {
         var refArray = itemsValue[0].split("/")
@@ -1002,13 +1006,13 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
     //We'll create two arrays to hold two types of schema we'll see at the top-level of a requestbody: a reference to a component.schema or an inline schema defined with a combination of references and inline properties.
     var schemaArray = []
     var inlineSchemaProperties = []
-    if(version=="response"){
-        console.log("Response Schema")
-        console.log(schemas)
-    } else {
-        console.log("Request Schema")
-        console.log(schemas)
-    }
+    // if(version==2){
+    //     console.log("Open API v2 Schema")
+    //     console.log(schemas)
+    // } else {
+    //     console.log("Request Schema")
+    //     console.log(schemas)
+    // }
 
     //This will build our two input arrays for their respective for loops.
         for (var i = 0; i < schemas.length; ++i) {
@@ -1650,12 +1654,13 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
             });
         
             for (var k = 0; k < responseKeys.length; ++k){
-                if (responseValues[k].content !== undefined) {
-                
+                if (responseValues[k].schema !== undefined) {
+                    var responseSchema = responseValues[k].schema;
+                    responseSchemaArray.push(responseSchema)
                     var response = {
                         "http_status_code": responseKeys[k],
                         "content_type": "json",
-                        "schema": processReferences([responseValues[k].content["application/json"].schema])
+                        "schema": processRequestBodySchema("action", responseSchemaArray, parent_interface_uuid, schemaMap, 2)
                     }
 
                     responsesArray.push(response);

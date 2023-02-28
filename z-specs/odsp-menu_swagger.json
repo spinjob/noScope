@@ -1,0 +1,3648 @@
+{
+	"swagger": "2.0",
+	"info": {
+		"version": "2.9.0",
+		"title": "odsp-menu",
+		"contact": {
+			"name": ""
+		},
+		"license": {
+			"name": "Copyright 2019 NCR Corporation. All rights reserved.",
+			"url": "http://www.ncr.com/license"
+		}
+	},
+	"host": "api.ncr.com",
+	"basePath": "/menu/v2",
+	"tags": [{
+		"name": "/menus"
+	}, {
+		"name": "/menu-details"
+	}],
+	"schemes": ["http", "https"],
+	"paths": {
+		"/menus": {
+			"get": {
+				"tags": ["/menus"],
+				"summary": "Get all published menus for an organization and enterprise unit",
+				"description": "Get all the menus that meet the publication criteria for the the requesting organization and enterprise unit.",
+				"operationId": "menus.findAll",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [{
+					"name": "orderChannel",
+					"in": "query",
+					"description": "The order channel to filter menus.",
+					"required": false,
+					"type": "string"
+				}, {
+					"name": "orderFulfillment",
+					"in": "query",
+					"description": "The order fulfillment to filter menus.",
+					"required": false,
+					"type": "string"
+				}, {
+					"name": "nep-correlation-id",
+					"in": "header",
+					"description": "A unique ID that can be used to correlate one or more related requests for debugging or tracing purposes",
+					"required": false,
+					"type": "string",
+					"x-example": "WUSRB185213-AE7-11243-22a2c887-12a7-48e6-b9af-0ed7fb67e4cb"
+				}, {
+					"name": "nep-organization",
+					"in": "header",
+					"description": "The organization the request applies to",
+					"required": false,
+					"type": "string",
+					"maxLength": 512,
+					"minLength": 1,
+					"x-example": "sample-organization"
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "ID of the enterprise unit that the request applies to",
+					"required": true,
+					"type": "string",
+					"maxLength": 32,
+					"minLength": 1,
+					"pattern": "^[0-9A-Fa-f]{32}$",
+					"x-example": "19ef43176f9c41d6badf4d5b158df959"
+				}],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"$ref": "#/definitions/FindMenusV1Response"
+						}
+					},
+					"400": {
+						"description": "An error occurred while processing a request like invalid request and etc.",
+						"schema": {
+							"$ref": "#/definitions/BusinessException"
+						}
+					},
+					"404": {
+						"description": "The order fulfillment supplied for filtering does not exist.",
+						"schema": {
+							"$ref": "#/definitions/OrderFulfillmentDoesNotExistException"
+						}
+					}
+				},
+				"x-authorities": {
+					"roles": ["MENU_VIEWER"]
+				}
+			}
+		},
+		"/menu-details/{menuId}": {
+			"get": {
+				"tags": ["/menu-details"],
+				"summary": "Gets a menu detail",
+				"description": "Gets a detailed menu information of a enterprise unit for the menu with the specified menu ID. Response is specific to a enterprise unit which is passed as a header parameter.",
+				"operationId": "menu-details.get",
+				"parameters": [{
+					"name": "menuId",
+					"in": "path",
+					"required": true,
+					"type": "string",
+					"maximum": 100,
+					"minimum": 1,
+					"maxLength": 100,
+					"minLength": 1,
+					"pattern": "\\p{Alnum}[\\w-]*",
+					"maxItems": 100,
+					"minItems": 1
+				}, {
+					"name": "orderChannel",
+					"in": "query",
+					"description": "The order channel to filter price schemes.",
+					"required": false,
+					"type": "string"
+				}, {
+					"name": "orderFulfillment",
+					"in": "query",
+					"description": "The order fulfillment to filter price schemes.",
+					"required": false,
+					"type": "string"
+				}, {
+					"name": "omitUnavailable",
+					"in": "query",
+					"description": "Boolean input to filter unavailable data from menu details.",
+					"required": false,
+					"type": "boolean",
+					"default": true
+				}, {
+					"name": "startDateTime",
+					"in": "query",
+					"description": "The requested start datetime for the menu in ISO Format",
+					"required": false,
+					"type": "string",
+					"x-example": "2019-07-24T20:45:00+00:00"
+				}, {
+					"name": "endDateTime",
+					"in": "query",
+					"description": "The requested end datetime for the menu in ISO Format",
+					"required": false,
+					"type": "string",
+					"x-example": "2019-07-24T20:45:00+00:00"
+				}, {
+					"name": "nep-correlation-id",
+					"in": "header",
+					"description": "A unique ID that can be used to correlate one or more related requests for debugging or tracing purposes",
+					"required": false,
+					"type": "string",
+					"x-example": "WUSRB185213-AE7-11243-22a2c887-12a7-48e6-b9af-0ed7fb67e4cb"
+				}, {
+					"name": "nep-organization",
+					"in": "header",
+					"description": "The organization the request applies to",
+					"required": false,
+					"type": "string",
+					"maxLength": 512,
+					"minLength": 1,
+					"x-example": "sample-organization"
+				}, {
+					"name": "nep-enterprise-unit",
+					"in": "header",
+					"description": "ID of the enterprise unit that the request applies to",
+					"required": true,
+					"type": "string",
+					"maxLength": 32,
+					"minLength": 1,
+					"pattern": "^[0-9A-Fa-f]{32}$",
+					"x-example": "19ef43176f9c41d6badf4d5b158df959"
+				}],
+				"responses": {
+					"200": {
+						"description": "Detailed information about a menu for an enterprise unit.",
+						"schema": {
+							"$ref": "#/definitions/MenuDetailViewData"
+						}
+					},
+					"400": {
+						"description": "An error occurred while processing a request like invalid request and etc.",
+						"schema": {
+							"$ref": "#/definitions/BusinessException"
+						}
+					},
+					"403": {
+						"description": "An error occurred while processing a request",
+						"schema": {
+							"$ref": "#/definitions/ResourceForbiddenException"
+						},
+						"x-exception-types": ["com.ncr.nep.common.exception.ResourceForbiddenException"]
+					},
+					"404": {
+						"description": "For request's menu identifier, no menu exists.",
+						"schema": {
+							"$ref": "#/definitions/ResourceDoesNotExistException"
+						}
+					},
+					"409": {
+						"description": "The menu is currently in an invalid state due to item/time unavailability.",
+						"schema": {
+							"$ref": "#/definitions/UnavailableItemsMenuException"
+						}
+					}
+				},
+				"x-authorities": {
+					"roles": ["MENU_VIEWER"]
+				}
+			}
+		}
+	},
+	"definitions": {
+		"FindMenusV1Response": {
+			"type": "object",
+			"properties": {
+				"content": {
+					"type": "array",
+					"description": "The result data",
+					"items": {
+						"$ref": "#/definitions/MenuV1BasicViewData"
+					}
+				}
+			}
+		},
+		"MenuV1BasicViewData": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"displayName": {
+					"type": "string"
+				},
+				"description": {
+					"type": "string"
+				},
+				"referenceId": {
+					"type": "string"
+				},
+				"isVisible": {
+					"type": "boolean"
+				},
+				"id": {
+					"$ref": "#/definitions/MenuV1IdData"
+				},
+				"menuType": {
+					"type": "string",
+					"enum": ["RETAIL", "CATERING"]
+				},
+				"orderModes": {
+					"type": "array",
+					"uniqueItems": true,
+					"items": {
+						"type": "string",
+						"enum": ["PICKUP", "DELIVERY", "CURBSIDE", "SVCDEPOSIT", "DINEIN", "THIRDPARTY_DELIVERY", "WALKIN", "DRIVETHRU", "UNDEFINED"]
+					}
+				}
+			}
+		},
+		"MenuV1IdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 255
+				}
+			}
+		},
+		"GetMenusResponse": {
+			"type": "object",
+			"properties": {
+				"content": {
+					"type": "array",
+					"description": "The result data",
+					"items": {
+						"$ref": "#/definitions/MenuPublishedViewData"
+					}
+				}
+			},
+			"description": "Response object for the get published menus request."
+		},
+		"MenuIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique menu identifier (unique per Enterprise Unit).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "Data object to identify a menu uniquely."
+		},
+		"MenuPublishedViewData": {
+			"type": "object",
+			"required": ["displayName", "id"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique menu identifier (unique per Enterprise Unit).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"orderChannels": {
+					"type": "array",
+					"description": "The order channels assigned to this menu.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"orderFulfillments": {
+					"type": "array",
+					"description": "The order fulfillments assigned to this menu.",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"description": "Data object containing view properties for a published menu."
+		},
+		"BusinessException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "An error occurred while processing a request"
+		},
+		"OrderChannelDoesNotExistException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "The specified order channel does not exist."
+		},
+		"OrderFulfillmentDoesNotExistException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "The specified order fulfillment does not exist."
+		},
+		"ItemCustomModifierDetailViewData": {
+			"type": "object",
+			"required": ["autoAdd", "id", "include", "linkGroupId", "linkedItemId", "parentItemId", "substitutionCharge"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique identifier for an item custom modifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"include": {
+					"type": "boolean",
+					"description": "A field to indicate whether the item custom modifier is included."
+				},
+				"autoAdd": {
+					"type": "boolean",
+					"description": "A field to indicate whether the item custom modifier is auto-added."
+				},
+				"substitutionCharge": {
+					"type": "string",
+					"description": "A field to indicate what type of substitution charge is for this item custom modifier.",
+					"enum": ["NO_CHARGE", "CHARGE_DIFFERENCE", "NOT_APPLICABLE"]
+				},
+				"linkedItemId": {
+					"description": "The linkedItem unique identifier for which item custom modifier needs to define.",
+					"$ref": "#/definitions/LinkedItemIdData"
+				},
+				"linkGroupId": {
+					"description": "The linkGroup unique identifier for a item custom modifier.",
+					"$ref": "#/definitions/LinkGroupIdData"
+				},
+				"parentItemId": {
+					"description": "An item (salesItem or linkedItem) unique identifier for custom modifier.  This will be the top level item of a node (item -> link group -> linked item)",
+					"$ref": "#/definitions/ItemIdData"
+				}
+			},
+			"description": "Data object containing all view properties for a an item custom modifier. It is always associated with a specific SI-LG-LI or LI-LG-LI triplet."
+		},
+		"ItemCustomModifierIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique identifier for an item custom modifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "An object that holds the unique identifier of an item custom modifier."
+		},
+		"ItemIdData": {
+			"type": "object",
+			"required": ["id", "type"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique identifier that represent a linkedItem or salesItem.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"type": {
+					"type": "string",
+					"description": "A type parameter that represent whether an item is a linkedItem or salesItem.",
+					"enum": ["SALES_ITEM", "LINKED_ITEM"]
+				}
+			},
+			"description": "Data object to identify a Item(LinkedItem/ Salesitem) uniquely."
+		},
+		"LinkGroupBasicRestrictionData": {
+			"type": "object",
+			"properties": {
+				"maxQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Restriction defining the maximum of item instances (portions, units) can be provided as a part of the link.",
+					"minimum": 0
+				},
+				"minQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Restriction defining the minimum number of item instances (portions, units) that can be provided as part of the link (group or individual item). For example, the setting of 1 will require at least one item instances to be included with the link. It can be used to define kits or strong linkage such as bottle deposit that must be sold along with the item.",
+					"minimum": 0
+				},
+				"freeQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Restriction defining the number of item instances (portions, units) that can be provided free as part of the link (group or individual item). For example, the setting of 1 means that one item instance is provided at no charge.",
+					"minimum": 0
+				},
+				"maxDistinctQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Max distinct quantity used to restrict the max amount of unique linked items a user can select.",
+					"minimum": 0
+				}
+			},
+			"description": "The restrictions set on a link group."
+		},
+		"LinkGroupDetailData": {
+			"type": "object",
+			"required": ["displayName", "id", "posName"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"posName": {
+					"type": "string",
+					"description": "POS name of a link group.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"productId": {
+					"type": "string",
+					"description": "Product identifier of this link group, used to create and order via the Order service."
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique link group identifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"catalogLinkGroupId": {
+					"description": "The catalog link group unique identifier of this link group.",
+					"$ref": "#/definitions/LinkGroupIdData"
+				},
+				"restriction": {
+					"description": "Restrictions that are set on the link group level.",
+					"$ref": "#/definitions/LinkGroupBasicRestrictionData"
+				},
+				"linkedItemReferences": {
+					"type": "array",
+					"description": "Collection of linked item reference data.",
+					"items": {
+						"$ref": "#/definitions/LinkedItemBasicReferenceData"
+					},
+					"maxItems": 2147483647,
+					"minItems": 1
+				},
+				"externalId": {
+					"type": "string",
+					"description": "Record external ID that is provided by the client. It is an optional field and requires no validation."
+				},
+				"imageUrls": {
+					"type": "array",
+					"description": "Collection of images associated to this resource.",
+					"items": {
+						"type": "string",
+						"format": "url"
+					}
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this resource.",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"description": "Data object containing all view properties for a link group. A link group is used to associate further sales items with the parent sales item. The link groups can form a nested structure, ie. tree."
+		},
+		"LinkGroupIdData": {
+			"type": "object",
+			"required": ["linkGroupCode"],
+			"properties": {
+				"linkGroupCode": {
+					"type": "string",
+					"example": "29837289",
+					"description": "A unique (per tenant) link group code that identifies the link group.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "Represents minimum set of fields that uniquely identify a link group."
+		},
+		"LinkedItemBasicReferenceData": {
+			"type": "object",
+			"required": ["displayName", "posName"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"posName": {
+					"type": "string",
+					"description": "POS name of a linked item.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"linkedItemId": {
+					"description": "A linked item unique identifier.",
+					"$ref": "#/definitions/LinkedItemIdData"
+				},
+				"modCodes": {
+					"type": "array",
+					"description": "Modifier codes which are associated to the link group and linked item.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"itemFactor": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Factor by which the linked item quantity is multiplied when matching against link group restrictions like minQuantity or maxQuantity.",
+					"minimum": 1
+				},
+				"restriction": {
+					"description": "Link restrictions that allows to specify whether items must be sold, how many must be sold, min/max quantities.",
+					"$ref": "#/definitions/LinkedItemRestrictionData"
+				}
+			},
+			"description": "Data object containing all view properties for a linked item reference data."
+		},
+		"LinkedItemDetailViewData": {
+			"type": "object",
+			"required": ["displayName", "id", "posName"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"currentPrice": {
+					"type": "number",
+					"description": "Current price of this item."
+				},
+				"prices": {
+					"type": "array",
+					"description": "Price data associated with this item describing the price changes over time.",
+					"items": {
+						"$ref": "#/definitions/MenuDetailItemPriceViewData"
+					}
+				},
+				"productId": {
+					"type": "string",
+					"description": "Product identifier of this linked item, used to create and order via the Order service."
+				},
+				"posName": {
+					"type": "string",
+					"description": "POS name for a linked item.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique linked item identifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"catalogItemId": {
+					"description": "The catalog item unique identifier.",
+					"$ref": "#/definitions/ItemIdData"
+				},
+				"restriction": {
+					"description": "Restrictions that are set on the linked item level.",
+					"$ref": "#/definitions/LinkedItemRestrictionData"
+				},
+				"linkGroupIds": {
+					"type": "array",
+					"description": "Unique identifiers of link groups which are associated to this linked item.",
+					"items": {
+						"type": "string"
+					},
+					"maxItems": 2147483647,
+					"minItems": 1
+				},
+				"available": {
+					"type": "boolean",
+					"description": "Item availability of this linked item. The availability can change over time."
+				},
+				"nutritionFactsData": {
+					"description": "Item nutritional data",
+					"$ref": "#/definitions/NutritionFactsData"
+				},
+				"externalId": {
+					"type": "string",
+					"description": "Record external ID that is provided by the client. It is an optional field and requires no validation."
+				},
+				"imageUrls": {
+					"type": "array",
+					"description": "Collection of images associated to this resource.",
+					"items": {
+						"type": "string",
+						"format": "url"
+					}
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this resource.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"itemCustomModifierIds": {
+					"type": "array",
+					"description": "Collection of item custom modifiers associated to this resource.",
+					"items": {
+						"$ref": "#/definitions/ItemCustomModifierIdData"
+					}
+				},
+				"revenueCenterPrices": {
+					"type": "boolean"
+				}
+			},
+			"description": "Data object containing all view properties for a linked item. A linked item is used to associate further link groups (modifier group) with the parent link group. The linked items can form a nested structure, ie. tree."
+		},
+		"LinkedItemIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique linked item identifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "Data object to identify a linked item uniquely."
+		},
+		"LinkedItemRestrictionData": {
+			"type": "object",
+			"properties": {
+				"maxQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Restriction defining the maximum of item instances (portions, units) can be provided as a part of the link.",
+					"minimum": 0
+				},
+				"minQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Restriction defining the minimum number of item instances (portions, units) that can be provided as part of the link (group or individual item). For example, the setting of 1 will require at least one item instances to be included with the link. It can be used to define kits or strong linkage such as bottle deposit that must be sold along with the item.",
+					"minimum": 0
+				},
+				"freeQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Restriction defining the number of item instances (portions, units) that can be provided free as part of the link (group or individual item). For example, the setting of 1 means that one item instance is provided at no charge.",
+					"minimum": 0
+				},
+				"stepQuantity": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Restriction defining the numeric incremental subset of item instances (portions, units) that can be added for each linked item.",
+					"minimum": 0
+				}
+			},
+			"description": "The restrictions (like min, max quantities and etc) set on a linked item."
+		},
+		"LocalTime": {
+			"type": "object",
+			"properties": {
+				"hour": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"minute": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"second": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"nano": {
+					"type": "integer",
+					"format": "int32"
+				}
+			}
+		},
+		"MenuAvailabilityData": {
+			"type": "object",
+			"required": ["dayOfWeek"],
+			"properties": {
+				"dayOfWeek": {
+					"type": "string",
+					"description": "Day of week that the availability should be applied to.",
+					"enum": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+				},
+				"startTime": {
+					"description": "Start time of the availability. If null then it is an all day availability.",
+					"$ref": "#/definitions/LocalTime"
+				},
+				"endTime": {
+					"description": "End time of the availability. If null then it is an all day availability.",
+					"$ref": "#/definitions/LocalTime"
+				}
+			},
+			"description": "Contain set of available attributes for a menu."
+		},
+		"MenuDetailItemPriceViewData": {
+			"type": "object",
+			"required": ["currency", "effectiveDate", "price", "status"],
+			"properties": {
+				"price": {
+					"type": "number",
+					"description": "Price value."
+				},
+				"currency": {
+					"type": "string",
+					"example": "US Dollar",
+					"description": "Currency of the price value.",
+					"minLength": 1,
+					"maxLength": 10
+				},
+				"effectiveDate": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Effective date for the price."
+				},
+				"endDate": {
+					"type": "string",
+					"format": "date-time",
+					"description": "End date for the price. The price may be considered expired after the specified date."
+				},
+				"status": {
+					"type": "string",
+					"description": "Status of the price object.at a time.<br/>Supported types:<br/><ul><li>ACTIVE: Indicates that object is not active.</li><li>INACTIVE: Indicates that object is active.</li></ul>",
+					"enum": ["INACTIVE", "ACTIVE", "DISCONTINUED", "SEASONAL", "TO_DISCONTINUE", "UNAUTHORIZED"]
+				},
+				"basePrice": {
+					"type": "boolean",
+					"description": "True if the price is a base price."
+				},
+				"linkGroupId": {
+					"type": "string",
+					"description": "The unique identifier corresponding to a link group that is related to this price. If this field is null, then the price is not associated to any link group."
+				}
+			},
+			"description": "Price view data for sales items or linked items within a Menu Details object"
+		},
+		"MenuDetailViewData": {
+			"type": "object",
+			"required": ["displayName", "id"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique menu identifier."
+				},
+				"externalId": {
+					"type": "string",
+					"description": "Record external ID that is provided by the client. It is an optional field and requires no validation."
+				},
+				"revenueCenterId": {
+					"type": "string",
+					"description": "The revenue center id of the revenue center."
+				},
+				"availability": {
+					"type": "array",
+					"description": "A menu availability. Any availability records means availability of this menu.",
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/MenuAvailabilityData"
+					}
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this menu.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"promotionIds": {
+					"type": "array",
+					"description": "Collection of promotions that are applied to the menu, only non quick-combo types can be applied",
+					"items": {
+						"type": "string"
+					}
+				},
+				"imageUrls": {
+					"type": "array",
+					"description": "Collection of images associated to this resource.",
+					"items": {
+						"type": "string",
+						"format": "url"
+					}
+				},
+				"submenus": {
+					"type": "array",
+					"description": "Collection of submenus related to the selected menu.",
+					"items": {
+						"$ref": "#/definitions/SubmenuDetailData"
+					}
+				},
+				"menuItems": {
+					"type": "array",
+					"description": "Collection of menu items related to the selected menu. The menu items are used to create displayable entries in the menu.",
+					"items": {
+						"$ref": "#/definitions/MenuItemDetailData"
+					}
+				},
+				"salesItems": {
+					"type": "array",
+					"description": "Collection of sales items related to the selected menu. The sales items are used to make a real order.",
+					"items": {
+						"$ref": "#/definitions/SalesItemDetailViewData"
+					}
+				},
+				"linkGroups": {
+					"type": "array",
+					"description": "Collection of linked groups related to the selected menu. The linked groups are used to model modifier groups.",
+					"items": {
+						"$ref": "#/definitions/LinkGroupDetailData"
+					}
+				},
+				"linkedItems": {
+					"type": "array",
+					"description": "Collection of linked items related to the selected menu. The linked items are used to model modifier items.",
+					"items": {
+						"$ref": "#/definitions/LinkedItemDetailViewData"
+					}
+				},
+				"modifierCodes": {
+					"type": "array",
+					"description": "Collection of modifier codes. The modifier codes are used to further adjust selected modifiers.",
+					"items": {
+						"$ref": "#/definitions/ModifierCodeDetailViewData"
+					}
+				},
+				"promotions": {
+					"type": "array",
+					"description": "All promotions associated to this menu.  A promotion can be of few type (see PromotionType for different types) like quick combo or coupon or etc.",
+					"items": {
+						"$ref": "#/definitions/PromotionDetailViewData"
+					}
+				},
+				"itemCustomModifiers": {
+					"type": "array",
+					"description": "Collection of item custom modifiers related to the selected menu. The item custom modifiers are used to model dynamic modifiers.",
+					"items": {
+						"$ref": "#/definitions/ItemCustomModifierDetailViewData"
+					}
+				}
+			},
+			"description": "Data object containing all view properties for menu."
+		},
+		"MenuItemDefaultItem": {
+			"type": "object",
+			"properties": {
+				"salesItemId": {
+					"description": "The salesItemId for a default sales item for a menu item. Valid only if promotionId is null.",
+					"$ref": "#/definitions/SalesItemIdData"
+				},
+				"promotionId": {
+					"description": "The promotionId for a default promotion for a menu item. Valid only if salesItemId is null.",
+					"$ref": "#/definitions/PromotionIdData"
+				}
+			},
+			"description": "An object that holds the id for a default item of a menu item. A menu item can have up to one default item (either a sales item or a promotion)."
+		},
+		"MenuItemDetailData": {
+			"type": "object",
+			"required": ["displayName", "id"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique menu item identifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"menuItemDefaultItem": {
+					"description": "Default item (either a sales item or a promotion but not both) that should be selected initially.",
+					"$ref": "#/definitions/MenuItemDefaultItem"
+				},
+				"menuItemResourceTypes": {
+					"type": "array",
+					"description": "The collection of items which can be associated to a menu item like sales item and different types of promotions.",
+					"items": {
+						"$ref": "#/definitions/MenuItemTypeData"
+					},
+					"maxItems": 255,
+					"minItems": 0
+				},
+				"availability": {
+					"type": "array",
+					"description": "A menu item availability. Any availability records means availability of this menu item.",
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/MenuAvailabilityData"
+					}
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this menu item.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"externalId": {
+					"type": "string",
+					"description": "Record external ID that is provided by the client. It is an optional field and requires no validation."
+				},
+				"imageUrls": {
+					"type": "array",
+					"description": "Collection of images associated to this resource.",
+					"items": {
+						"type": "string",
+						"format": "url"
+					}
+				}
+			},
+			"description": "Data object containing all write properties for a menu item. A menu item can be only displayed from a submenu."
+		},
+		"MenuItemIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique menu item identifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "Data object to uniquely identify a menu item."
+		},
+		"MenuItemTypeData": {
+			"type": "object",
+			"required": ["id", "type"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "The unique identifier of the menu item type like sales item or promotion",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"type": {
+					"type": "string",
+					"description": "The type of menu item like sales item or promotion.",
+					"enum": ["SALES_ITEM", "PROMOTION"]
+				},
+				"state": {
+					"type": "string",
+					"description": "The state of a sales item specific to a menu item.",
+					"enum": ["SHOW", "HIDE"]
+				}
+			},
+			"description": "An object to contain fields for those items which can be associated to a menu item like sales item, promotions."
+		},
+		"ModifierCodeDetailViewData": {
+			"type": "object",
+			"required": ["displayName"],
+			"properties": {
+				"modifierCodeId": {
+					"description": "The technical unique identifier of a modifier code.",
+					"readOnly": true,
+					"$ref": "#/definitions/ModifierCodeIdData"
+				},
+				"catalogModifierCodeIdData": {
+					"description": "The unique identifier of modifier code resource (defined by modifier code resource APIs).",
+					"$ref": "#/definitions/ModifierCodeIdData"
+				},
+				"posNumber": {
+					"type": "string",
+					"description": "A code that identifies the Modifier Code in the attached context. ex. posNumber: 987654"
+				},
+				"priceMultiplier": {
+					"type": "number",
+					"format": "double",
+					"description": "Price multiplier. If specified, the price for the item-price will be adjusted by applying the multiplier. For example, \\\"double-cheese\\\" selection may have a multiplier of 2 specified."
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				}
+			},
+			"description": "Data object containing all view properties for a modifier code. It is always associated with a specific LG-LI tuple."
+		},
+		"ModifierCodeIdData": {
+			"type": "object",
+			"required": ["modifierCodeId"],
+			"properties": {
+				"modifierCodeId": {
+					"type": "string",
+					"description": "A unique (per tenant) modifier code id that identifies the modifier code.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "Represents minimum set of fields that uniquely identify a modifier code."
+		},
+		"NutritionAttributeData": {
+			"type": "object",
+			"properties": {
+				"nutritionType": {
+					"type": "string",
+					"description": "The allowed Nutritional types are as below. These Nutritional types have a <b>predetermined set of allowed NutritionUOM (mentioned in brackets)</b><ul><li/>CALORIES (CALORIES)<li/>CALORIES_FROM_FAT (CALORIES)<li/>FAT (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>SATURATED_FAT (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>TRANS_FAT (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>CHOLESTEROL (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>SODIUM (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>CARBOHYDRATES (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>DIETARY_FIBER (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>SUGARS (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>PROTEIN (MILLIGRAMS, GRAMS, KILOGRAMS)<li/>VITAMIN_A (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>VITAMIN_D (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>VITAMIN_C (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>VITAMIN_E (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>VITAMIN_B6 (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>VITAMIN_B12 (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>VITAMIN_K (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>CALCIUM (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>IRON (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>POTASSIUM (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>FLOURIDE (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>MAGNESIUM (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>BIOTIN (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>IODINE (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>ZINC (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>NIACIN (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>FOLATE (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>THIAMIN (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>RIBOFLAVIN (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>MANGANESE (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>PHOSPHORUS (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>PANTOTHENIC_ACID (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>SELENIUM (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>CHOLINE (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>COPPER (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>MOLYBDENUM (MICROGRAMS, MILLIGRAMS, GRAMS)<li/>CHROMIUM (MICROGRAMS, MILLIGRAMS, GRAMS)</ul>",
+					"enum": ["CALORIES", "CALORIES_FROM_FAT", "FAT", "SATURATED_FAT", "TRANS_FAT", "CHOLESTEROL", "SODIUM", "CARBOHYDRATES", "DIETARY_FIBER", "SUGARS", "PROTEIN", "VITAMIN_A", "VITAMIN_D", "VITAMIN_C", "VITAMIN_E", "VITAMIN_B6", "VITAMIN_B12", "VITAMIN_K", "CALCIUM", "IRON", "POTASSIUM", "FLOURIDE", "MAGNESIUM", "BIOTIN", "IODINE", "ZINC", "NIACIN", "FOLATE", "THIAMIN", "RIBOFLAVIN", "MANGANESE", "PHOSPHORUS", "PANTOTHENIC_ACID", "SELENIUM", "CHOLINE", "COPPER", "MOLYBDENUM", "CHROMIUM"]
+				},
+				"units": {
+					"type": "string",
+					"description": "The allowed nutritional units of measure (UOM) values are as follows:- <br/><ul><li/>CALORIES<li/>GRAMS<li/>KILOGRAMS<li/>MILLIGRAMS<li/>MICROGRAMS</ul>",
+					"enum": ["CALORIES", "GRAMS", "KILOGRAMS", "MILLIGRAMS", "MICROGRAMS"]
+				},
+				"value": {
+					"type": "number",
+					"example": 300,
+					"description": "Value of Nutrition Information",
+					"minimum": 0
+				},
+				"rangeValue": {
+					"description": "Option to store nutritional values as ranges, eg. 300-500 KCal",
+					"$ref": "#/definitions/RangeValues"
+				},
+				"percentDailyValue": {
+					"type": "number",
+					"example": 35,
+					"description": "Percent of Daily Value",
+					"minimum": 0
+				}
+			},
+			"description": "Represents all the information for a single nutritional attribute to be displayed under nutrition facts."
+		},
+		"NutritionFactsData": {
+			"type": "object",
+			"properties": {
+				"servingSize": {
+					"type": "string",
+					"example": "3/4 cup",
+					"description": "Serving Size"
+				},
+				"nutritionAttributes": {
+					"type": "array",
+					"description": "Nutritional Related information",
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/NutritionAttributeData"
+					}
+				},
+				"servingPerContainer": {
+					"type": "number"
+				}
+			},
+			"description": "Represents all nutrition related parameters for items. These nutrition facts are optional."
+		},
+		"Overrides": {
+			"type": "object",
+			"properties": {
+				"amount": {
+					"type": "number",
+					"format": "double"
+				},
+				"isActive": {
+					"type": "boolean"
+				},
+				"startDate": {
+					"type": "string"
+				},
+				"endDate": {
+					"type": "string"
+				},
+				"revenueCenter": {
+					"type": "string"
+				}
+			},
+			"description": "Data object containing all properties for a promotion overrides. The overrides indicates if the value of fields can be overridden. For eg: the amount field in upsells can be overridden with amount in overrides (if an override is applicable)."
+		},
+		"PromotionDetailViewData": {
+			"type": "object",
+			"required": ["displayName", "id", "originPromotionId", "owner", "posName", "posPromotionId"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"posName": {
+					"type": "string",
+					"description": "POS name of a promotion.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique promotion identifier (unique per organization).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"owner": {
+					"type": "string",
+					"description": "The owner of the promotion. This value is retrieved from the Digital Coupon Service."
+				},
+				"promotionType": {
+					"type": "string",
+					"description": "The type of this promotion.",
+					"enum": ["COUPON", "BOGO", "CHECK_REDUCTION", "NEW_PRICE", "GROUP_COMBO", "PACKAGE_PROMO", "QUICK_COMBO"]
+				},
+				"posPromotionId": {
+					"type": "string",
+					"description": "The promotion ID used by POS, POS usually has limit number allocated for promotion.  This should unique per store. This value is retrieved from the Digital Coupon Service."
+				},
+				"originPromotionId": {
+					"type": "string",
+					"description": "Origin promotion id from the coupon provider. This value is retrieved from the Digital Coupon Service."
+				},
+				"startDate": {
+					"type": "string",
+					"description": "Promotion starting date."
+				},
+				"endDate": {
+					"type": "string",
+					"description": "Promotion end date."
+				},
+				"requirements": {
+					"type": "array",
+					"description": "The requirements of the promotion.",
+					"items": {
+						"$ref": "#/definitions/PromotionRequirementDetailData"
+					}
+				},
+				"nutritionFact": {
+					"description": "The nutrition fact of this promotion.",
+					"$ref": "#/definitions/PromotionNutritionFactData"
+				},
+				"reward": {
+					"description": "The reward of this promotion.",
+					"$ref": "#/definitions/PromotionRewardData"
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this promotion.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"externalId": {
+					"type": "string",
+					"description": "Record external ID that is provided by the client. It is an optional field and requires no validation."
+				},
+				"imageUrls": {
+					"type": "array",
+					"description": "Collection of images associated to this resource.",
+					"items": {
+						"type": "string",
+						"format": "url"
+					}
+				}
+			},
+			"description": "Data object containing all view properties for a promotion. A quick combo is always associated with a specific menu item and linked through a promotion unique identifier."
+		},
+		"PromotionIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique promotion identifier (unique per organization).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "An unique identifier (per org) of a promotion"
+		},
+		"PromotionNutritionFactData": {
+			"type": "object",
+			"properties": {
+				"servingSize": {
+					"type": "string",
+					"description": "The serving size"
+				},
+				"nutritionAttributes": {
+					"type": "array",
+					"description": "The detailed nutrition list",
+					"items": {
+						"$ref": "#/definitions/The definition of nutrition."
+					}
+				},
+				"servingPerContainer": {
+					"type": "number",
+					"description": "Serving per container"
+				}
+			},
+			"description": "An object to contain details about a nutrition fact."
+		},
+		"PromotionRequirementAttributesData": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
+				}
+			}
+		},
+		"PromotionRequirementDetailData": {
+			"type": "object",
+			"required": ["displayName", "posName"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"dcsRequirementId": {
+					"type": "string",
+					"description": "The unique id of a requirement/component."
+				},
+				"posName": {
+					"type": "string",
+					"description": "POS name of a promotion's requirement.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"isPrimary": {
+					"type": "boolean",
+					"description": "If the current requirement is the primary requirement or not"
+				},
+				"items": {
+					"type": "array",
+					"description": "The items must be purchased to meet this requirement",
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/PromotionRequirementItemDetailData"
+					}
+				},
+				"itemGroups": {
+					"type": "array",
+					"description": "The item groups within this requirement",
+					"items": {
+						"$ref": "#/definitions/RequirementItemGroupDetailData"
+					}
+				},
+				"attributes": {
+					"type": "array",
+					"description": "The dynamic attributes of the requirement",
+					"items": {
+						"$ref": "#/definitions/PromotionRequirementAttributesData"
+					}
+				},
+				"minRequiredItems": {
+					"type": "integer",
+					"format": "int32",
+					"description": "The minimum required items for the given promotions"
+				},
+				"combos": {
+					"type": "array",
+					"description": "The id of the combo",
+					"items": {
+						"type": "string"
+					}
+				},
+				"itemCategory": {
+					"type": "string",
+					"description": "The item category must be purchased to meet the MinRequiredItems requirement"
+				},
+				"minRequiredAmount": {
+					"type": "number",
+					"format": "double",
+					"description": "The minimum required amount for the promotion to apply"
+				},
+				"itemCategoryExclusion": {
+					"type": "string",
+					"description": "The item category does not apply to any minimums"
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this requirement.",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"description": "Contains the details information about a promotion's requirement"
+		},
+		"PromotionRequirementItemDetailData": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"name": {
+					"type": "string"
+				},
+				"posNumber": {
+					"type": "string"
+				},
+				"level": {
+					"type": "integer",
+					"format": "int32",
+					"description": "Defines the different levels of upsells when the item is used in a QuickCombo"
+				},
+				"itemGroup": {
+					"type": "integer",
+					"format": "int32",
+					"description": "The item group this item belongs to"
+				},
+				"sizeSurcharge": {
+					"type": "number",
+					"description": "Specifies the additional amount to charge for an item when it is not considered a base size of a QuickCombo"
+				},
+				"itemSurcharge": {
+					"type": "number",
+					"description": "Specifies the additional amount to charge for an item when it is not considered a base item of a QuickCombo"
+				},
+				"overrides": {
+					"type": "array",
+					"description": "Specify the overrides of the item",
+					"items": {
+						"$ref": "#/definitions/RequirementItemOverrideData"
+					}
+				}
+			}
+		},
+		"PromotionRewardData": {
+			"type": "object",
+			"properties": {
+				"type": {
+					"type": "string",
+					"description": "Reward type",
+					"enum": ["REDUCED_ITEM", "FREE_ITEM", "REDUCED_TOTAL", "FIXED_PRICE"]
+				},
+				"upSells": {
+					"type": "array",
+					"description": "the upsells of this promotion",
+					"items": {
+						"$ref": "#/definitions/UpsellData"
+					}
+				},
+				"itemLimit": {
+					"type": "integer",
+					"format": "int32",
+					"description": "the item limit of this reward"
+				},
+				"itemCategory": {
+					"type": "string",
+					"description": "the item category of this reward"
+				},
+				"amount": {
+					"type": "number",
+					"format": "double",
+					"description": "the amount of this reward"
+				},
+				"percent": {
+					"type": "number",
+					"format": "double",
+					"description": "the percent of this reward"
+				},
+				"isAutoApply": {
+					"type": "boolean",
+					"description": "true if the reward will be auto applied"
+				},
+				"isAutoInclude": {
+					"type": "boolean",
+					"description": "true if the reward will be auto included"
+				},
+				"applyTo": {
+					"type": "string",
+					"description": "the apply to type of this reward",
+					"enum": ["ALL_QUALIFIED_ITEM", "FIRST_QUALIFYING_ITEM", "PROMPT_EACH_QUALIFIED_ITEM"]
+				},
+				"applyType": {
+					"type": "string",
+					"description": "the apply type of this reward",
+					"enum": ["ONCE_PER_ITEM", "ONCE_PER_COUPON"]
+				},
+				"calculationMethod": {
+					"type": "string",
+					"description": "the calculation method of this reward",
+					"enum": ["AMOUNT", "PERCENT", "PROMPT_FOR_AMOUNT", "PROMPT_FOR_PERCENT", "ITEM_BY_PERCENT"]
+				},
+				"itemRestrictionType": {
+					"type": "string",
+					"enum": ["NONE", "EQUAL_OR_LESS", "EQUAL_OR_HIGHER", "LOWEST"]
+				}
+			},
+			"description": "An object to contain attributes of a promotion reward."
+		},
+		"RangeValue": {
+			"type": "object",
+			"properties": {
+				"min": {
+					"type": "number",
+					"description": "Minimum value"
+				},
+				"max": {
+					"type": "number",
+					"description": "Maximum value"
+				}
+			},
+			"description": "Option to store nutritional values as ranges, eg. 300-500 KCal"
+		},
+		"RangeValues": {
+			"type": "object",
+			"properties": {
+				"min": {
+					"type": "number",
+					"example": 0,
+					"description": "Min Value",
+					"minimum": 0
+				},
+				"max": {
+					"type": "number",
+					"example": 3500,
+					"description": "Max value",
+					"minimum": 0
+				}
+			},
+			"description": "Represents an object to store range values"
+		},
+		"RequirementItemGroupDetailData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique requirement item group identifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"itemGroupNumber": {
+					"type": "integer",
+					"format": "int32",
+					"description": "the item group number for this item group"
+				},
+				"requirementItems": {
+					"type": "array",
+					"description": "the requirement items under this item group",
+					"items": {
+						"$ref": "#/definitions/PromotionRequirementItemDetailData"
+					}
+				},
+				"itemGroupId": {
+					"type": "string",
+					"description": "The unique identifier for this item group"
+				}
+			},
+			"description": "Contains the details information about a promotion's requirement item group"
+		},
+		"RequirementItemGroupIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique requirement item group identifier.",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "Data object to identify a requirement item group uniquely."
+		},
+		"RequirementItemOverrideData": {
+			"type": "object",
+			"properties": {
+				"startDate": {
+					"type": "string",
+					"description": "Override starting date"
+				},
+				"endDate": {
+					"type": "string",
+					"description": "Override ending date"
+				},
+				"revenueCenter": {
+					"type": "string",
+					"description": "The revenue center this override is applied to"
+				},
+				"itemSurcharge": {
+					"type": "number",
+					"description": "The reward amount. This is required for amount type methods"
+				},
+				"sizeSurcharge": {
+					"type": "number",
+					"description": "The reward percent. This is required for percent type methods"
+				}
+			}
+		},
+		"SalesItemDetailViewData": {
+			"type": "object",
+			"required": ["displayName", "id", "posName"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"currentPrice": {
+					"type": "number",
+					"description": "Current price of this item."
+				},
+				"prices": {
+					"type": "array",
+					"description": "Price data associated with this item describing the price changes over time.",
+					"items": {
+						"$ref": "#/definitions/MenuDetailItemPriceViewData"
+					}
+				},
+				"posName": {
+					"type": "string",
+					"description": "POS name of a sales item.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique sales item identifier (unique per Enterprise Unit).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"productId": {
+					"type": "string",
+					"description": "Product identifier used to create and order via the Order service."
+				},
+				"available": {
+					"type": "boolean",
+					"description": "Item availability of this sales item. The availability can change over time."
+				},
+				"shortDescription": {
+					"type": "string",
+					"description": "Provides details on the optional pricing grid during order entry."
+				},
+				"linkGroupIds": {
+					"type": "array",
+					"description": "Collection of linked groups valid for this sales item.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"nutritionFactsData": {
+					"description": "Item nutritional data",
+					"$ref": "#/definitions/NutritionFactsData"
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this sales item.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"externalId": {
+					"type": "string",
+					"description": "Record external ID that is provided by the client. It is an optional field and requires no validation."
+				},
+				"imageUrls": {
+					"type": "array",
+					"description": "Collection of images associated to this resource.",
+					"items": {
+						"type": "string",
+						"format": "url"
+					}
+				},
+				"revenueCenterPrices": {
+					"type": "boolean"
+				}
+			},
+			"description": "Complete set of writable attributes of Sales Item."
+		},
+		"SalesItemIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique sales item identifier (unique per Enterprise Unit).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "Data object to identify a sales item uniquely."
+		},
+		"SubmenuDetailData": {
+			"type": "object",
+			"required": ["displayName", "id"],
+			"properties": {
+				"displayName": {
+					"type": "string",
+					"description": "Record display name that should be displayed to the end user.",
+					"minLength": 1,
+					"maxLength": 256
+				},
+				"description": {
+					"type": "string",
+					"description": "Records description.",
+					"minLength": 0,
+					"maxLength": 1024
+				},
+				"referenceId": {
+					"type": "string",
+					"description": "Record reference ID used by the site owner.",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"id": {
+					"type": "string",
+					"description": "A unique submenu identifier (unique per Enterprise Unit).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				},
+				"availability": {
+					"type": "array",
+					"description": "submenu availability. Any availability records mean availability of this submenu.",
+					"uniqueItems": true,
+					"items": {
+						"$ref": "#/definitions/MenuAvailabilityData"
+					}
+				},
+				"menuItemIds": {
+					"type": "array",
+					"description": "Collection of menu items that shall be displayed for this submenu.",
+					"items": {
+						"$ref": "#/definitions/MenuItemIdData"
+					}
+				},
+				"tags": {
+					"type": "array",
+					"description": "Collection of tags associated to this submenu.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"externalId": {
+					"type": "string",
+					"description": "Record external ID that is provided by the client. It is an optional field and requires no validation."
+				},
+				"imageUrls": {
+					"type": "array",
+					"description": "Collection of images associated to this resource.",
+					"items": {
+						"type": "string",
+						"format": "url"
+					}
+				}
+			},
+			"description": "An object to contain a detail of submenu entity"
+		},
+		"SubmenuIdData": {
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "A unique submenu identifier (unique per Enterprise Unit).",
+					"minLength": 1,
+					"maxLength": 100,
+					"pattern": "\\p{Alnum}[\\w-]*"
+				}
+			},
+			"description": "An object to identify a submenu entity as uniquely for an enterprise unit"
+		},
+		"The definition of nutrition.": {
+			"type": "object",
+			"properties": {
+				"nutritionType": {
+					"type": "string",
+					"description": "The nutrition type",
+					"enum": ["CALORIES", "CALORIES_FROM_FAT", "FAT", "SATURATED_FAT", "TRANS_FAT", "CHOLESTEROL", "SODIUM", "CARBOHYDRATES", "DIETARY_FIBER", "SUGARS", "PROTEIN", "VITAMIN_A", "VITAMIN_D", "VITAMIN_C", "VITAMIN_E", "VITAMIN_B6", "VITAMIN_B12", "VITAMIN_K", "CALCIUM", "IRON", "POTASSIUM", "FLUORIDE", "MAGNESIUM", "BIOTIN", "IODINE", "ZINC", "NIACIN", "FOLIATE", "THIAMINE", "RIBOFLAVIN", "MANGANESE", "PHOSPHORUS", "PANTOMIMIC_ACID", "SELENIUM", "CHOLINE", "COPPER", "MOLYBDENUM", "CHROMIUM"]
+				},
+				"units": {
+					"type": "string",
+					"description": "The allowed nutritional units of measure",
+					"enum": ["CALORIES", "GRAMS", "KILOGRAMS", "MILLIGRAMS", "MICROGRAMS"]
+				},
+				"value": {
+					"type": "number",
+					"description": "Value of Nutrition Information"
+				},
+				"rangeValue": {
+					"description": "Option to store nutritional values as ranges, eg. 300-500 KCal",
+					"$ref": "#/definitions/RangeValue"
+				},
+				"percentDailyValue": {
+					"type": "number",
+					"description": "Percent of Daily Value"
+				}
+			}
+		},
+		"UpsellData": {
+			"type": "object",
+			"properties": {
+				"level": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"name": {
+					"type": "string"
+				},
+				"amount": {
+					"type": "number",
+					"format": "double"
+				},
+				"partOfCombo": {
+					"type": "boolean"
+				},
+				"overrides": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Overrides"
+					}
+				}
+			},
+			"description": "Data object containing all view properties for a quick combo component item upsell. The upsell indicates if the sales item can be sold in a certain quick combo level and for what price."
+		},
+		"ResourceDoesNotExistException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "Resource does not exist"
+		},
+		"OmittedMenuException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "The menu is currently in an omitted state due to it being empty or if menu data configuration is incomplete."
+		},
+		"NoPricesMenuException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "The menu is currently in an invalid state due to no/invalid item prices."
+		},
+		"UnavailableItemsMenuException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "The menu is currently in an invalid state due to unavailability of sales items."
+		},
+		"AnnotatedType": {
+			"type": "object",
+			"properties": {
+				"annotatedOwnerType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"type": {
+					"$ref": "#/definitions/Type"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				}
+			}
+		},
+		"Annotation": {
+			"type": "object"
+		},
+		"CertPath": {
+			"type": "object",
+			"properties": {
+				"type": {
+					"type": "string"
+				},
+				"certificates": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Certificate"
+					}
+				},
+				"encoded": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "byte",
+						"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+					}
+				},
+				"encodings": {
+					"$ref": "#/definitions/IteratorString"
+				}
+			}
+		},
+		"Certificate": {
+			"type": "object",
+			"properties": {
+				"type": {
+					"type": "string"
+				},
+				"encoded": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "byte",
+						"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+					}
+				},
+				"publicKey": {
+					"$ref": "#/definitions/PublicKey"
+				}
+			}
+		},
+		"Class": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"module": {
+					"$ref": "#/definitions/Module"
+				},
+				"packageName": {
+					"type": "string"
+				},
+				"componentType": {
+					"$ref": "#/definitions/Class"
+				},
+				"enumConstants": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {}
+					}
+				},
+				"protectionDomain": {
+					"$ref": "#/definitions/ProtectionDomain"
+				},
+				"modifiers": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"interface": {
+					"type": "boolean"
+				},
+				"array": {
+					"type": "boolean"
+				},
+				"primitive": {
+					"type": "boolean"
+				},
+				"superclass": {
+					"$ref": "#/definitions/Class"
+				},
+				"annotation": {
+					"type": "boolean"
+				},
+				"synthetic": {
+					"type": "boolean"
+				},
+				"classLoader": {
+					"$ref": "#/definitions/ClassLoader"
+				},
+				"typeParameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/TypeVariableClass"
+					}
+				},
+				"genericSuperclass": {
+					"$ref": "#/definitions/Type"
+				},
+				"package": {
+					"$ref": "#/definitions/Package"
+				},
+				"interfaces": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"genericInterfaces": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"signers": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {}
+					}
+				},
+				"enclosingMethod": {
+					"$ref": "#/definitions/Method"
+				},
+				"enclosingConstructor": {
+					"$ref": "#/definitions/ConstructorObject"
+				},
+				"declaringClass": {
+					"$ref": "#/definitions/Class"
+				},
+				"enclosingClass": {
+					"$ref": "#/definitions/Class"
+				},
+				"simpleName": {
+					"type": "string"
+				},
+				"typeName": {
+					"type": "string"
+				},
+				"canonicalName": {
+					"type": "string"
+				},
+				"anonymousClass": {
+					"type": "boolean"
+				},
+				"localClass": {
+					"type": "boolean"
+				},
+				"memberClass": {
+					"type": "boolean"
+				},
+				"classes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"fields": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Field"
+					}
+				},
+				"methods": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Method"
+					}
+				},
+				"constructors": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/ConstructorObject"
+					}
+				},
+				"declaredClasses": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"declaredFields": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Field"
+					}
+				},
+				"declaredMethods": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Method"
+					}
+				},
+				"declaredConstructors": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/ConstructorObject"
+					}
+				},
+				"enum": {
+					"type": "boolean"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"annotatedSuperclass": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedInterfaces": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"nestHost": {
+					"$ref": "#/definitions/Class"
+				},
+				"nestMembers": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				}
+			}
+		},
+		"ClassLoader": {
+			"type": "object",
+			"properties": {
+				"parent": {
+					"$ref": "#/definitions/ClassLoader"
+				},
+				"name": {
+					"type": "string"
+				},
+				"unnamedModule": {
+					"$ref": "#/definitions/Module"
+				},
+				"registeredAsParallelCapable": {
+					"type": "boolean"
+				},
+				"definedPackages": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Package"
+					}
+				}
+			}
+		},
+		"CodeSigner": {
+			"type": "object",
+			"properties": {
+				"signerCertPath": {
+					"$ref": "#/definitions/CertPath"
+				},
+				"timestamp": {
+					"$ref": "#/definitions/Timestamp"
+				}
+			}
+		},
+		"CodeSource": {
+			"type": "object",
+			"properties": {
+				"location": {
+					"type": "string",
+					"format": "url"
+				},
+				"certificates": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Certificate"
+					}
+				},
+				"codeSigners": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/CodeSigner"
+					}
+				}
+			}
+		},
+		"Constructor": {
+			"type": "object",
+			"properties": {
+				"parameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Parameter"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"parameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"exceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"modifiers": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"parameterAnnotations": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"$ref": "#/definitions/Annotation"
+						}
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"synthetic": {
+					"type": "boolean"
+				},
+				"typeParameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/TypeVariableConstructorObject"
+					}
+				},
+				"declaringClass": {
+					"$ref": "#/definitions/Class"
+				},
+				"accessible": {
+					"type": "boolean"
+				},
+				"varArgs": {
+					"type": "boolean"
+				},
+				"parameterCount": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"genericParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"genericExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"annotatedReturnType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedReceiverType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"annotatedExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				}
+			}
+		},
+		"ConstructorObject": {
+			"type": "object",
+			"properties": {
+				"parameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Parameter"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"parameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"exceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"modifiers": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"parameterAnnotations": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"$ref": "#/definitions/Annotation"
+						}
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"synthetic": {
+					"type": "boolean"
+				},
+				"typeParameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/TypeVariableConstructorObject"
+					}
+				},
+				"declaringClass": {
+					"$ref": "#/definitions/Class"
+				},
+				"accessible": {
+					"type": "boolean"
+				},
+				"varArgs": {
+					"type": "boolean"
+				},
+				"parameterCount": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"genericParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"genericExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"annotatedReturnType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedReceiverType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"annotatedExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				}
+			}
+		},
+		"Executable": {
+			"type": "object",
+			"properties": {
+				"parameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Parameter"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"modifiers": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"name": {
+					"type": "string"
+				},
+				"synthetic": {
+					"type": "boolean"
+				},
+				"typeParameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/TypeVariableObject"
+					}
+				},
+				"declaringClass": {
+					"$ref": "#/definitions/Class"
+				},
+				"parameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"varArgs": {
+					"type": "boolean"
+				},
+				"annotatedParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"parameterCount": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"parameterAnnotations": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"$ref": "#/definitions/Annotation"
+						}
+					}
+				},
+				"genericParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"exceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"genericExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"annotatedReturnType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedReceiverType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"accessible": {
+					"type": "boolean"
+				}
+			}
+		},
+		"Field": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"type": {
+					"$ref": "#/definitions/Class"
+				},
+				"modifiers": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"synthetic": {
+					"type": "boolean"
+				},
+				"declaringClass": {
+					"$ref": "#/definitions/Class"
+				},
+				"accessible": {
+					"type": "boolean"
+				},
+				"enumConstant": {
+					"type": "boolean"
+				},
+				"genericType": {
+					"$ref": "#/definitions/Type"
+				},
+				"annotatedType": {
+					"$ref": "#/definitions/AnnotatedType"
+				}
+			}
+		},
+		"GenericDeclaration": {
+			"type": "object",
+			"properties": {
+				"typeParameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/TypeVariableObject"
+					}
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				}
+			}
+		},
+		"Iterator": {
+			"type": "object"
+		},
+		"IteratorString": {
+			"type": "object"
+		},
+		"MappingContext": {
+			"type": "object",
+			"properties": {
+				"depth": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"resolvedSourceType": {
+					"$ref": "#/definitions/TypeObject"
+				},
+				"resolvedDestinationType": {
+					"$ref": "#/definitions/TypeObject"
+				},
+				"resolvedStrategy": {
+					"$ref": "#/definitions/MappingStrategy"
+				},
+				"fullyQualifiedSourcePath": {
+					"type": "string"
+				},
+				"sourceExpressionPaths": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"sourceObjects": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {}
+					}
+				},
+				"sourceTypePaths": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"fullyQualifiedDestinationPath": {
+					"type": "string"
+				},
+				"destinationExpressionPaths": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"destinationObjects": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {}
+					}
+				},
+				"destinationTypePaths": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				}
+			}
+		},
+		"MappingStrategy": {
+			"type": "object",
+			"properties": {
+				"atype": {
+					"$ref": "#/definitions/TypeObject"
+				},
+				"btype": {
+					"$ref": "#/definitions/TypeObject"
+				}
+			}
+		},
+		"Method": {
+			"type": "object",
+			"properties": {
+				"parameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Parameter"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"returnType": {
+					"$ref": "#/definitions/Class"
+				},
+				"parameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"exceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Class"
+					}
+				},
+				"modifiers": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"parameterAnnotations": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"$ref": "#/definitions/Annotation"
+						}
+					}
+				},
+				"synthetic": {
+					"type": "boolean"
+				},
+				"typeParameters": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/TypeVariableMethod"
+					}
+				},
+				"declaringClass": {
+					"$ref": "#/definitions/Class"
+				},
+				"accessible": {
+					"type": "boolean"
+				},
+				"varArgs": {
+					"type": "boolean"
+				},
+				"parameterCount": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"genericReturnType": {
+					"$ref": "#/definitions/Type"
+				},
+				"genericParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"genericExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"bridge": {
+					"type": "boolean"
+				},
+				"default": {
+					"type": "boolean"
+				},
+				"defaultValue": {
+					"type": "object",
+					"properties": {}
+				},
+				"annotatedReturnType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedParameterTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"annotatedReceiverType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"annotatedExceptionTypes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				}
+			}
+		},
+		"Module": {
+			"type": "object",
+			"properties": {
+				"layer": {
+					"$ref": "#/definitions/ModuleLayer"
+				},
+				"name": {
+					"type": "string"
+				},
+				"descriptor": {
+					"$ref": "#/definitions/ModuleDescriptor"
+				},
+				"classLoader": {
+					"$ref": "#/definitions/ClassLoader"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"named": {
+					"type": "boolean"
+				},
+				"packages": {
+					"type": "array",
+					"uniqueItems": true,
+					"items": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"ModuleDescriptor": {
+			"type": "object",
+			"properties": {
+				"open": {
+					"type": "boolean"
+				},
+				"automatic": {
+					"type": "boolean"
+				}
+			}
+		},
+		"ModuleLayer": {
+			"type": "object"
+		},
+		"Package": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"specificationTitle": {
+					"type": "string"
+				},
+				"specificationVersion": {
+					"type": "string"
+				},
+				"specificationVendor": {
+					"type": "string"
+				},
+				"implementationTitle": {
+					"type": "string"
+				},
+				"implementationVersion": {
+					"type": "string"
+				},
+				"implementationVendor": {
+					"type": "string"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"sealed": {
+					"type": "boolean"
+				}
+			}
+		},
+		"Parameter": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"modifiers": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"synthetic": {
+					"type": "boolean"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"type": {
+					"$ref": "#/definitions/Class"
+				},
+				"annotatedType": {
+					"$ref": "#/definitions/AnnotatedType"
+				},
+				"namePresent": {
+					"type": "boolean"
+				},
+				"declaringExecutable": {
+					"$ref": "#/definitions/Executable"
+				},
+				"parameterizedType": {
+					"$ref": "#/definitions/Type"
+				},
+				"implicit": {
+					"type": "boolean"
+				},
+				"varArgs": {
+					"type": "boolean"
+				}
+			}
+		},
+		"PermissionCollection": {
+			"type": "object",
+			"properties": {
+				"readOnly": {
+					"type": "boolean"
+				}
+			}
+		},
+		"Principal": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				}
+			}
+		},
+		"ProtectionDomain": {
+			"type": "object",
+			"properties": {
+				"principals": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Principal"
+					}
+				},
+				"permissions": {
+					"$ref": "#/definitions/PermissionCollection"
+				},
+				"classLoader": {
+					"$ref": "#/definitions/ClassLoader"
+				},
+				"codeSource": {
+					"$ref": "#/definitions/CodeSource"
+				}
+			}
+		},
+		"PublicKey": {
+			"type": "object",
+			"properties": {
+				"algorithm": {
+					"type": "string"
+				},
+				"format": {
+					"type": "string"
+				},
+				"encoded": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "byte",
+						"pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+					}
+				}
+			}
+		},
+		"Timestamp": {
+			"type": "object",
+			"properties": {
+				"timestamp": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"signerCertPath": {
+					"$ref": "#/definitions/CertPath"
+				}
+			}
+		},
+		"Type": {
+			"type": "object",
+			"properties": {
+				"rawType": {
+					"$ref": "#/definitions/Class"
+				},
+				"actualTypeArguments": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"interfaces": {
+					"type": "array"
+				},
+				"uniqueIndex": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"collection": {
+					"type": "boolean"
+				},
+				"list": {
+					"type": "boolean"
+				},
+				"ownerType": {
+					"$ref": "#/definitions/Type"
+				},
+				"immutable": {
+					"type": "boolean"
+				},
+				"primitiveWrapper": {
+					"type": "boolean"
+				},
+				"map": {
+					"type": "boolean"
+				},
+				"concrete": {
+					"type": "boolean"
+				},
+				"array": {
+					"type": "boolean"
+				},
+				"primitive": {
+					"type": "boolean"
+				},
+				"name": {
+					"type": "string"
+				},
+				"simpleName": {
+					"type": "string"
+				},
+				"canonicalName": {
+					"type": "string"
+				},
+				"enum": {
+					"type": "boolean"
+				},
+				"parameterized": {
+					"type": "boolean"
+				},
+				"string": {
+					"type": "boolean"
+				},
+				"multiOccurrence": {
+					"type": "boolean"
+				},
+				"convertibleFromString": {
+					"type": "boolean"
+				},
+				"selfOrAncestorParameterized": {
+					"type": "boolean"
+				},
+				"typeName": {
+					"type": "string"
+				}
+			}
+		},
+		"TypeObject": {
+			"type": "object",
+			"properties": {
+				"rawType": {
+					"$ref": "#/definitions/Class"
+				},
+				"actualTypeArguments": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"superType": {
+					"$ref": "#/definitions/TypeObject"
+				},
+				"interfaces": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/TypeObject"
+					}
+				},
+				"componentType": {
+					"$ref": "#/definitions/TypeObject"
+				},
+				"uniqueIndex": {
+					"type": "integer",
+					"format": "int32"
+				},
+				"collection": {
+					"type": "boolean"
+				},
+				"list": {
+					"type": "boolean"
+				},
+				"ownerType": {
+					"$ref": "#/definitions/Type"
+				},
+				"immutable": {
+					"type": "boolean"
+				},
+				"primitiveWrapper": {
+					"type": "boolean"
+				},
+				"map": {
+					"type": "boolean"
+				},
+				"primitiveType": {
+					"$ref": "#/definitions/TypeObject"
+				},
+				"concrete": {
+					"type": "boolean"
+				},
+				"array": {
+					"type": "boolean"
+				},
+				"primitive": {
+					"type": "boolean"
+				},
+				"name": {
+					"type": "string"
+				},
+				"simpleName": {
+					"type": "string"
+				},
+				"canonicalName": {
+					"type": "string"
+				},
+				"enum": {
+					"type": "boolean"
+				},
+				"parameterized": {
+					"type": "boolean"
+				},
+				"wrapperType": {
+					"$ref": "#/definitions/TypeObject"
+				},
+				"string": {
+					"type": "boolean"
+				},
+				"multiOccurrence": {
+					"type": "boolean"
+				},
+				"convertibleFromString": {
+					"type": "boolean"
+				},
+				"selfOrAncestorParameterized": {
+					"type": "boolean"
+				},
+				"typeName": {
+					"type": "string"
+				}
+			}
+		},
+		"TypeVariable": {
+			"type": "object",
+			"properties": {
+				"genericDeclaration": {
+					"$ref": "#/definitions/GenericDeclaration"
+				},
+				"annotatedBounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"bounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"typeName": {
+					"type": "string"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				}
+			}
+		},
+		"TypeVariableClass": {
+			"type": "object",
+			"properties": {
+				"genericDeclaration": {
+					"$ref": "#/definitions/Class"
+				},
+				"annotatedBounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"bounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"typeName": {
+					"type": "string"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				}
+			}
+		},
+		"TypeVariableConstructorObject": {
+			"type": "object",
+			"properties": {
+				"annotatedBounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"bounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"typeName": {
+					"type": "string"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				}
+			}
+		},
+		"TypeVariableMethod": {
+			"type": "object",
+			"properties": {
+				"genericDeclaration": {
+					"$ref": "#/definitions/Method"
+				},
+				"annotatedBounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"bounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"typeName": {
+					"type": "string"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				}
+			}
+		},
+		"TypeVariableObject": {
+			"type": "object",
+			"properties": {
+				"genericDeclaration": {
+					"type": "object",
+					"properties": {}
+				},
+				"annotatedBounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/AnnotatedType"
+					}
+				},
+				"bounds": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Type"
+					}
+				},
+				"name": {
+					"type": "string"
+				},
+				"typeName": {
+					"type": "string"
+				},
+				"annotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				},
+				"declaredAnnotations": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Annotation"
+					}
+				}
+			}
+		},
+		"ResourceForbiddenException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "An error occurred while processing a request"
+		},
+		"PayloadConstraintViolationException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				},
+				"constraintViolations": {
+					"type": "array",
+					"description": "Constraint violation details",
+					"items": {
+						"$ref": "#/definitions/ConstraintViolationData"
+					}
+				}
+			},
+			"description": "The request failed validation"
+		},
+		"HeaderConstraintViolationException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				},
+				"constraintViolations": {
+					"type": "array",
+					"description": "Constraint violation details",
+					"items": {
+						"$ref": "#/definitions/ConstraintViolationData"
+					}
+				}
+			},
+			"description": "A request header failed validation"
+		},
+		"ConstraintViolationData": {
+			"type": "object",
+			"properties": {
+				"invalidValue": {
+					"type": "string",
+					"description": "The value that failed validation"
+				},
+				"message": {
+					"type": "string",
+					"description": "Message describing the violation error"
+				},
+				"propertyPath": {
+					"type": "string",
+					"description": "The path of the property that failed validation"
+				}
+			},
+			"description": "Captures constraint violation information for an API request. Contains error information for a property constraint violation (for instance, value too long)."
+		},
+		"AccessDeniedException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "Access denied due to insufficient privileges."
+		},
+		"InvalidCredentialsException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "The user credentials are invalid"
+		},
+		"TenantAccessDeniedException": {
+			"type": "object",
+			"required": ["errorType", "message"],
+			"properties": {
+				"message": {
+					"type": "string",
+					"description": "The error message"
+				},
+				"details": {
+					"type": "array",
+					"description": "Details associated with the error",
+					"items": {
+						"type": "string"
+					}
+				},
+				"errorType": {
+					"type": "string",
+					"description": "The unique fully-qualified class name identifying the exception"
+				}
+			},
+			"description": "The user does not have access to the organization specified in the request"
+		}
+	}
+}
