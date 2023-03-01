@@ -26,9 +26,6 @@ function SchemaTree ({ projectId, interfaces, workflow, type}) {
     const handleNodeExpand = useCallback((node) => {
         node.isExpanded = true
 
-        console.log(node)
-        console.log(type)
-
         if (type === "trigger") {
             setTriggerRequestSchemas(_.cloneDeep(triggerRequestSchemas));
         } else if (type === "action") {
@@ -38,9 +35,6 @@ function SchemaTree ({ projectId, interfaces, workflow, type}) {
     })
 
     const handleNodeCollapse = useCallback((node) => {
-
-        console.log(node)
-        console.log(type)
 
         node.isExpanded = false
         if (type === "trigger") {

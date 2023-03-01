@@ -68,7 +68,7 @@ function processOpenApiV3(json, userId, orgId) {
                 }
                 console.log("Interface Created with ID: " + interface.uuid);
                 processSchema(schemaKeys, schemaValues, interfaceUUID, json.components.schemas);
-                processPathActions(pathKeys,pathValues,interfaceUUID, json.components.schemas, json.components.parameters);
+                processPathActions(pathKeys,pathValues,interfaceUUID, json.components.schemas, json.components.parameters, 3);
                 processParameters(parameterKeys,parameterValues,interfaceUUID);
                 processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
                 processWebhooks(webhookKeys,webhookValues,interfaceUUID, json.components.schemas);
@@ -77,20 +77,71 @@ function processOpenApiV3(json, userId, orgId) {
 
 }
 
-function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMap) {
+function processOpenApiV2(json, userId, orgId) {
+
+    var schemaKeys = Object.keys(json.definitions);
+    var schemaValues = Object.values(json.definitions);
+    var pathKeys = Object.keys(json.paths);
+    var pathValues = Object.values(json.paths);
+    var securitySchemeKeys = []
+    var securitySchemeValues = []
+    var server = json.host;
+
+    if(json.securityDefinitions === undefined) {
+    } else {
+        securitySchemeKeys = Object.keys(json.securityDefinitions);
+        securitySchemeValues = Object.values(json.securityDefinitions);
+    }
+
+    var interfaceUUID = crypto.randomUUID();
+
+        Interface.create({
+            uuid: interfaceUUID,
+            name: json.info.title,
+            description: json.info.description, 
+            version: json.info.version,
+            created_by: userId,
+            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+            updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+            deleted_at: null,
+            production_server: server,
+            sandbox_server: server,
+            owning_organization: orgId
+        },
+            function(err,interface){
+                if (err) {
+                    console.log(err);
+                    return; 
+                }
+                console.log("Interface Created with ID: " + interface.uuid);
+                processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions, 2);
+                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions);
+                processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
+                return;
+        });
+
+}
+
+function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMap, version) {
 
     for (var i = 0; i < schemaKeys.length; ++i) {
         
         var entityUUID = crypto.randomUUID();
 
         if (schemaValues[i].required && schemaValues[i].properties) {
+            var propertyKeys = Object.keys(schemaValues[i].properties);
+            var propertyValues = Object.values(schemaValues[i].properties);
+            console.log("Creating Entity: " + schemaKeys[i] + " with properties:")
+            console.log(propertyKeys)
+            console.log(propertyValues)
+
             InterfaceEntity.create({
                 uuid: entityUUID,
                 parent_interface_uuid: parent_interface_uuid,
                 name: schemaKeys[i],
                 description: schemaValues[i].description,
                 type: schemaValues[i].type,
-                properties: processProperties(schemaValues[i].properties,schemaValues[i].required)
+                properties: processSchemaProperties(propertyKeys,propertyValues, schemaKeys[i], schemaMap, false, version)
             },
                 function(err,interfaceEntity){
                     if (err) {
@@ -100,14 +151,16 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMa
                        
             });
         } else if(!schemaValues[i].required && schemaValues[i].properties) {
-            
+            var propertyKeys = Object.keys(schemaValues[i].properties);
+            var propertyValues = Object.values(schemaValues[i].properties);
+
             InterfaceEntity.create({
                 uuid: entityUUID,
                 parent_interface_uuid: parent_interface_uuid,
                 name: schemaKeys[i],
                 description: schemaValues[i].description,
                 type: schemaValues[i].type,
-                properties: processProperties(schemaValues[i].properties,[])
+                properties: processSchemaProperties(propertyKeys,propertyValues, schemaKeys[i], schemaMap, false, version)
             },
                 function(err,interfaceEntity){
                     if (err) {
@@ -157,6 +210,11 @@ function processProperties(properties, required){
         if (required.includes(propertyNames[i])) {
             propertyAttributes[i].required = true
             propertiesMap[propertyNames[i]]= propertyAttributes[i]
+            if(propertyAttributes[i].items !== undefined) {
+                propertiesMap[propertyNames[i]].items = processArrayItemsReferences(propertyAttributes[i].items, schemaMap)
+            } else if(propertyAttributes[i].properties !== undefined) {
+                propertiesMap[propertyNames[i]].properties = processProperties(propertyAttributes[i].properties, propertyAttributes[i].required)
+            }
         } else {
             propertyAttributes[i].required = false
             propertiesMap[propertyNames[i]]= propertyAttributes[i]
@@ -911,8 +969,7 @@ function processReferences(parameters){
             } else {
             //if this parameter isn't a top-level reference, we'll reach this statement. 
             if(parameters[i].type !== undefined && parameters[i].type == "object"){
-                console.log("object parameter schema");
-                console.log(parameters[i]);
+
                 //check if this schema is an object
                     var propertiesArray = [];
                     var nestedReference = null
@@ -1006,25 +1063,18 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
     //We'll create two arrays to hold two types of schema we'll see at the top-level of a requestbody: a reference to a component.schema or an inline schema defined with a combination of references and inline properties.
     var schemaArray = []
     var inlineSchemaProperties = []
-    // if(version==2){
-    //     console.log("Open API v2 Schema")
-    //     console.log(schemas)
-    // } else {
-    //     console.log("Request Schema")
-    //     console.log(schemas)
-    // }
 
     //This will build our two input arrays for their respective for loops.
-        for (var i = 0; i < schemas.length; ++i) {
-            console.log(schemas[i])
-            if(schemas[i] && schemas[i]["$ref"] !== undefined && version != 2){
-                schemaArray.push(schemas[i]["$ref"].split("/")[3]);
-            } else if (schemas[i] && schemas[i]["$ref"] !== undefined && version == 2) {
-                schemaArray.push(schemas[i]["$ref"].split("/")[2]);
-            } else {
-                inlineSchemaProperties.push(schemas[i])
-            }
+    for (var i = 0; i < schemas.length; ++i) {
+        
+        if(schemas[i] && schemas[i]["$ref"] !== undefined && version != 2){
+            schemaArray.push(schemas[i]["$ref"].split("/")[3]);
+        } else if (schemas[i] && schemas[i]["$ref"] !== undefined && version == 2) {
+            schemaArray.push(schemas[i]["$ref"].split("/")[2]);
+        } else {
+            inlineSchemaProperties.push(schemas[i])
         }
+    }
     //This is the object we'll use to build the schema for the requestBody.  We'll be using Object.assign to ensure any properties that are affected by both for loops are not updated and not overwritten.
     var inlineSchema = {}
 
@@ -1050,14 +1100,7 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
             //Let's process the properties for the schema.
 
             var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, schemaKey, schemaMapCopy, true, version);
-            // schemaObject = {
-            //     "schemaName": schemaKey,
-            //     "type": schemaValues.type,
-            //     "properties": schemaProperties,
-            //     "required": schemaValues.required ? schemaValues.required : []
-            // }
 
-            //inlineSchema = Object.assign(inlineSchema, schemaProperties);
             inlineSchema = {...inlineSchema, ...schemaProperties}
 
         } else if (schemaValues.items && schemaValues.type == 'array'){
@@ -1102,10 +1145,6 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
         for (var i = 0; i < propertyKeys.length; ++i){
                 var propertyKey = propertyKeys[i];
                 var propertyValue = propertyValues[i];
-                if(propertyKey == "price"){
-                    console.log("Price Property Value:")
-                    console.log(propertyValue)
-                }
 
                 //Check for infinite loop and return an empty object if one is detected.
                 if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers"){
@@ -1132,7 +1171,24 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                         schemaProperties = {...schemaProperties, ...propertyObject}
                     }
                    
-                } else if (propertyValue.type == 'object' && propertyValue.properties){
+                } else if (propertyValue['allOf']){
+                    var propertyObject = {};
+                    var allOfSchema = processRequestBodySchema("webhook", propertyValue['allOf'], null, schemaMap,  version)
+                    if(propertyValue['allOf'].length == 1) {
+                        if(propertyValue['allOf'][0]['$ref']){
+                            var propertyReference = propertyValue['allOf'][0]['$ref'].split("/")[3];
+                            var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
+                            var propertySchemaMapValues = propertySchemaMap[propertyReference];
+                            propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertySchemaMapValues};
+                        } else {
+                            propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue['allOf'][0]};
+                        }
+                    }
+                    propertyObject[propertyKey].properties = allOfSchema
+
+                    schemaProperties = {...schemaProperties, ...propertyObject}
+                }
+                  else if (propertyValue.type == 'object' && propertyValue.properties){
                     // console.log("Object Detected: " + propertyKey)
                     // console.log("Property Key: " + propertyKey)
                     // console.log("Property Value: ")
@@ -1182,8 +1238,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     } else {
                         console.log("Map Detected with no schema defined inline: " + propertyKey)
                     }
-                }
-                else if (propertyValue.type == 'array'){
+                } else if (propertyValue.type == 'array'){
 
                     var propertyObject = {};
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
@@ -1235,7 +1290,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                         //schemaProperties = Object.assign(schemaProperties, propertyObject);
                         schemaProperties = {...schemaProperties, ...propertyObject}
                     } 
-                }  else {
+                } else {
                     var propertyObject = {};
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
                     //schemaProperties = Object.assign(schemaProperties, propertyObject);
@@ -1582,50 +1637,6 @@ function retrieveInterfaces(userId){
 
 }
 
-function processOpenApiV2(json, userId, orgId) {
-
-    var schemaKeys = Object.keys(json.definitions);
-    var schemaValues = Object.values(json.definitions);
-    var pathKeys = Object.keys(json.paths);
-    var pathValues = Object.values(json.paths);
-    var securitySchemeKeys = []
-    var securitySchemeValues = []
-    var server = json.host;
-
-    if(json.securityDefinitions === undefined) {
-    } else {
-        securitySchemeKeys = Object.keys(json.securityDefinitions);
-        securitySchemeValues = Object.values(json.securityDefinitions);
-    }
-
-    var interfaceUUID = crypto.randomUUID();
-
-        Interface.create({
-            uuid: interfaceUUID,
-            name: json.info.title,
-            description: json.info.description, 
-            version: json.info.version,
-            created_by: userId,
-            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-            updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-            deleted_at: null,
-            production_server: server,
-            sandbox_server: server,
-            owning_organization: orgId
-        },
-            function(err,interface){
-                if (err) {
-                    console.log(err);
-                    return; 
-                }
-                console.log("Interface Created with ID: " + interface.uuid);
-                processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions);
-                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions);
-                processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
-                return;
-        });
-
-}
 
 function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap) {
     //iterate through paths
