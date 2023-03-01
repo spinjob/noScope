@@ -4,6 +4,8 @@ const {Liquid} = require('liquidjs');
 const engine = new Liquid();
 router.use(express.urlencoded({extended: true}));
 router.use(express.json());
+const {encode, decode} = require('gpt-3-encoder')
+
 
 //Example Callback URL for a Webhook Trigger
 router.post('/', (req,res) => {
@@ -39,5 +41,16 @@ router.post('/', (req,res) => {
         res.status(500).send(err);
     })
 });
+
+router.post('/encode', (req,res) => {
+    var encoded = encode(req.body.prompt);
+    res.status(200).send(
+      {
+        'encoded': encoded, 
+        prompt: req.body.prompt
+      }
+    )
+})
+
 
 module.exports = router;
