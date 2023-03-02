@@ -5,7 +5,7 @@ const InterfaceParameter = require('./models/interface_parameter/InterfaceParame
 const InterfaceAction = require('./models/interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
 const WorkflowLog = require('./models/workflow_log/WorkflowLog');
-const { castObject } = require('./models/interface/Interface');
+const { castObject, schema } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
 const {Liquid} = require('liquidjs');
 const engine = new Liquid();
@@ -115,7 +115,7 @@ function processOpenApiV2(json, userId, orgId) {
                 }
                 console.log("Interface Created with ID: " + interface.uuid);
                 processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions, 2);
-                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions);
+                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions, 2);
                 processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
                 return;
         });
@@ -323,7 +323,7 @@ function createPropertyEntities(propertyValues, parent_object_uuid, parent_inter
     return;
 }
 
-function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap, parameterMap) {
+function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap, parameterMap, version) {
 
     //iterate through paths
     for (var i = 0; i < pathKeys.length; ++i) {
@@ -427,12 +427,14 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                     var requestBodyKeys = Object.keys(values[j].requestBody.content["application/json"].schema);
                     var requestBodyArray = [];
                     var requestBody = values[j].requestBody.content["application/json"].schema;
+                    
 
                     if(requestBodyKeys.length > 1 && requestBodyKeys.includes("$ref") == true) {
                     
                         for (var h = 0; h < requestBodyKeys.length; ++h){
                             requestBodyArray.push(requestBody[h]);
                         }
+            
                         InterfaceAction.create({
                             uuid: actionUUID,
                             parent_interface_uuid: parent_interface_uuid,
@@ -449,6 +451,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                             requestBody2: {
                                 type: "json",
                                 required: values[j].requestBody.required,
+                                requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                 schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                             },
                             responses: responsesArray
@@ -483,6 +486,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                             requestBody2: {
                                 type: "json",
                                 required: values[j].requestBody.required,
+                                requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                 schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                             },
                             responses: responsesArray
@@ -556,6 +560,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                 requestBody2: {
                                     type: "json",
                                     required: values[j].requestBody.required,
+                                    requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                     schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                                 },
                                 responses: responsesArray
@@ -589,6 +594,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                 requestBody2: {
                                     type: "json",
                                     required: values[j].requestBody.required,
+                                    requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                     schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                                 },
                                 responses: responsesArray
@@ -637,12 +643,16 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                     var requestBodyKeys = Object.keys(values[j].requestBody.content["application/json"].schema);
                     var requestBodyArray = [];
                     var requestBody = values[j].requestBody.content["application/json"].schema;
-
+                    
+                   
                     if(requestBodyKeys.length > 1 && requestBodyKeys.includes("$ref") == true) {
                     
                         for (var h = 0; h < requestBodyKeys.length; ++h){
                             requestBodyArray.push(requestBody[h]);
                         }
+                        console.log("requestBodyArray: " + requestBodyArray)
+                        processTopLevelRequiredProperties(requestBodyArray, schemaMap)
+
                         InterfaceAction.create({
                             uuid: actionUUID,
                             parent_interface_uuid: parent_interface_uuid,
@@ -659,6 +669,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                             requestBody2: {
                                 type: "json",
                                 required: values[j].requestBody.required,
+                                requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                 schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                             },
                             responses: responsesArray
@@ -690,6 +701,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                             requestBody2: {
                                 type: "json",
                                 required: values[j].requestBody.required,
+                                requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                 schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                             },
                             responses: responsesArray
@@ -733,6 +745,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                 requestBody2: {
                                     type: "form-urlencoded",
                                     required: values[j].requestBody.required,
+                                    requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                     schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                                 },
                                 responses: responsesArray
@@ -766,6 +779,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                 requestBody2: {
                                     type: "json",
                                     required: values[j].requestBody.required,
+                                    requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
                                     schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
                                 },
                                 responses: responsesArray
@@ -1013,6 +1027,32 @@ function processReferences(parameters){
     }
     
     return references
+}
+
+function processTopLevelRequiredProperties(schemas, schemaMap, version){
+    var schemaArray = []
+    var requiredSchemas = []
+
+    for (var i = 0; i < schemas.length; ++i) {
+        
+        if(schemas[i] && schemas[i]["$ref"] !== undefined && version != 2){
+            schemaArray.push(schemas[i]["$ref"].split("/")[3]);
+        } else if (schemas[i] && schemas[i]["$ref"] !== undefined && version == 2) {
+            schemaArray.push(schemas[i]["$ref"].split("/")[2]);
+        } else {
+            //skip
+        }
+    }
+
+    schemaArray.map((schema) => {
+        var schemaObject = schemaMap[schema]
+        if (schemaObject.type == "object" && schemaObject.required !== undefined){
+            requiredSchemas.push(...schemaObject.required)
+        }
+    })
+    console.log("Processing Top Level Required Properties:")
+    console.log(requiredSchemas)
+    return requiredSchemas
 }
 
 function processRequestParameterSchema(schemas, parameterMap, schemaMap){
@@ -1775,6 +1815,7 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                                 requestBody2: {
                                     type: "json",
                                     required: actionRequestBody[l].required,
+                                    requiredSchemas: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 2),
                                     schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap, 2)
                                 },
                                 responses: responsesArray
@@ -1821,6 +1862,7 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                             requestBody2: {
                                 type: "json",
                                 required: actionRequestBody[n].required,
+                                requiredSchemas: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 2),
                                 schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap, 2)
                             },
                             responses: responsesArray
