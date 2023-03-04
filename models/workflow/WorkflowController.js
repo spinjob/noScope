@@ -5,6 +5,7 @@ router.use(express.json());
 const crypto = require('crypto');
 const Workflow = require('../workflow/Workflow');
 const Interface = require('../interface/Interface');
+const Project = require('../project/Project');
 const {verifyUser} = require('../../authenticate.js');
 const {runWorkflow} = require('../../lib.js');
 
@@ -27,12 +28,28 @@ router.post('/', function(req,res) {
 
     },
     function (err,workflow) {
-        if (err) return res.status(500).send(err);
-        res.status(200).send(workflow);
+        if(err) {
+            return res.status(500).send(err);
+        } else {
+            Project.findOneAndUpdate({uuid: req.body.parent_project_uuid}, { $push: {workflows: workflowUUID}}, function (err,project){
+                if(err) {
+                    console.log(err)
+                } else {
+                    res.status(200).send(workflow);
+                }
+            })
+        }
     });
 });
 
 router.post('/details', function(req,res) {
+    Workflow.find({parent_project_uuid: req.body.parent_project_uuid}, function (err, workflows) {
+        if (err) return res.status(500).send("There was a problem finding the project.");
+        res.status(200).send(workflows);
+    });
+});
+
+router.get('/', function(req,res) {
     Workflow.find({parent_project_uuid: req.body.parent_project_uuid}, function (err, workflows) {
         if (err) return res.status(500).send("There was a problem finding the project.");
         res.status(200).send(workflows);
