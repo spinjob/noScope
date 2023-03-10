@@ -19,6 +19,7 @@ router.post('/new', function(req,res) {
         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         workflows: req.body.workflows,
+        status: 'new',
         owning_organization: req.body.organizationId,
         created_by: req.body.created_by
     },
@@ -93,7 +94,13 @@ router.put('/:id/configuration', function (req,res){
         if (err) return res.status(500).send("There was a problem updating the project.");
         res.status(200).send(project);
     });
+})
 
+router.put('/:id/status', function(req,res){
+    Project.findOneAndUpdate({uuid: req.params.id}, {"status": req.body.status}, function (err, project) {
+        if (err) return res.status(500).send("There was a problem updating the project.");
+        res.status(200).send(project);
+    });
 })
 
 

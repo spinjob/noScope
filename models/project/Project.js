@@ -10,6 +10,7 @@ var ProjectSchema = new mongoose.Schema({
     created_by: String,
     workflows: Array,
     customers: Array,
+    status: String,
     configuration: Object,
     customer_configuration: Object,
     owning_organization: String

@@ -104,7 +104,6 @@ router.put('/:workflowId/steps/0', function(req,res) {
 });
 
 router.put('/:workflowId', function(req,res) {
-    console.log(req.body)
     Workflow.findOneAndUpdate({uuid: req.params.workflowId},{ 
         name: req.body.name,
         nodes: req.body.nodes,
@@ -112,6 +111,7 @@ router.put('/:workflowId', function(req,res) {
         updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         trigger: req.body.trigger,
         definition: req.body.definition,
+        status: req.body.status,
     }, {new: true, upsert: true}, function(err,workflow){
         if (err) return res.status(500).send(err);
         res.status(200).send(workflow);
