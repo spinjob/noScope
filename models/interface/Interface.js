@@ -13,7 +13,8 @@ var InterfaceSchema = new mongoose.Schema({
     credentials: Object,
     created_by: String,
     actions: Array,
-    owning_organization: String
+    owning_organization: String,
+    jobIds: Array
 });
 
 mongoose.model('Interface', InterfaceSchema);

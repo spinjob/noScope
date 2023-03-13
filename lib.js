@@ -4,6 +4,7 @@ const InterfaceEntity = require('./models/interface_entity/InterfaceEntity');
 const InterfaceParameter = require('./models/interface_parameter/InterfaceParameter');
 const InterfaceAction = require('./models/interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
+const Job = require('./models/job/Job');
 const WorkflowLog = require('./models/workflow_log/WorkflowLog');
 const { castObject, schema } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
@@ -15,7 +16,7 @@ const outputFile = 'openApi.json'
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-function processOpenApiV3(json, userId, orgId) {
+function processOpenApiV3(json, userId, orgId, jobId) {
 
     var schemaKeys = Object.keys(json.components.schemas);
     var schemaValues = Object.values(json.components.schemas);
@@ -25,29 +26,95 @@ function processOpenApiV3(json, userId, orgId) {
     var parameterValues = []
     var securitySchemeKeys = []
     var securitySchemeValues = []
+    var webhookKeys = [];
+    var webhookValues = [];
+    var errorArray = [];
+
+    if(json.components.schemas === undefined || schemaKeys.length === 0) {
+        errorArray.push({
+            message: "No schemas found in the OpenAPI document. Please ensure that the OpenAPI document has at least one schema defined.",
+            errorCode: "NO_SCHEMAS",
+            severity: "ERROR"
+        })
+    }
+
+    if(json.paths === undefined || pathKeys.length === 0) {
+        errorArray.push({
+            message: "No paths found in the OpenAPI document. Please ensure that the OpenAPI document has at least one path action defined.",
+            errorCode: "NO_PATHS",
+            severity: "ERROR"
+        })
+    }
 
     if(json.components.securitySchemes === undefined) {
+        errorArray.push({
+            message: "No security schemes found in the OpenAPI document.",
+            errorCode: "NO_SECURITY_SCHEMES",
+            severity: "WARNING"
+        })
     } else {
         securitySchemeKeys = Object.keys(json.components.securitySchemes);
         securitySchemeValues = Object.values(json.components.securitySchemes);
     }
 
     if(json.components.parameters === undefined) {
+        errorArray.push({
+            message: "No parameters found in the OpenAPI document.",
+            errorCode: "NO_PARAMETERS",
+            severity: "WARNING"
+        })
     } else {
         parameterKeys = Object.keys(json.components.parameters);
         parameterValues = Object.values(json.components.parameters);
     }
    
-    var webhookKeys = [];
-    var webhookValues = [];
     if( json["x-webhooks"] === undefined) {
+        errorArray.push({
+            message: "No webhooks found in the OpenAPI document.",
+            errorCode: "NO_WEBHOOKS",
+            severity: "WARNING"
+        })
     } else {
         webhookKeys = Object.keys(json["x-webhooks"]);
         webhookValues = Object.values(json["x-webhooks"])
     }
-
     var interfaceUUID = crypto.randomUUID();
 
+    Job.findOneAndUpdate({uuid: jobId}, {status: "IN_PROGRESS", metadata: {
+        interface: interfaceUUID,
+        errors: errorArray,
+        schema: {
+            status: "IN_PROGRESS",
+            count: schemaKeys.length,
+            message: "Generating schema..."
+        },
+        webhooks: {
+            status: "IN_PROGRESS",
+            count: webhookKeys.length,
+            message: "Generating webhooks..."
+        },
+        actions: {
+            status: "IN_PROGRESS",
+            count: pathKeys.length,
+            message: "Generating actions..."
+        },
+        parameters: {
+            status: "IN_PROGRESS",
+            count: parameterKeys.length,
+            message: "Generating parameters..."
+        },
+        securitySchemes: {
+            status: "IN_PROGRESS",
+            count: securitySchemeKeys.length,
+            message: "Generating security schemes..."
+        }
+    }}, function(err, job) {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log("Job Updated")
+        }
+    })
         Interface.create({
             uuid: interfaceUUID,
             name: json.info.title,
@@ -59,7 +126,8 @@ function processOpenApiV3(json, userId, orgId) {
             deleted_at: null,
             production_server: "",
             sandbox_server: "",
-            owning_organization: orgId
+            owning_organization: orgId,
+            jobIds: [jobId]
         },
             function(err,interface){
                 if (err) {
@@ -67,17 +135,17 @@ function processOpenApiV3(json, userId, orgId) {
                     return; 
                 }
                 console.log("Interface Created with ID: " + interface.uuid);
-                processSchema(schemaKeys, schemaValues, interfaceUUID, json.components.schemas);
-                processPathActions(pathKeys,pathValues,interfaceUUID, json.components.schemas, json.components.parameters, 3);
-                processParameters(parameterKeys,parameterValues,interfaceUUID);
-                processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
-                processWebhooks(webhookKeys,webhookValues,interfaceUUID, json.components.schemas);
+                processSchema(schemaKeys, schemaValues, interfaceUUID, json.components.schemas, 3, jobId);
+                processPathActions(pathKeys,pathValues,interfaceUUID, json.components.schemas, json.components.parameters, 3, jobId);
+                processParameters(parameterKeys,parameterValues,interfaceUUID, jobId);
+                processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID, jobId)
+                processWebhooks(webhookKeys,webhookValues,interfaceUUID, json.components.schemas, jobId);
                 return;
         });
 
 }
 
-function processOpenApiV2(json, userId, orgId) {
+function processOpenApiV2(json, userId, orgId, jobId) {
 
     var schemaKeys = Object.keys(json.definitions);
     var schemaValues = Object.values(json.definitions);
@@ -86,14 +154,56 @@ function processOpenApiV2(json, userId, orgId) {
     var securitySchemeKeys = []
     var securitySchemeValues = []
     var server = json.host;
+    var errorArray = [];
 
     if(json.securityDefinitions === undefined) {
+        errorArray.push({
+            message: "No security schemes found in the OpenAPI document.",
+            errorCode: "NO_SECURITY_SCHEMES",
+            severity: "WARNING"
+        })
     } else {
         securitySchemeKeys = Object.keys(json.securityDefinitions);
         securitySchemeValues = Object.values(json.securityDefinitions);
     }
 
     var interfaceUUID = crypto.randomUUID();
+    
+        Job.findOneAndUpdate({uuid: jobId}, {status: "IN_PROGRESS", metadata: {
+            interface: interfaceUUID,
+            errors: errorArray,
+            schema: {
+                status: "IN_PROGRESS",
+                count: schemaKeys.length,
+                message: "Generating schema..."
+            },
+            webhooks: {
+                status: "COMPLETED",
+                count: 0 ,
+                message: "No webhooks found"
+            },
+            actions: {
+                status: "IN_PROGRESS",
+                count: pathKeys.length,
+                message: "Generating actions..."
+            },
+            parameters: {
+                status: "IN_PROGRESS",
+                count: 0,
+                message: "Generating parameters..."
+            },
+            securitySchemes: {
+                status: "IN_PROGRESS",
+                count: securitySchemeKeys.length,
+                message: "Generating security schemes..."
+            }
+        }}, function(err, job) {
+            if(err) {
+                console.log(err)
+            } else {
+                console.log("Job Updated")
+            }
+        })
 
         Interface.create({
             uuid: interfaceUUID,
@@ -106,34 +216,36 @@ function processOpenApiV2(json, userId, orgId) {
             deleted_at: null,
             production_server: server,
             sandbox_server: server,
-            owning_organization: orgId
+            owning_organization: orgId,
+            jobIds: [jobId]
         },
             function(err,interface){
                 if (err) {
                     console.log(err);
                     return; 
                 }
-                console.log("Interface Created with ID: " + interface.uuid);
-                processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions, 2);
-                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions, 2);
-                processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID)
+                // console.log("Interface Created with ID: " + interface.uuid);
+                processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions, 2, jobId);
+                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions, jobId);
+                processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID, jobId)
                 return;
         });
 
 }
 
-function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMap, version) {
-
+function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMap, version, jobId) {
+    var errorArray = [];
+    var schemaCount = 0;
     for (var i = 0; i < schemaKeys.length; ++i) {
         
-        var entityUUID = crypto.randomUUID();
+        var entityUUID = crypto.randomUUID(); 
+        schemaCount++;
 
         if (schemaValues[i].required && schemaValues[i].properties) {
             var propertyKeys = Object.keys(schemaValues[i].properties);
             var propertyValues = Object.values(schemaValues[i].properties);
-            console.log("Creating Entity: " + schemaKeys[i] + " with properties:")
-            console.log(propertyKeys)
-            console.log(propertyValues)
+            var properties = processSchemaProperties(propertyKeys,propertyValues, schemaKeys[i], schemaMap, false, version)
+            schemaCount += properties.length;
 
             InterfaceEntity.create({
                 uuid: entityUUID,
@@ -141,11 +253,15 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMa
                 name: schemaKeys[i],
                 description: schemaValues[i].description,
                 type: schemaValues[i].type,
-                properties: processSchemaProperties(propertyKeys,propertyValues, schemaKeys[i], schemaMap, false, version)
+                properties: properties
             },
                 function(err,interfaceEntity){
                     if (err) {
                         console.log(err);
+                        errorArray.push({
+                            "schema": schemaKeys[i],
+                            "error": err
+                        })
                         return; 
                     }
                        
@@ -153,6 +269,8 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMa
         } else if(!schemaValues[i].required && schemaValues[i].properties) {
             var propertyKeys = Object.keys(schemaValues[i].properties);
             var propertyValues = Object.values(schemaValues[i].properties);
+            var properties = processSchemaProperties(propertyKeys,propertyValues, schemaKeys[i], schemaMap, false, version)
+            schemaCount += properties.length;
 
             InterfaceEntity.create({
                 uuid: entityUUID,
@@ -160,17 +278,22 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMa
                 name: schemaKeys[i],
                 description: schemaValues[i].description,
                 type: schemaValues[i].type,
-                properties: processSchemaProperties(propertyKeys,propertyValues, schemaKeys[i], schemaMap, false, version)
+                properties: properties
             },
                 function(err,interfaceEntity){
                     if (err) {
                         console.log(err);
+                        errorArray.push({
+                            "schema": schemaKeys[i],
+                            "error": err
+                        })
                         return; 
                     }
                     //console.log("Interface Entity Created with ID: " + interfaceEntity._id);
                        
             });
         } else {
+            
             InterfaceEntity.create({
                 uuid: entityUUID,
                 parent_interface_uuid: parent_interface_uuid,
@@ -182,6 +305,10 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMa
                 function(err,interfaceEntity){
                     if (err) {
                         console.log(err);
+                        errorArray.push({
+                            "schema": schemaKeys[i],
+                            "error": err
+                        })
                         return; 
                     }
                     //console.log("Interface Entity Created with ID: " + interfaceEntity._id);
@@ -197,7 +324,22 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMa
     
     }
 
-    return
+    Job.findOneAndUpdate({uuid: jobId}, {
+        'metadata.schema': {
+               status: "COMPLETED",
+               count: schemaKeys.length,
+               message: "Schema processed successfully",
+               errors: errorArray
+           }
+       }, function(err, job) {
+           if(err) {
+               console.log(err)
+           } else {
+               console.log("Job Updated")
+           }
+       })
+    
+    return true
 }
 
 function processProperties(properties, required){
@@ -323,8 +465,8 @@ function createPropertyEntities(propertyValues, parent_object_uuid, parent_inter
     return;
 }
 
-function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap, parameterMap, version) {
-
+function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap, parameterMap, version, jobId) {
+    var errorArray = [];
     //iterate through paths
     for (var i = 0; i < pathKeys.length; ++i) {
         var path = pathKeys[i];
@@ -650,7 +792,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                         for (var h = 0; h < requestBodyKeys.length; ++h){
                             requestBodyArray.push(requestBody[h]);
                         }
-                        console.log("requestBodyArray: " + requestBodyArray)
+
                         processTopLevelRequiredProperties(requestBodyArray, schemaMap)
 
                         InterfaceAction.create({
@@ -677,6 +819,13 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                             function(err,interfaceAction){
                                 if (err) {
                                     console.log(err);
+                                    errorArray.push(
+                                        {
+                                            "path": path,
+                                            "method": methods[j],
+                                            "error": err
+                                        }
+                                    )
                                     return; 
                                 }
                                 
@@ -709,6 +858,13 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                             function(err,interfaceAction){
                                 if (err) {
                                     console.log(err);
+                                    errorArray.push(
+                                        {
+                                            "path": path,
+                                            "method": methods[j],
+                                            "error": err
+                                        }
+                                    )
                                     console.log(path + " request body and parameters exist (ln 443)")
                                     return; 
                                 }
@@ -753,6 +909,13 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                 function(err,interfaceAction){
                                     if (err) {
                                         console.log(err);
+                                        errorArray.push(
+                                            {
+                                                "path": path,
+                                                "method": methods[j],
+                                                "error": err
+                                            }
+                                        )
                                         console.log(path + "both requestBody (1 schema + form-urlencoded) and parameters are present (ln 264)");
                                         return; 
                                     }
@@ -787,6 +950,13 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                 function(err,interfaceAction){
                                     if (err) {
                                         console.log(err);
+                                        errorArray.push(
+                                            {
+                                                "path": path,
+                                                "method": methods[j],
+                                                "error": err
+                                            }
+                                        )
                                         console.log(path + "both requestBody (>1 schema + form-urlencoded) and parameters are present (ln 299)");
                                         return; 
                                     }
@@ -812,6 +982,13 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                     function(err,interfaceAction){
                                         if (err) {
                                             console.log(err);
+                                            errorArray.push(
+                                                {
+                                                    "path": path,
+                                                    "method": methods[j],
+                                                    "error": err
+                                                }
+                                            )
                                             console.log(path + " requestBody is undefined but parameters are present (ln 166)");
                                             return; 
                                         }
@@ -821,6 +998,11 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                 
                 } else {
                     console.log("not application/json or application/x-www-form-urlencoded");
+                    errorArray.push({
+                        path: path,
+                        method: methods[j],
+                        error: "requestBody is not application/json or application/x-www-form-urlencoded"
+                    });
                 }
                
             }
@@ -828,14 +1010,28 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
 
         }        
     }
-
-    return;
+        Job.findOneAndUpdate({uuid: jobId}, {
+         'metadata.actions': {
+                status: "COMPLETED",
+                count: pathKeys.length,
+                message: "Actions processed successfully",
+                errors: errorArray
+            }
+        }, function(err, job) {
+            if(err) {
+                console.log(err)
+            } else {
+                console.log("Job Updated")
+            }
+        })
+    
+    return true;
 }
 
-function processParameters(parameterKeys, parameterValues,parent_interface_uuid){
+function processParameters(parameterKeys, parameterValues,parent_interface_uuid, jobId){
     var parameterNames = Object.keys(parameterKeys);
     var parameterAttributes = Object.values(parameterValues);
-
+    var errorArray = []
     for (var i = 0; i < parameterNames.length; ++i) {
         var parameterUUID = crypto.randomUUID();
 
@@ -854,6 +1050,10 @@ function processParameters(parameterKeys, parameterValues,parent_interface_uuid)
                 function(err,interfaceParameter){
                     if (err) {
                         console.log(err);
+                        errorArray.push({
+                            "parameter": parameterKeys[i],
+                            "error": err
+                        })
                         return; 
                     }
                     //console.log("Interface Parameter Created "+ interfaceParameter._id);
@@ -875,20 +1075,39 @@ function processParameters(parameterKeys, parameterValues,parent_interface_uuid)
             
                     if (err) {
                         console.log(err);
+                        errorArray.push({
+                            "parameter": parameterKeys[i],
+                            "error": err
+                        })
+
                         return; 
                     }
                     //console.log("Interface Parameter Created "+ interfaceParameter._id);
             });
         }
     }
+    Job.findOneAndUpdate({uuid: jobId}, {
+       'metadata.parameters' : {
+                status: "COMPLETED",
+                count: parameterKeys.length,
+                message: "Parameters processed successfully",
+                errors: errorArray
+            }
+    }, function(err, job) {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log("Job Updated")
+        }
+    })
     
-    return;  
+    return true  
 }
 
-function processSecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_interface_uuid){
+function processSecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_interface_uuid, jobId){
    
     //var securitySchemeAttributes = Object.values(securitySchemeValues);
-
+    var errorArray = [];
     for (var i = 0; i < securitySchemeKeys.length; ++i) {
         
         var securitySchemeUUID = crypto.randomUUID();
@@ -921,6 +1140,11 @@ function processSecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_i
                     function(err,interfaceSecurityScheme){
                         if (err) {
                             console.log(err);
+                            errorArray.push({
+                                "securityScheme": securitySchemeKeys[i],
+                                "error": err
+                            })
+
                             return; 
                         }
                         console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
@@ -939,6 +1163,10 @@ function processSecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_i
                 function(err,interfaceSecurityScheme){
                     if (err) {
                         console.log(err);
+                        errorArray.push({
+                            "securityScheme": securitySchemeKeys[i],
+                            "error": err
+                        })
                         return; 
                     }
                     console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
@@ -946,12 +1174,27 @@ function processSecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_i
 
 
         }
-       
 
     
     }
+           
+    Job.findOneAndUpdate({uuid: jobId}, {
+        'metadata.securitySchemes': {
+                status: "COMPLETED",
+                count: securitySchemeKeys.length,
+                message: "Security Scheme processed successfully",
+                errors: errorArray
+            }
+        }, function(err, job) {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log("Job Updated")
+        }
+    })
     
-    return;  
+    
+    return true;  
 }
 
 function processReferences(parameters){
@@ -1342,7 +1585,9 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
 
 }
 
-function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schemaMap){
+function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schemaMap, jobId){
+    var errorArray = [];
+
     for (var i = 0; i < webhookKeys.length; ++i){
 
         var webhookUUID = crypto.randomUUID();
@@ -1395,6 +1640,10 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
                             function(err,interfaceWebhook){
                                 if (err) {
                                     console.log(err);
+                                    errorArray.push({
+                                        "webhook": thisWebhookValues.operationId,
+                                        "error": err
+                                    });
                                     return; 
                                 }
                             // console.log("Interface Webhook Created With Responses"+ interfaceWebhook._id);
@@ -1425,6 +1674,10 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
                         function(err,interfaceWebhook){
                             if (err) {
                                 console.log(err);
+                                errorArray.push({
+                                    "webhook": thisWebhookValues.operationId,
+                                    "error": err
+                                });
                                 return; 
                             }
                             // console.log("Interface Webhook Created Without Responses"+ interfaceWebhook._id);
@@ -1433,11 +1686,25 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
             }
 
         } else {}
-
         
+        Job.findOneAndUpdate({uuid: jobId}, {
+            'metadata.webhooks':{
+                status: "COMPLETED",
+                count: webhookKeys.length,
+                message: "Webhooks processed successfully",
+                errors: errorArray
+            }
+        }, function(err, job) {
+            if(err) {
+                console.log(err)
+            } else {
+                console.log("Job Updated")
+            }
+        })
 
     }
     
+    return true
 }
 
 function runWorkflow(workflow, actionInterface, environment, inputJSON){
@@ -1677,9 +1944,10 @@ function retrieveInterfaces(userId){
 
 }
 
-
-function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap) {
+function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid, schemaMap, jobId) {
     //iterate through paths
+    var errorArray = [];
+    var parameterArray = [];
     for (var i = 0; i < pathKeys.length; ++i) {
 
         var path = pathKeys[i];
@@ -1748,7 +2016,10 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                 },
                     function(err,interfaceAction){
                         if (err) {
-                            console.log()
+                            errorArray.push({
+                                "action": values[j].operationId,
+                                "error": err
+                            })
                             console.log(err);
                             console.log(path + " both requestBody and parameters are undefined (ln 158)");
                             return; 
@@ -1763,6 +2034,7 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
             } else if (actionRequestBody.length == 0 && actionParameters.length > 0) {
 
                 var parameters = processOpenApiV2RequestParameterSchema(actionParameters, schemaMap);
+                parameterArray.push(parameters);
              // No Request Body but Parameters exist for the Action (i.e. GET request with an ID in the path or a documented Header parameter) 
                 
                 InterfaceAction.create({
@@ -1778,6 +2050,10 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                     function(err,interfaceAction){
                         if (err) {
                             console.log(err);
+                            errorArray.push({
+                                "action": values[j].operationId,
+                                "error": err
+                            })
                             console.log(path + " requestBody is undefined but parameters exist (ln 366)");
                             return; 
                         } else {
@@ -1789,6 +2065,7 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
 
                 // Request Body and Parameters exist for the Action (i.e. POST, PUT, PATCH)
                     var parameters = processOpenApiV2RequestParameterSchema(actionParameters, schemaMap);
+                    parameterArray.push(parameters);
     
                     for (l = 0; l < actionRequestBody.length; ++l) {
                     
@@ -1823,6 +2100,10 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                                 function(err,interfaceAction){
                                     if (err) {
                                         console.log(err);
+                                        errorArray.push({
+                                            "action": values[j].operationId,
+                                            "error": err
+                                        })
                                         console.log(path + " requestBody is undefined but parameters exist (ln 366)")
                                         return; 
                                     } else {
@@ -1835,6 +2116,10 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
 
                         } else{
                             console.log('OpenAPIV2 Request Body Schema is not a reference:')
+                            errorArray.push({
+                                "action": values[j].operationId,
+                                "error": "OpenAPIV2 Request Body Schema is not a reference"
+                            })
                             console.log(actionRequestBody[i])
                         }
 
@@ -1870,6 +2155,10 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                             function(err,interfaceAction){
                                 if (err) {
                                     console.log(err);
+                                    errorArray.push({
+                                        "action": values[j].operationId,
+                                        "error": err
+                                    })
                                     console.log(path + " requestBody is undefined but parameters exist (ln 366)")
                                     return; 
                                 } else {
@@ -1883,6 +2172,10 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
                     } else{
                         console.log('OpenAPIV2 Request Body Schema is not a reference:')
                         console.log(actionRequestBody[i])
+                        errorArray.push({
+                            "action": values[j].operationId,
+                            "error": "OpenAPIV2 Request Body Schema is not a reference"
+                        })
                     }
 
                 } 
@@ -1892,6 +2185,26 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
 
         }        
     }
+    Job.findOneAndUpdate({uuid: jobId}, {
+        'metadata.actions': {
+                status: "COMPLETED",
+                count: pathKeys.length,
+                message: "Actions processed successfully",
+                errors: errorArray
+            },
+        'metadata.parameters':{
+            status: "COMPLETED",
+            count: parameterArray.length,
+            message: "Parameters processed successfully",
+            errors: errorArray
+        }
+    }, function(err, job) {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log("Job Updated")
+        }
+    })
 
     return;
 }
@@ -1924,8 +2237,8 @@ function processOpenApiV2RequestParameterSchema(schemas,schemaMap){
     return parameters;
 }
 
-function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_interface_uuid){
-
+function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,parent_interface_uuid, jobId){
+    var errorArray = [];
     for (var i = 0; i < securitySchemeKeys.length; ++i) {
         
         var securitySchemeUUID = crypto.randomUUID();
@@ -1953,6 +2266,10 @@ function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues
                     function(err,interfaceSecurityScheme){
                         if (err) {
                             console.log(err);
+                            errorArray.push({
+                                "securityScheme": securitySchemeKeys[i],
+                                "error": err
+                            })
                             return; 
                         }
                         console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
@@ -1971,6 +2288,10 @@ function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues
                 function(err,interfaceSecurityScheme){
                     if (err) {
                         console.log(err);
+                        errorArray.push({
+                            "securityScheme": securitySchemeKeys[i],
+                            "error": err
+                        })
                         return; 
                     }
                     console.log("Interface Security Scheme Created "+ interfaceSecurityScheme._id);
@@ -1982,7 +2303,20 @@ function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues
 
     
     }
-    
+    Job.findOneAndUpdate({uuid: jobId}, {
+        'metadata.securitySchemes': {
+                status: "COMPLETED",
+                count: securitySchemeKeys.length,
+                message: "Security Schemes processed successfully"
+            },
+            errors: errorArray
+    }, function(err, job) {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log("Job Updated")
+        }
+    })
     return;  
 }
 

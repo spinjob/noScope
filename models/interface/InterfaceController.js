@@ -6,26 +6,69 @@ var Interface = require('./Interface');
 const lib = require('../../lib.js')
 const crypto = require('crypto');
 const User = require('../user/User');
+const Job = require('../job/Job');
 const {verifyUser} = require('../../authenticate.js');
 
 // IMPORT AN INTERFACE FROM SWAGGER
 router.post('/upload', (req,res, next) => {
-      if(req.body.spec.openapi?.split('.')[0] == "2" || req.body.spec.swagger?.split('.')[0] == "2"){
-        console.log("OPEN API 2.X")
-        var info = lib.processOpenApiV2(req.body.spec, req.body.userId, req.body.organizationId);
-        res.send({ success: true, info: info })
+      var jobUUID = crypto.randomUUID();
 
-      } else if (req.body.spec.openapi?.split('.')[0] == "3" || req.body.spec.swagger?.split('.')[0] == "3"){
-        console.log("OPEN API 3.X")
-        var info = lib.processOpenApiV3(req.body.spec, req.body.userId, req.body.organizationId);
-        res.send({ success: true, info: info })
+      Job.create({
+        uuid: jobUUID,
+        type: "API_IMPORT",
+        status: "PENDING",
+        created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        created_by: req.body.userId,
+        metadata: {
+            schema: {
+                status: "PENDING",
+                count: 0,
+                message: "No schema has been generated yet."
+            },
+            webhooks: {
+                status: "PENDING",
+                count: 0,
+                message: "No webhooks have been generated yet."
+            },
+            actions: {
+                status: "PENDING",
+                count: 0,
+                message: "No actions have been generated yet."
+            },
+            parameters: {
+                status: "PENDING",
+                count: 0,
+                message: "No parameters have been generated yet."
+            },
+            securitySchemes: {
+                status: "PENDING",
+                count: 0,
+                message: "No security schemes have been generated yet."
+            }
+        }
 
-      } else {
-        console.log("NOT OPENAPI OR SWAGGER, TRYING POSTMAN")
-        var info = lib.convertPostmanCollection(req.body.spec, req.body.userId, req.body.organizationId);
-        res.send({ success: true, info: info })
-      }
-    
+      },
+      function (err,job) {
+            if(err) {
+                console.log(err)
+                res.status(500).send(err)
+            } else {
+                if(req.body.spec.openapi?.split('.')[0] == "2" || req.body.spec.swagger?.split('.')[0] == "2"){
+                    console.log("OPEN API 2.X")
+                    lib.processOpenApiV2(req.body.spec, req.body.userId, req.body.organizationId,jobUUID);
+                    
+                  } else if (req.body.spec.openapi?.split('.')[0] == "3" || req.body.spec.swagger?.split('.')[0] == "3"){
+                    console.log("OPEN API 3.X")
+                    lib.processOpenApiV3(req.body.spec, req.body.userId, req.body.organizationId, jobUUID)
+            
+                  } else {
+                    console.log("NOT OPENAPI OR SWAGGER, TRYING POSTMAN")
+                    lib.convertPostmanCollection(req.body.spec, req.body.userId, req.body.organizationId, jobUUID);
+                  }
+                res.status(200).send(job)
+            } 
+      });
 });
 
 

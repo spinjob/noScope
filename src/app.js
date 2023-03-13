@@ -22,6 +22,7 @@ const InterfaceParameterController = require('../models/interface_parameter/Inte
 const WorkflowLogController = require('../models/workflow_log/WorkflowLogController');
 const OrganizationController = require('../models/organization/OrganizationController');
 const CustomerController = require('../models/customer/CustomerController');
+const JobController = require('../models/job/JobController');
 
 if (process.env.NODE_ENV !== "production") {
     // Load environment variables from .env file in non prod environments
@@ -63,6 +64,7 @@ app.use('/interfaces', InterfaceSecuritySchemeController);
 app.use('/transform', TransformerController);
 app.use('/organizations', OrganizationController);
 app.use('/customers', CustomerController);
+app.use('/jobs', JobController);
 
 //All other GET requests not handled will return our React app
 app.get('*', (req, res) => {
