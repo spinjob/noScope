@@ -39,7 +39,20 @@ const UserSchema = new mongoose.Schema({
     },
     refreshToken: {
         type: [Session]
+    },
+    password: {
+        type: String,
+        default: ""
+    },
+    created_at: {
+        type: Date,
+        default: Date.now
+    },
+    updated_at: {
+        type: Date,
+        default: Date.now
     }
+
 });
 
 UserSchema.set('toJSON', {

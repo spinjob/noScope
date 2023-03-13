@@ -125,7 +125,7 @@ router.get("/me", verifyUser, (req, res, next) => {
   })  
 
 router.post('/find', function(req,res) {
-    User.findOne({username: req.body.email}, function (err, user) {
+    User.findOne({email: req.body.email}, function (err, user) {
         if (err) return res.status(500).send("There was a problem finding the user.");
         res.status(200).send(user);
     });
