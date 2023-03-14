@@ -18,10 +18,10 @@ const yaml = require('js-yaml');
 
 function processOpenApiV3(json, userId, orgId, jobId) {
 
-    var schemaKeys = Object.keys(json.components.schemas);
-    var schemaValues = Object.values(json.components.schemas);
-    var pathKeys = Object.keys(json.paths);
-    var pathValues = Object.values(json.paths);
+    var schemaKeys = [];
+    var schemaValues = [];
+    var pathKeys = [];
+    var pathValues = [];
     var parameterKeys = []
     var parameterValues = []
     var securitySchemeKeys = []
@@ -30,20 +30,26 @@ function processOpenApiV3(json, userId, orgId, jobId) {
     var webhookValues = [];
     var errorArray = [];
 
-    if(json.components.schemas === undefined || schemaKeys.length === 0) {
+    if(json.components.schemas === undefined) {
         errorArray.push({
             message: "No schemas found in the OpenAPI document. Please ensure that the OpenAPI document has at least one schema defined.",
             errorCode: "NO_SCHEMAS",
             severity: "ERROR"
         })
+    } else {
+        schemaKeys = Object.keys(json.components.schemas);
+        schemaValues = Object.values(json.components.schemas);
     }
 
-    if(json.paths === undefined || pathKeys.length === 0) {
+    if(json.paths === undefined) {
         errorArray.push({
             message: "No paths found in the OpenAPI document. Please ensure that the OpenAPI document has at least one path action defined.",
             errorCode: "NO_PATHS",
             severity: "ERROR"
         })
+    } else {
+        pathKeys = Object.keys(json.paths);
+        pathValues = Object.values(json.paths);
     }
 
     if(json.components.securitySchemes === undefined) {
@@ -78,35 +84,36 @@ function processOpenApiV3(json, userId, orgId, jobId) {
         webhookKeys = Object.keys(json["x-webhooks"]);
         webhookValues = Object.values(json["x-webhooks"])
     }
+
     var interfaceUUID = crypto.randomUUID();
 
     Job.findOneAndUpdate({uuid: jobId}, {status: "IN_PROGRESS", metadata: {
         interface: interfaceUUID,
         errors: errorArray,
         schema: {
-            status: "IN_PROGRESS",
+            status: schemaKeys.length > 0 ? "IN_PROGRESS": "COMPLETED" ,
             count: schemaKeys.length,
-            message: "Generating schema..."
+            message:  schemaKeys.length > 0 ? "Generating schema..." : "No schemas found."
         },
         webhooks: {
-            status: "IN_PROGRESS",
+            status: webhookKeys.length > 0 ? "IN_PROGRESS" : "COMPLETED",
             count: webhookKeys.length,
-            message: "Generating webhooks..."
+            message: webhookKeys.length > 0 ? "Generating webhooks...": "No webhooks found."
         },
         actions: {
-            status: "IN_PROGRESS",
+            status: pathKeys.length > 0 ? "IN_PROGRESS" : "COMPLETED",
             count: pathKeys.length,
-            message: "Generating actions..."
+            message: pathKeys.length > 0 ? "Generating actions...": "No actions found."
         },
         parameters: {
-            status: "IN_PROGRESS",
+            status: parameterKeys.length > 0 ? "IN_PROGRESS" : "COMPLETED",
             count: parameterKeys.length,
-            message: "Generating parameters..."
+            message: parameterKeys.length > 0 ? "Generating parameters..." : "No parameters found."
         },
         securitySchemes: {
-            status: "IN_PROGRESS",
+            status: securitySchemeKeys.length > 0 ? "IN_PROGRESS": "COMPLETED",
             count: securitySchemeKeys.length,
-            message: "Generating security schemes..."
+            message: securitySchemeKeys.length > 0 ? "Generating security schemes..." : "No security schemes found."
         }
     }}, function(err, job) {
         if(err) {
@@ -135,11 +142,23 @@ function processOpenApiV3(json, userId, orgId, jobId) {
                     return; 
                 }
                 console.log("Interface Created with ID: " + interface.uuid);
-                processSchema(schemaKeys, schemaValues, interfaceUUID, json.components.schemas, 3, jobId);
-                processPathActions(pathKeys,pathValues,interfaceUUID, json.components.schemas, json.components.parameters, 3, jobId);
-                processParameters(parameterKeys,parameterValues,interfaceUUID, jobId);
-                processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID, jobId)
-                processWebhooks(webhookKeys,webhookValues,interfaceUUID, json.components.schemas, jobId);
+
+                {
+                    schemaKeys.length > 0 ? processSchema(schemaKeys, schemaValues, interfaceUUID, json.components.schemas, 3, jobId) : console.log("No schemas found.")
+                }
+                {
+                    pathKeys.length > 0 ?  processPathActions(pathKeys,pathValues,interfaceUUID, json.components.schemas, json.components.parameters, 3, jobId) : console.log("No actions found.")
+                }
+                {
+                    parameterKeys.length > 0 ? processParameters(parameterKeys,parameterValues,interfaceUUID, jobId) : console.log("No parameters found.")
+                }
+                {
+                    securitySchemeKeys.length > 0 ? processSecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID, jobId) : console.log("No security schemes found.")
+                }
+
+                {
+                    webhookKeys.length > 0 ? processWebhooks(webhookKeys,webhookValues,interfaceUUID, json.components.schemas, jobId) : console.log("No webhooks found.")
+                }
                 return;
         });
 
@@ -147,14 +166,37 @@ function processOpenApiV3(json, userId, orgId, jobId) {
 
 function processOpenApiV2(json, userId, orgId, jobId) {
 
-    var schemaKeys = Object.keys(json.definitions);
-    var schemaValues = Object.values(json.definitions);
-    var pathKeys = Object.keys(json.paths);
-    var pathValues = Object.values(json.paths);
-    var securitySchemeKeys = []
-    var securitySchemeValues = []
+    var schemaKeys = [];
+    var schemaValues = [];
+    var pathKeys = [];
+    var pathValues = [];
+    var securitySchemeKeys = [];
+    var securitySchemeValues = [];
     var server = json.host;
     var errorArray = [];
+
+    if(json.definitions === undefined) {
+        errorArray.push({
+            message: "No schemas found in the OpenAPI document. Please ensure that the OpenAPI document has at least one schema defined.",
+            errorCode: "NO_SCHEMAS",
+            severity: "ERROR"
+        })
+    } else {
+        schemaKeys = Object.keys(json.definitions);
+        schemaValues = Object.values(json.definitions);
+    }
+
+    if(json.paths === undefined) {
+        errorArray.push({
+            message: "No paths found in the OpenAPI document. Please ensure that the OpenAPI document has at least one path action defined.",
+            errorCode: "NO_PATHS",
+            severity: "ERROR"
+        })
+    } else {
+        pathKeys = Object.keys(json.paths);
+        pathValues = Object.values(json.paths);
+    }
+
 
     if(json.securityDefinitions === undefined) {
         errorArray.push({
@@ -169,67 +211,67 @@ function processOpenApiV2(json, userId, orgId, jobId) {
 
     var interfaceUUID = crypto.randomUUID();
     
-        Job.findOneAndUpdate({uuid: jobId}, {status: "IN_PROGRESS", metadata: {
-            interface: interfaceUUID,
-            errors: errorArray,
-            schema: {
-                status: "IN_PROGRESS",
-                count: schemaKeys.length,
-                message: "Generating schema..."
-            },
-            webhooks: {
-                status: "COMPLETED",
-                count: 0 ,
-                message: "No webhooks found"
-            },
-            actions: {
-                status: "IN_PROGRESS",
-                count: pathKeys.length,
-                message: "Generating actions..."
-            },
-            parameters: {
-                status: "IN_PROGRESS",
-                count: 0,
-                message: "Generating parameters..."
-            },
-            securitySchemes: {
-                status: "IN_PROGRESS",
-                count: securitySchemeKeys.length,
-                message: "Generating security schemes..."
-            }
-        }}, function(err, job) {
-            if(err) {
-                console.log(err)
-            } else {
-                console.log("Job Updated")
-            }
-        })
-
-        Interface.create({
-            uuid: interfaceUUID,
-            name: json.info.title,
-            description: json.info.description, 
-            version: json.info.version,
-            created_by: userId,
-            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-            updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-            deleted_at: null,
-            production_server: server,
-            sandbox_server: server,
-            owning_organization: orgId,
-            jobIds: [jobId]
+    Job.findOneAndUpdate({uuid: jobId}, {status: "IN_PROGRESS", metadata: {
+        interface: interfaceUUID,
+        errors: errorArray,
+        schema: {
+            status: "IN_PROGRESS",
+            count: schemaKeys.length,
+            message: "Generating schema..."
         },
-            function(err,interface){
-                if (err) {
-                    console.log(err);
-                    return; 
-                }
-                // console.log("Interface Created with ID: " + interface.uuid);
-                processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions, 2, jobId);
-                processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions, jobId);
-                processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID, jobId)
-                return;
-        });
+        webhooks: {
+            status: "COMPLETED",
+            count: 0 ,
+            message: "No webhooks found"
+        },
+        actions: {
+            status: "IN_PROGRESS",
+            count: pathKeys.length,
+            message: "Generating actions..."
+        },
+        parameters: {
+            status: "IN_PROGRESS",
+            count: 0,
+            message: "Generating parameters..."
+        },
+        securitySchemes: {
+            status: "IN_PROGRESS",
+            count: securitySchemeKeys.length,
+            message: "Generating security schemes..."
+        }
+    }}, function(err, job) {
+        if(err) {
+            console.log(err)
+        } else {
+            console.log("Job Updated")
+        }
+    })
+
+    Interface.create({
+        uuid: interfaceUUID,
+        name: json.info.title,
+        description: json.info.description, 
+        version: json.info.version,
+        created_by: userId,
+        created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        deleted_at: null,
+        production_server: server,
+        sandbox_server: server,
+        owning_organization: orgId,
+        jobIds: [jobId]
+    },
+        function(err,interface){
+            if (err) {
+                console.log(err);
+                return; 
+            }
+            // console.log("Interface Created with ID: " + interface.uuid);
+            processSchema(schemaKeys, schemaValues, interfaceUUID, json.definitions, 2, jobId);
+            processOpenApiV2PathActions(pathKeys,pathValues,interfaceUUID, json.definitions, jobId);
+            processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues,interfaceUUID, jobId)
+            return;
+    });
 
 }
 
