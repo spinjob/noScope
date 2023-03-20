@@ -19,7 +19,7 @@ router.post('/new', function(req,res) {
         created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
         workflows: req.body.workflows,
-        status: 'new',
+        status: 'Scoping',
         owning_organization: req.body.organizationId,
         created_by: req.body.created_by
     },
