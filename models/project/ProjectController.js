@@ -103,6 +103,13 @@ router.put('/:id/status', function(req,res){
     });
 })
 
+router.put('/:id/authentication', function(req,res){
+    Project.findOneAndUpdate({uuid: req.params.id}, {"authentication": req.body.authentication}, function (err, project) {
+        if (err) return res.status(500).send("There was a problem updating the project.");
+        res.status(200).send(project);
+    });
+})
+
 
 
 module.exports = router;

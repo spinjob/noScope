@@ -13,6 +13,7 @@ var ProjectSchema = new mongoose.Schema({
     status: String,
     configuration: Object,
     customer_configuration: Object,
+    authentication: Object,
     owning_organization: String
 });
 
