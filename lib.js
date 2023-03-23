@@ -1462,9 +1462,10 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
 
 }
 
-function processSchemaProperties(propertyKeys, propertyValues, parentSchema, schemaMap, debug, version){
+function processSchemaProperties(propertyKeys, propertyValues, parentSchema, schemaMap, debug, version, parentPath){
 
     var schemaProperties = {};
+    
     //example propertyKeys: [deliveryStatus, estimatedDeliveryTime]
     //example propertyValues: [{ '$ref': '#/components/schemas/DeliveryStatus' }, {type: 'string',nullable: true,description: 'The expected delivery time.',format: 'date-time',example: '2007-12-03T10:15:30+01:00'}]  
         for (var i = 0; i < propertyKeys.length; ++i){
@@ -1472,7 +1473,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                 var propertyValue = propertyValues[i];
 
                 //Check for infinite loop and return an empty object if one is detected.
-                if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers"){
+                if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers" || parentPath?.includes(propertyKey)){
                     console.log("Infinite Loop Detected: " + parentSchema + " and " + propertyKey + " reference loop.")
                     return {};
                 }
@@ -1486,7 +1487,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     if(propertySchemaMapValues && propertySchemaMapValues.properties){
                         var nestedPropertyKeys = Object.keys(propertySchemaMapValues.properties);
                         var nestedPropertyValues = Object.values(propertySchemaMapValues.properties);
-                        var propertyProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap, false, version);
+                        var propertyProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap, false, version, parentPath + "." + propertyKey);
                         propertyObject[propertyKey].properties = {...propertyObject[propertyKey].properties, ...propertyProperties}
 
                         //schemaProperties = Object.assign(schemaProperties, propertyObject);
@@ -1522,7 +1523,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     var propertyObject = {};
                     var propertyKeys = Object.keys(propertyValue.properties);
                     var propertyValues = Object.values(propertyValue.properties);
-                    var propertyProperties = processSchemaProperties(propertyKeys, propertyValues, propertyKey, schemaMap, false, version);
+                    var propertyProperties = processSchemaProperties(propertyKeys, propertyValues, propertyKey, schemaMap, false, version, parentPath + "." + propertyKey);
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
                     propertyObject[propertyKey].properties = {...propertyObject[propertyKey].properties, ...propertyProperties}; 
                     //schemaProperties = Object.assign(schemaProperties, propertyObject);
@@ -1552,7 +1553,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                         if(mapPropertyValueSchema.properties){
                             var nestedPropertyKeys = Object.keys(propertySchemaMap[propertyReference].properties);
                             var nestedPropertyValues = Object.values(propertySchemaMap[propertyReference].properties);
-                            var mappedPropertyValueNestedProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap, false, version);
+                            var mappedPropertyValueNestedProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap, false, version, parentPath + "." + propertyKey);
                             mapPropertyObject[mapPropertyKey].properties = {...mapPropertyObject[mapPropertyKey].properties, ...mappedPropertyValueNestedProperties}
                         }
 
@@ -1587,8 +1588,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                             var itemArraySchemaProperties = JSON.parse(JSON.stringify(propertySchemaMapValues.properties));
                             var itemArraySchemaPropertyKeys = Object.keys(itemArraySchemaProperties);
                             var itemArraySchemaPropertyValues = Object.values(itemArraySchemaProperties);
-
-                            var itemArraySchemaPropertyMap = processSchemaProperties(itemArraySchemaPropertyKeys, itemArraySchemaPropertyValues, propertyReference, propertySchemaMap, false, version);
+                            var itemArraySchemaPropertyMap = processSchemaProperties(itemArraySchemaPropertyKeys, itemArraySchemaPropertyValues, propertyReference, propertySchemaMap, false, version, parentPath + "." + propertyKey);
                             
                             var itemsSchemaObject = {
                                     "type": propertySchemaMapValues.type ? propertySchemaMapValues.type : null,
