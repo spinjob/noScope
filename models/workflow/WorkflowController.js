@@ -8,6 +8,7 @@ const Interface = require('../interface/Interface');
 const Project = require('../project/Project');
 const {verifyUser} = require('../../authenticate.js');
 const {runWorkflow} = require('../../lib.js');
+const {triggerWorkflow} = require('../../workflowOrchestrator.js');
 
 // CREATE A WORKFLOW
 router.post('/', function(req,res) {
@@ -132,13 +133,15 @@ router.post('/:workflowId/trigger', function(req,res) {
         } else {
             res.status(200).send(workflow);
             console.log(workflow);
-            var actionInterfaceUuid = workflow.steps[0].request.parent_interface_uuid
-            
-            Interface.findOne({uuid: actionInterfaceUuid}, function(err,interface){
+           
+            Interface.find({
+                $or: [
+                    {uuid: {$in: workflow.interfaces}}
+                ]
+            }, function(err,apis){
                 if (err) return res.status(500).send(err);
-                var actionInterface = interface;
-                runWorkflow(workflow, actionInterface, "sandbox", req.body);
-            })
+                triggerWorkflow(workflow, apis, "sandbox", req.body)
+            });
 
         }
 
