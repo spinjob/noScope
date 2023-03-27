@@ -132,7 +132,6 @@ router.post('/:workflowId/trigger', function(req,res) {
             return res.status(500).send(err);
         } else {
             res.status(200).send(workflow);
-            console.log(workflow);
            
             Interface.find({
                 $or: [
