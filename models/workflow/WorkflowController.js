@@ -126,20 +126,44 @@ router.put('/:workflowId/steps/1', function(req,res) {
     });
 });
 
+const isJson = (str) => {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+
 router.post('/:workflowId/trigger', function(req,res) {
     Workflow.findOne({uuid: req.params.workflowId}, function(err,workflow){
         if (err) {
             return res.status(500).send(err);
         } else {
-            res.status(200).send(workflow);
-           
             Interface.find({
                 $or: [
                     {uuid: {$in: workflow.interfaces}}
                 ]
             }, function(err,apis){
+                var traceUUID = crypto.randomUUID();
                 if (err) return res.status(500).send(err);
-                triggerWorkflow(workflow, apis, "sandbox", req.body)
+
+                if (!isJson(JSON.stringify(req.body))){
+                  return res.status(400).send({
+                        status: 'failure',
+                        message: 'Invalid JSON',
+                        traceId: traceUUID
+                    })
+                } else {
+                    triggerWorkflow(workflow, apis, "sandbox", req.body, traceUUID)
+                   return res.status(200).send({
+                        status: 'success',
+                        message: 'Triggered workflow',
+                        traceId: traceUUID
+                    })
+                }
+
             });
 
         }

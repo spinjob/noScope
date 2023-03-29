@@ -5,7 +5,7 @@ const WorkflowLog = require('./models/workflow_log/WorkflowLog');
 const Project = require('./models/project/Project');
 const _ = require('lodash');
 
-async function triggerWorkflow (workflow, apis, environment, inputJSON){
+async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUID){
     const workflowActionNodes = workflow.nodes.filter((node) => node.type === 'action')
     const workflowMappings = workflow.definition.mappings
     const actionApi = apis.filter((api) => api.uuid === workflowActionNodes[0].data.selectedAction.parent_interface_uuid)[0]
@@ -21,7 +21,6 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON){
         var logMessage = 'Workflow Triggered: ' + workflow.name + ' (' + workflow.uuid + ')' + ' with input: ' + JSON.stringify(inputJSON)
         var logLevel = 'info'
         var logWorkflowUUID = workflow.uuid
-        var traceUUID = crypto.randomUUID()
         logEvent(logMessage, logWorkflowUUID, 'trigger', logLevel, traceUUID)
 
         let promiseChain = Promise.resolve();
@@ -30,7 +29,8 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON){
                 promiseChain = promiseChain.then(() => {
                     return new Promise((resolve, reject) => {
                             if(input[index].result == 'failure'){
-
+                                // If the previous action failed, check for a failure action. If it exists, execute it. If not, end the workflow.
+                                
                             } else {
                             
                                 var action = actionNode.data.selectedAction
@@ -290,8 +290,14 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
         var mappingInputPathArray = mappingInputDefinition.path.includes('.') ? mappingInputDefinition.path.split('.') : [mappingInputDefinition.path]
         console.log("Input Data: Adapt Property")
         console.log(inputData)
-        var mappingInputValue = inputData ? mappingInputPathArray.reduce((obj, i) => obj[i], inputData) : null
-       
+        var mappingInputValue = null;
+        if (inputData) {
+          try {
+            mappingInputValue = mappingInputPathArray.reduce((obj, i) => obj[i], inputData);
+          } catch (error) {
+            console.log("Error accessing property:", error.message);
+          }
+        }
         if(formulas.length > 0){
             //Apply formulas to the input value, if they exist
         }
