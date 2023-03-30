@@ -36,7 +36,23 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
                                 var action = actionNode.data.selectedAction
                                 var method = actionNode.data.selectedAction.method
                                 var path = productionServer + actionNode.data.selectedAction.path
-                                const authenticationConfigurations = partnership?.authentication[actionApi.uuid] ? partnership.authentication[actionApi.uuid] : null
+                                const authenticationConfigurations = partnership && partnership?.authentication && partnership?.authentication[actionApi.uuid] ? partnership.authentication[actionApi.uuid] : null
+
+                                if(!authenticationConfigurations){
+                                    var logMessage = 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ')'
+                                    var logLevel = 'error'
+                                    var logWorkflowUUID = workflow.uuid
+                                    logEvent(logMessage, logWorkflowUUID, 'trigger', logLevel, traceUUID)
+                                    input[index+1] = {result: 'failure', data: {
+                                        status: 'failure',
+                                        message: 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ').',
+                                    }}
+                                    resolve({result: 'failure', data: {
+                                        status: 'failure',
+                                        message: 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ').',
+                                    }});
+                                }
+
                                 var actionMappings = workflowMappings[actionNode.id] ? workflowMappings[actionNode.id] : []
                 
                                 // Determine what request components need to be built
@@ -242,8 +258,8 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
         
         if(mappingInputDefinition.path.includes('$variable.')){
             var mappingInputPath = mappingInputDefinition.key
-            var partnershipKeys = Object.keys(partnershipConfigurations)
-            var partnershipValues = Object.values(partnershipConfigurations)
+            var partnershipKeys = partnershipConfigurations ? Object.keys(partnershipConfigurations) : []
+            var partnershipValues = partnershipConfigurations ?  Object.values(partnershipConfigurations) : []
             var isPartnershipConfig = partnershipKeys.includes(mappingInputPath)
             var mappingInputValue = isPartnershipConfig ? partnershipValues[partnershipKeys.indexOf(mappingInputPath)].value : mappingInputDefinition.value
 
@@ -283,7 +299,6 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
         var mappingInputPathArray = mappingInputDefinition.path.includes('.') ? mappingInputDefinition.path.split('.') : [mappingInputDefinition.path]
         var mappingInputValue = mappingInputPathArray.reduce((obj, i) => obj[i], inputData)
         setPartnershipConfiguration(mappingOutputDefinition.key, mappingInputValue, partnership.uuid)
-
     } else {
         // If the input value is not a configured value, it must be a mapped value. Get the mapped value.
         // Get the value of the mapped input property
@@ -291,6 +306,7 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
         console.log("Input Data: Adapt Property")
         console.log(inputData)
         var mappingInputValue = null;
+
         if (inputData) {
           try {
             mappingInputValue = mappingInputPathArray.reduce((obj, i) => obj[i], inputData);
@@ -298,6 +314,7 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
             console.log("Error accessing property:", error.message);
           }
         }
+
         if(formulas.length > 0){
             //Apply formulas to the input value, if they exist
         }
@@ -307,14 +324,50 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
         var outputObject = {}
 
         _.set(outputObject, mappingOutputDefinition.path, mappingInputValue)
-        // for (var i = 0; i < mappingOutputPathArray.length; i++){
-        //     outputObject = outputObject[mappingOutputPathArray[i]] = {};
-        // }
-        // outputObject[mappingOutputPathArray[mappingOutputPathArray.length - 1]] = mappingInputValue
 
         return outputObject
     }
 
+}
+
+function subtract(a, b) {
+    return a - b;
+}
+
+function multiply(a, b) {
+    return a * b;
+}
+
+function divide(a, b) {
+    return a / b;
+}
+
+function add(a, b) {
+    return a + b;
+}
+
+function substring(a, b, c) {
+    return a.substring(b, c);
+}
+
+function toLowerCase(a) {
+    return a.toLowerCase();
+}
+
+function toUpperCase(a) {
+    return a.toUpperCase();
+}
+
+function trim(a) {
+    return a.trim();
+}
+
+function replace(a, b, c) {
+    return a.replace(b, c);
+}
+
+function ifElse(a, b, c) {
+    return a ? b : c;
 }
 
 function setPartnershipConfiguration(key, value, partnershipUuid){
