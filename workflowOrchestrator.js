@@ -30,7 +30,11 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
                     return new Promise((resolve, reject) => {
                             if(input[index].result == 'failure'){
                                 // If the previous action failed, check for a failure action. If it exists, execute it. If not, end the workflow.
-                                
+                                resolve({result: 'failure', data: {
+                                    status: 'failure',
+                                    message: 'Previous action failed.',
+                                }});
+
                             } else {
                             
                                 var action = actionNode.data.selectedAction
@@ -303,8 +307,7 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
         // If the input value is not a configured value, it must be a mapped value. Get the mapped value.
         // Get the value of the mapped input property
         var mappingInputPathArray = mappingInputDefinition.path.includes('.') ? mappingInputDefinition.path.split('.') : [mappingInputDefinition.path]
-        console.log("Input Data: Adapt Property")
-        console.log(inputData)
+
         var mappingInputValue = null;
 
         if (inputData) {
@@ -317,57 +320,314 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
 
         if(formulas.length > 0){
             //Apply formulas to the input value, if they exist
+           mappingInputValue = applyFormulas(formulas, mappingInputValue, mappingOutputDefinition.type, inputData)
         }
 
         // Set the value of the mapped output property
         var mappingOutputPathArray = mappingOutputDefinition.path.includes('.') ? mappingOutputDefinition.path.split('.') : [mappingOutputDefinition.path]
         var outputObject = {}
 
-        _.set(outputObject, mappingOutputDefinition.path, mappingInputValue)
+        _.set(outputObject, mappingOutputDefinition.path, mappingInputValue, mappingOutputDefinition.type)
 
         return outputObject
     }
 
 }
 
-function subtract(a, b) {
-    return a - b;
-}
+function applyFormulas(formulas, inputValue, outputType, inputData){
+    // Formulas is an array of objects. Each object has a formula that has a type that corresponds to the function type and any inputs into that function designated by the user
+    // InputValue is the value of the mapped property that is being transformed into the output value
+    // OutputType is the data type the output needs to be in
+    // InputData is the entire input object (i.e. the entire response or webhook payload) that will be used when multiple properties are being used in a formula.
 
-function multiply(a, b) {
-    return a * b;
-}
+    // Initiate the output to equal the input (i.e. one-to-one mapping).  Each formula will modify the input in the order they are listed in the array.
 
-function divide(a, b) {
-    return a / b;
-}
+    var outputValue = inputValue
 
-function add(a, b) {
-    return a + b;
-}
+    formulas.forEach((formula, index) => {
 
-function substring(a, b, c) {
-    return a.substring(b, c);
-}
+        //IfThen Formulas
+        if(formula.formula == 'ifthen' && Object.keys(formula.inputs).length > 0){
+            var ifThenInputs = formula.inputs['ifThen'][0]
 
-function toLowerCase(a) {
-    return a.toLowerCase();
-}
+            var ifCondition = ifThenInputs['if']
+            var thenLogic = ifThenInputs['then']
+            var elseLogic = ifThenInputs['else']
 
-function toUpperCase(a) {
-    return a.toUpperCase();
-}
+            var conditionResult = []
 
-function trim(a) {
-    return a.trim();
-}
+            if(ifCondition.condition == 'equals'){
+                var conditionValue = ifCondition.value
+                if(ifCondition.or && ifCondition.or.length > 0){
+                    ifCondition.or.forEach((orObject, index) => {
+                        var orCondition = orObject.condition
+                        var orValue = orObject.value
+                        if (orCondition == 'equals'){                            
+                            conditionResult.push(inputValue == conditionValue || inputValue == orValue)
+                        }
+                        if (orCondition == 'notEquals'){
+                            conditionResult.push(inputValue == conditionValue || inputValue != orValue)
+                        }
+                    })
+                } else {
 
-function replace(a, b, c) {
-    return a.replace(b, c);
-}
+                    conditionResult.push(inputValue == conditionValue)
+                }
+            }
 
-function ifElse(a, b, c) {
-    return a ? b : c;
+            if(ifCondition.condition == 'notEquals'){
+                var conditionValue = ifCondition.value
+                if(ifCondition.or && ifCondition.or.length > 0){
+                    ifCondition.or.forEach((orObject, index) => {
+                        var orCondition = orObject.condition
+                        var orValue = orObject.value
+                        if (orCondition == 'equals'){
+                            conditionResult.push(inputValue != conditionValue || inputValue == orValue)
+                        }
+                        if (orCondition == 'notEquals'){
+                            conditionResult.push(inputValue != conditionValue || inputValue != orValue)
+                        }
+                    })
+                } else {
+                    conditionResult.push(inputValue != conditionValue)
+                }
+            }
+
+            if(ifCondition.condition == 'greaterThan'){
+                var conditionValue = ifCondition.value
+                if(ifCondition.or && ifCondition.or.length > 0){
+                    ifCondition.or.forEach((orObject, index) => {
+                        var orCondition = orObject.condition
+                        var orValue = orObject.value
+                        if (orCondition == 'greaterThan'){
+                            conditionResult.push(inputValue > conditionValue || inputValue > orValue)
+                        }
+                        if (orCondition == 'lessThan'){
+                            conditionResult.push(inputValue > conditionValue || inputValue < orValue)
+                        }
+                    })
+                } else {
+                    conditionResult.push(inputValue > conditionValue)
+                }
+            }
+
+            if(ifCondition.condition == 'lessThan'){
+                var conditionValue = ifCondition.value
+                if(ifCondition.or && ifCondition.or.length > 0){
+                    ifCondition.or.forEach((orObject, index) => {
+                        var orCondition = orObject.condition
+                        var orValue = orObject.value
+                        if (orCondition == 'greaterThan'){
+                            conditionResult.push(inputValue < conditionValue || inputValue > orValue)
+                        }
+                        if (orCondition == 'lessThan'){
+                            conditionResult.push(inputValue < conditionValue || inputValue < orValue)
+                        }
+                    })
+                } else {
+                    conditionResult.push(inputValue < conditionValue)
+                }
+            }
+
+            if(ifCondition.condition == 'greaterThanEquals'){
+                var conditionValue = ifCondition.value
+                if(ifCondition.or && ifCondition.or.length > 0){
+                    ifCondition.or.forEach((orObject, index) => {
+                        var orCondition = orObject.condition
+                        var orValue = orObject.value
+                        if (orCondition == 'greaterThanEquals'){
+                            conditionResult.push(inputValue >= conditionValue || inputValue >= orValue)
+                        }
+                        if (orCondition == 'lessThanEquals'){
+                            conditionResult.push(inputValue >= conditionValue || inputValue <= orValue)
+                        }
+                    })
+                } else {
+                    conditionResult.push(inputValue >= conditionValue)
+                }
+            }
+
+            if(ifCondition.condition == 'lessThanEquals'){
+                var conditionValue = ifCondition.value
+                if(ifCondition.or && ifCondition.or.length > 0){
+                    ifCondition.or.forEach((orObject, index) => {
+                        var orCondition = orObject.condition
+                        var orValue = orObject.value
+                        if (orCondition == 'greaterThanEquals'){
+                            conditionResult.push(inputValue <= conditionValue || inputValue >= orValue)
+                        }
+                        if (orCondition == 'lessThanEquals'){
+                            conditionResult.push(inputValue <= conditionValue || inputValue <= orValue)
+                        }
+                    })
+                } else {
+                    conditionResult.push(inputValue <= conditionValue)
+                }
+            }
+
+            var isElseResult = conditionResult.every((result) => {
+                return result == false
+            })
+
+            if(isElseResult == true){
+                outputValue = elseLogic.value
+            } else {
+                outputValue = thenLogic.value
+            }
+        }    
+
+        //String Formulas
+        if(formula.formula == 'prepend' && Object.keys(formula.inputs).length > 0){
+            var prependInput = formula.inputs['prepend']
+            outputValue = prependInput + inputValue
+        }
+        if(formula.formula == 'append' && Object.keys(formula.inputs).length > 0){
+            var appendInput = formula.inputs['append']
+            outputValue = inputValue + appendInput
+        }
+        if(formula.formula == 'replace' && Object.keys(formula.inputs).length > 0){
+           var replaceInputs = formula.inputs['replace']
+           var toReplace = replaceInputs['toReplace']
+           var replaceWith = replaceInputs['replaceWith']
+           outputValue = outputValue.replace(toReplace, replaceWith)
+        }
+        if(formula.formula == 'substring' && Object.keys(formula.inputs).length > 0){
+            var substringInputs = formula.inputs['substring']
+            var start = substringInputs['startingIndex']
+            var end = substringInputs['endingIndex']
+
+            if (start == 'input.length'){
+                start = inputValue.length
+            }
+            outputValue = outputValue.substring(start, end)
+
+        }
+
+        if(formula.formula == 'lowercase'){
+            outputValue = outputValue.toLowerCase()
+        }
+
+        if(formula.formula == 'uppercase'){
+            outputValue = outputValue.toUpperCase()
+        }
+
+        if(formula.formula == 'capitalize'){
+            outputValue = outputValue.charAt(0).toUpperCase() + outputValue.slice(1)
+        }
+
+        if(formula.formula == 'trim'){
+            outputValue = outputValue.trim()
+        }
+
+
+        //Numerical Formulas
+        if(formula.formula == 'addition' && Object.keys(formula.inputs).length > 0){
+            var additionInputs = formula.inputs['addition']
+            if (typeof additionInputs === 'string') {
+                // If the input is a string, it's a reference to another input property whose value needs to be added to the input value
+                
+                if (inputData) {
+                    try {
+                        console.log("Input Data: Adding a Property's Value")
+                        console.log(inputData)
+                        var addendInputPathArray = additionInputs.includes('.') ? additionInputs.split('.') : [additionInputs]
+                        console.log(addendInputPathArray)
+                        var addend = addendInputPathArray.reduce((obj, i) => obj[i], inputData);
+                        outputValue = outputValue + addend
+                    } catch (error) {
+                      console.log("Error accessing property:", error.message);
+                    }
+                  }
+            }
+
+            if (typeof additionInputs == 'number' || typeof additionInputs == 'float' || typeof additionInputs == 'integer') {
+                // If the input is a number, it's a literal number that needs to be added to the input value
+                var addend = additionInputs
+                outputValue = outputValue + addend
+            }
+        }
+
+        if(formula.formula == 'subtraction' && Object.keys(formula.inputs).length > 0){
+            var subtractionInputs = formula.inputs['subtraction']
+            if (typeof subtractionInputs === 'string') {
+                // If the input is a string, it's a reference to another input property whose value needs to be added to the input value
+                
+                if (inputData) {
+                    try {
+                        console.log("Input Data: Subtracting a Property's Value")
+                        console.log(inputData)
+                        var inputPathArray = subtractionInputs.includes('.') ? subtractionInputs.split('.') : [subtractionInputs]
+                        console.log(inputPathArray)
+                        var subtractionValue = inputPathArray.reduce((obj, i) => obj[i], inputData);
+                        outputValue = outputValue + subtractionValue
+                    } catch (error) {
+                      console.log("Error accessing property:", error.message);
+                    }
+                  }
+            }
+
+            if (typeof subtractionInputs == 'number' || typeof subtractionInputs == 'float' || typeof subtractionInputs == 'integer') {
+                // If the input is a number, it's a literal number that needs to be added to the input value
+                var subtractionValue = subtractionInputs
+                outputValue = outputValue + subtractionValue
+            }
+        }
+
+        if(formula.formula == 'multiplication' && Object.keys(formula.inputs).length > 0){
+            var multiplicationInputs = formula.inputs['multiplication']
+            if (typeof multiplicationInputs === 'string') {
+                // If the input is a string, it's a reference to another input property whose value needs to be added to the input value
+                
+                if (inputData) {
+                    try {
+                        console.log("Input Data: Multiplying a Property's Value")
+                        console.log(inputData)
+                        var inputPathArray = multiplicationInputs.includes('.') ? multiplicationInputs.split('.') : [multiplicationInputs]
+                        console.log(inputPathArray)
+                        var multiplicationValue = inputPathArray.reduce((obj, i) => obj[i], inputData);
+                        outputValue = outputValue + multiplicationValue
+                    } catch (error) {
+                      console.log("Error accessing property:", error.message);
+                    }
+                  }
+            }
+
+            if (typeof multiplicationInputs == 'number' || typeof multiplicationInputs == 'float' || typeof multiplicationInputs == 'integer') {
+                // If the input is a number, it's a literal number that needs to be added to the input value
+                var multiplicationValue = multiplicationInputs
+                outputValue = outputValue + multiplicationValue
+            }
+        }
+
+        if(formula.formula == 'division' && Object.keys(formula.inputs).length > 0){
+            var divisionInputs = formula.inputs['division']
+            if (typeof divisionInputs === 'string') {
+                // If the input is a string, it's a reference to another input property whose value needs to be added to the input value
+                
+                if (inputData) {
+                    try {
+                        console.log("Input Data: Dividing a Property's Value")
+                        console.log(inputData)
+                        var inputPathArray = divisionInputs.includes('.') ? divisionInputs.split('.') : [divisionInputs]
+                        console.log(inputPathArray)
+                        var divisionValue = inputPathArray.reduce((obj, i) => obj[i], inputData);
+                        outputValue = outputValue + divisionValue
+                    } catch (error) {
+                      console.log("Error accessing property:", error.message);
+                    }
+                  }
+            }
+
+            if (typeof divisionInputs == 'number' || typeof divisionInputs == 'float' || typeof divisionInputs == 'integer') {
+                // If the input is a number, it's a literal number that needs to be added to the input value
+                var divisionValue = divisionInputs
+                outputValue = outputValue + divisionValue
+            }
+        }
+    })
+
+    return outputValue
+
 }
 
 function setPartnershipConfiguration(key, value, partnershipUuid){
