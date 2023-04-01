@@ -9,6 +9,7 @@ const Project = require('../project/Project');
 const {verifyUser} = require('../../authenticate.js');
 const {runWorkflow} = require('../../lib.js');
 const {triggerWorkflow} = require('../../workflowOrchestrator.js');
+const {addBreeJob} = require('../../bree.js');
 
 // CREATE A WORKFLOW
 router.post('/', function(req,res) {
@@ -100,6 +101,22 @@ router.put('/:workflowId/steps/0', function(req,res) {
              'trigger.liquidTemplate': req.body.liquidTemplate
         }, function (err,workflow){
         if (err) return res.status(500).send(err);
+        res.status(200).send(workflow);
+    });
+});
+
+router.post('/:workflowId/activate', function(req,res) {
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {status: 'active'}, function (err,workflow){
+        if(err) return res.status(500).send(err);
+        if(workflow.trigger.type == 'scheduled'){
+            var cadence = {
+                cadence: workflow.trigger.cadence,
+                days: workflow.trigger.days ? workflow.trigger.days : null,
+                hours: workflow.trigger.time ? workflow.trigger.time : null,
+            }
+            var testCadence = 'every 10 seconds'
+            addBreeJob(workflow.parent_project_uuid, workflow.uuid,testCadence)
+        }
         res.status(200).send(workflow);
     });
 });
