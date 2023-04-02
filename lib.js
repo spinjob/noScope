@@ -5,6 +5,7 @@ const InterfaceParameter = require('./models/interface_parameter/InterfaceParame
 const InterfaceAction = require('./models/interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
 const Job = require('./models/job/Job');
+const Workflow = require('./models/workflow/Workflow');
 const WorkflowLog = require('./models/workflow_log/WorkflowLog');
 const { castObject, schema } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
@@ -15,6 +16,8 @@ const postmanToOpenApi = require('postman-to-openapi');
 const outputFile = 'openApi.json'
 const fs = require('fs');
 const yaml = require('js-yaml');
+
+
 
 function processOpenApiV3(json, userId, orgId, jobId) {
 
@@ -2375,4 +2378,4 @@ function convertPostmanCollection(collection, userId){
     });
 }
 
-module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection };
+module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection};

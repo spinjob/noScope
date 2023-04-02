@@ -4,6 +4,22 @@ const crypto = require('crypto');
 const WorkflowLog = require('./models/workflow_log/WorkflowLog');
 const Project = require('./models/project/Project');
 const _ = require('lodash');
+const {parentPort} = require('node:worker_threads');
+const mongoose = require('mongoose');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+const url = process.env.MONGO_DB_CONNECTION_STRING
+
+mongoose.connect(url, {
+    useNewUrlParser: true, 
+    useUnifiedTopology: true
+}).then((db) => {
+})
+.catch((err) => {
+    console.log(err)
+});
+
 
 async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUID){
     const workflowActionNodes = workflow.nodes.filter((node) => node.type === 'action')
@@ -24,188 +40,182 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
         logEvent(logMessage, logWorkflowUUID, 'trigger', logLevel, traceUUID)
 
         let promiseChain = Promise.resolve();
-
+        
         workflowActionNodes.forEach((actionNode, index) => {
-                promiseChain = promiseChain.then(() => {
-                    return new Promise((resolve, reject) => {
-                            if(input[index].result == 'failure'){
-                                // If the previous action failed, check for a failure action. If it exists, execute it. If not, end the workflow.
+            promiseChain = promiseChain.then(() => {
+                return new Promise((resolve, reject) => {
+                        if(input[index].result == 'failure'){
+                            // If the previous action failed, check for a failure action. If it exists, execute it. If not, end the workflow.
+                            resolve({result: 'failure', data: {
+                                status: 'failure',
+                                message: 'Previous action failed.',
+                            }});
+
+                        } else {
+                        
+                            var action = actionNode.data.selectedAction
+                            var method = actionNode.data.selectedAction.method
+                            var path = productionServer + actionNode.data.selectedAction.path
+                            const authenticationConfigurations = partnership && partnership?.authentication && partnership?.authentication[actionApi.uuid] ? partnership.authentication[actionApi.uuid] : null
+
+                            if(!authenticationConfigurations){
+                                var logMessage = 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ')'
+                                var logLevel = 'error'
+                                var logWorkflowUUID = workflow.uuid
+                                logEvent(logMessage, logWorkflowUUID, 'trigger', logLevel, traceUUID)
+                                input[index+1] = {result: 'failure', data: {
+                                    status: 'failure',
+                                    message: 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ').',
+                                }}
                                 resolve({result: 'failure', data: {
                                     status: 'failure',
-                                    message: 'Previous action failed.',
+                                    message: 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ').',
                                 }});
+                            }
 
-                            } else {
-                            
-                                var action = actionNode.data.selectedAction
-                                var method = actionNode.data.selectedAction.method
-                                var path = productionServer + actionNode.data.selectedAction.path
-                                const authenticationConfigurations = partnership && partnership?.authentication && partnership?.authentication[actionApi.uuid] ? partnership.authentication[actionApi.uuid] : null
+                            var actionMappings = workflowMappings[actionNode.id] ? workflowMappings[actionNode.id] : []
+            
+                            // Determine what request components need to be built
+                            var headerParameters = action.parameterSchema?.header ? action.parameterSchema.header : null
+                            var pathParameters = action.parameterSchema?.path ? action.parameterSchema.path : null
+                            var requestBody = action.requestBody2?.schema ? action.requestBody2.schema : null
+                            var contentType = action.requestBody?.type == 'json' ? 'application/json' : action.requestBody?.type == 'form-urlencoded' ? 'application/x-www-form-urlencoded' : null
+                            var adaptedRequestBodyObject = {}
 
-                                if(!authenticationConfigurations){
-                                    var logMessage = 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ')'
-                                    var logLevel = 'error'
-                                    var logWorkflowUUID = workflow.uuid
-                                    logEvent(logMessage, logWorkflowUUID, 'trigger', logLevel, traceUUID)
-                                    input[index+1] = {result: 'failure', data: {
-                                        status: 'failure',
-                                        message: 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ').',
-                                    }}
-                                    resolve({result: 'failure', data: {
-                                        status: 'failure',
-                                        message: 'No authentication configurations found for ' + actionApi.name + ' (' + actionApi.uuid + ').',
-                                    }});
-                                }
-
-                                var actionMappings = workflowMappings[actionNode.id] ? workflowMappings[actionNode.id] : []
-                
-                                // Determine what request components need to be built
-                                var headerParameters = action.parameterSchema?.header ? action.parameterSchema.header : null
-                                var pathParameters = action.parameterSchema?.path ? action.parameterSchema.path : null
-                                var requestBody = action.requestBody2?.schema ? action.requestBody2.schema : null
-                                var contentType = action.requestBody?.type == 'json' ? 'application/json' : action.requestBody?.type == 'form-urlencoded' ? 'application/x-www-form-urlencoded' : null
-                                var adaptedRequestBodyObject = {}
-
-                                var adaptedHeaderObject = {
-                                    'Content-Type': contentType
-                                }
-                                var adaptedPathObject = {}
-                        
-                                // Adapt non-null components using any adaption formulas
-                                if (requestBody){
-                                    
-                                    Object.values(actionMappings).forEach((mapping) => {
-                                        if(mapping.output.in == 'body') {
-                                            var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership)
-                                            _.merge(adaptedRequestBodyObject, adaptedObject)
-                                        }
-                                    })  
-                                }
-                                if (headerParameters){
+                            var adaptedHeaderObject = {
+                                'Content-Type': contentType
+                            }
+                            var adaptedPathObject = {}
+                    
+                            // Adapt non-null components using any adaption formulas
+                            if (requestBody){
                                 
-                                    Object.values(actionMappings).forEach((mapping) => {
-                                        if(mapping.output.in == 'header') {
-                                            var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data,partnershipConfigurations, authenticationConfigurations, partnership)
-                                            adaptedHeaderObject = {...adaptedHeaderObject, ...adaptedObject}
-                                        }
-                                    })  
-                                }
-                                if (pathParameters){
-                                        
-                                        Object.values(actionMappings).forEach((mapping) => {
-                                            if(mapping.output.in == 'path') {
-                                                var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations,partnership)
-                                                adaptedPathObject = {...adaptedPathObject, ...adaptedObject}
-                                            }
-                                        }) 
-                            
-                                        // Add path parameters to the path, if they exist
-                                        Object.keys(adaptedPathObject).forEach((key) => {
-                                            path = path.replace(`{${key}}`, adaptedPathObject[key])
-                                        })
-                                }
-                
                                 Object.values(actionMappings).forEach((mapping) => {
-                                    if(mapping.output.path.includes('$variable.')){ 
-                                        console.log("Mapped to Configuration")
-                                        adaptProperty(mapping.input, mapping.output, input[index], partnershipConfigurations, authenticationConfigurations, partnership)
+                                    if(mapping.output.in == 'body') {
+                                        var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership)
+                                        _.merge(adaptedRequestBodyObject, adaptedObject)
                                     }
-                                })
-
-                                // Partnership Authentication Handling
-
-                                if (authenticationConfigurations && authenticationConfigurations.tokenData?.token){
-                                    const { tokenData } = authenticationConfigurations
-                                    const { token, tokenType, expiresIn } = tokenData
-                                    const currentTime = new Date().getTime()
-                                    const tokenExpirationTime = currentTime + (expiresIn * 1000)
-                                    if (tokenExpirationTime < currentTime){
-                                        console.log("Token Expired")
-                                    } else {
-                                        adaptedHeaderObject['Authorization'] = `${tokenType} ${token}`;
-
-                                    }
-                                }
-                
-                                var loggedRequestData = {
-                                    workflow: workflow.uuid,
-                                    actionName: action.name,
-                                    request: {
-                                        method: method,
-                                        path: path,
-                                        headers: adaptedHeaderObject,
-                                        body: contentType == 'json' ? adaptedRequestBodyObject : contentType == 'form-urlencoded' ? qs.stringify(adaptedRequestBodyObject) : {},
-                                        contentType: contentType
-                                    }
-                                }
-                        
-                                const requestParams = {
-                                    method,
-                                    url: path,
-                                    headers: adaptedHeaderObject,
-                                    body: adaptedRequestBodyObject,
-                                    contentType,
-                                };
-
-                                //Pre-Request Logging 
-                                var logMessage = `Requesting ${requestParams.method} ${requestParams.url} with headers ${JSON.stringify(requestParams.headers)} and body ${JSON.stringify(requestParams.body)}`
-                                var logLevel = 'info'
-                                var logWorkflowUUID = workflow.uuid
-                                var logActionName = action.name
-                                logEvent(logMessage, logWorkflowUUID, logActionName, logLevel, traceUUID)
+                                })  
+                            }
+                            if (headerParameters){
                             
-                                // Make the request
-                                makeRequest(requestParams.method, requestParams.url, requestParams.headers, requestParams.body, requestParams.contentType)
-                                    .then((response) => {
-                                        loggedRequestData.response = {
-                                            status: response.status,
-                                            body: response.data,
-                                        };
+                                Object.values(actionMappings).forEach((mapping) => {
+                                    if(mapping.output.in == 'header') {
+                                        var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data,partnershipConfigurations, authenticationConfigurations, partnership)
+                                        adaptedHeaderObject = {...adaptedHeaderObject, ...adaptedObject}
+                                    }
+                                })  
+                            }
+                            if (pathParameters){
                                     
-                                        if(response.level == 'error'){
-                                            console.log("Request Error")
-                                            var logMessage = `Failed Request: Received ${response.status} response from ${requestParams.method} ${requestParams.url} with body ${JSON.stringify(response.data)}`
-                                            var logLevel = 'error'
-                                            var logWorkflowUUID = workflow.uuid
-                                            var logActionName = action.name
-                                            logEvent(logMessage, logWorkflowUUID, logActionName, logLevel, traceUUID)
-                                            input[index+1] = {result: 'failure', data: response.data}
-                                            resolve(loggedRequestData);
-                                        } else {
-                                            console.log("Request Success")
-                                            var logMessage = `Successful Request: Received ${response.status} response from ${requestParams.method} ${requestParams.url} with body ${JSON.stringify(response.data)}`
-                                            var logLevel = 'info'
-                                            var logWorkflowUUID = workflow.uuid
-                                            var logActionName = action.name
-                                            logEvent(logMessage, logWorkflowUUID, logActionName, logLevel, traceUUID)
-                                            input[index+1] = {result: 'success', data: response.data}
-                                            resolve(response);
-                                        } 
-
+                                    Object.values(actionMappings).forEach((mapping) => {
+                                        if(mapping.output.in == 'path') {
+                                            var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations,partnership)
+                                            adaptedPathObject = {...adaptedPathObject, ...adaptedObject}
+                                        }
+                                    }) 
+                        
+                                    // Add path parameters to the path, if they exist
+                                    Object.keys(adaptedPathObject).forEach((key) => {
+                                        path = path.replace(`{${key}}`, adaptedPathObject[key])
                                     })
-                                    .catch((error) => {
-                                        console.log("Request Error")
-                                        console.log(error)
-                                        loggedRequestData.response = {
-                                            status: error.status,
-                                            body: error,
-                                        };
-                                        var logMessage = `Received ${error.status} response from ${requestParams.method} ${requestParams.url} with body ${JSON.stringify(error)}`
+                            }
+            
+                            Object.values(actionMappings).forEach((mapping) => {
+                                if(mapping.output.path.includes('$variable.')){ 
+                                    console.log("Mapped to Configuration")
+                                    adaptProperty(mapping.input, mapping.output, input[index], partnershipConfigurations, authenticationConfigurations, partnership)
+                                }
+                            })
+
+                            // Partnership Authentication Handling
+
+                            if (authenticationConfigurations && authenticationConfigurations.tokenData?.token){
+                                const { tokenData } = authenticationConfigurations
+                                const { token, tokenType, expiresIn } = tokenData
+                                const currentTime = new Date().getTime()
+                                const tokenExpirationTime = currentTime + (expiresIn * 1000)
+                                if (tokenExpirationTime < currentTime){
+                                    console.log("Token Expired")
+                                } else {
+                                    adaptedHeaderObject['Authorization'] = `${tokenType} ${token}`;
+
+                                }
+                            }
+            
+                            var loggedRequestData = {
+                                workflow: workflow.uuid,
+                                actionName: action.name,
+                                request: {
+                                    method: method,
+                                    path: path,
+                                    headers: adaptedHeaderObject,
+                                    body: contentType == 'json' ? adaptedRequestBodyObject : contentType == 'form-urlencoded' ? qs.stringify(adaptedRequestBodyObject) : {},
+                                    contentType: contentType
+                                }
+                            }
+                    
+                            const requestParams = {
+                                method,
+                                url: path,
+                                headers: adaptedHeaderObject,
+                                body: adaptedRequestBodyObject,
+                                contentType,
+                            };
+
+                            //Pre-Request Logging 
+                            var logMessage = `Requesting ${requestParams.method} ${requestParams.url} with headers ${JSON.stringify(requestParams.headers)} and body ${JSON.stringify(requestParams.body)}`
+                            var logLevel = 'info'
+                            var logWorkflowUUID = workflow.uuid
+                            var logActionName = action.name
+                            logEvent(logMessage, logWorkflowUUID, logActionName, logLevel, traceUUID)
+                        
+                            // Make the request
+                            makeRequest(requestParams.method, requestParams.url, requestParams.headers, requestParams.body, requestParams.contentType)
+                                .then((response) => {
+                                    loggedRequestData.response = {
+                                        status: response.status,
+                                        body: response.data,
+                                    };
+                                
+                                    if(response.level == 'error'){
+                                        var logMessage = `Failed Request: Received ${response.status} response from ${requestParams.method} ${requestParams.url} with body ${JSON.stringify(response.data)}`
                                         var logLevel = 'error'
                                         var logWorkflowUUID = workflow.uuid
                                         var logActionName = action.name
                                         logEvent(logMessage, logWorkflowUUID, logActionName, logLevel, traceUUID)
-                                        input[index+1] = {result: 'failure', data: error}
-                                        reject(loggedRequestData);
-                                    
-                                    });
-                            }
-                    });
-                    
-                });
-     
-        })
+                                        input[index+1] = {result: 'failure', data: response.data}
+                                        resolve(loggedRequestData);
+                                    } else {
+                                        var logMessage = `Successful Request: Received ${response.status} response from ${requestParams.method} ${requestParams.url} with body ${JSON.stringify(response.data)}`
+                                        var logLevel = 'info'
+                                        var logWorkflowUUID = workflow.uuid
+                                        var logActionName = action.name
+                                        logEvent(logMessage, logWorkflowUUID, logActionName, logLevel, traceUUID)
+                                        input[index+1] = {result: 'success', data: response.data}
+                                        resolve(response);
+                                    } 
 
+                                })
+                                .catch((error) => {
+                                    loggedRequestData.response = {
+                                        status: error.status,
+                                        body: error,
+                                    };
+                                    var logMessage = `Received ${error.status} response from ${requestParams.method} ${requestParams.url} with body ${JSON.stringify(error)}`
+                                    var logLevel = 'error'
+                                    var logWorkflowUUID = workflow.uuid
+                                    var logActionName = action.name
+                                    logEvent(logMessage, logWorkflowUUID, logActionName, logLevel, traceUUID)
+                                    input[index+1] = {result: 'failure', data: error}
+                                    reject(loggedRequestData);
+                                
+                                });
+                        }
+                });
+            })
+        })
+        return promiseChain
 }
 
 function makeRequest(method, url, headers, body, contentType) {
@@ -224,8 +234,8 @@ function makeRequest(method, url, headers, body, contentType) {
       headers,
       data,
     }).then((response) => {
-        console.log("Success! Response Data")
-        console.log(response.data)
+        // console.log("Success! Response Data")
+        // console.log(response.data)
         var successResponse = {
             status: response.status,
             data: response.data,
@@ -233,8 +243,6 @@ function makeRequest(method, url, headers, body, contentType) {
         }
         return successResponse
     }).catch((error) => {
-        console.log("Error! Response Data")
-        console.log(error.response)
         var errorResponse = {
             level: 'error',
             status: error.response.status,
@@ -246,14 +254,14 @@ function makeRequest(method, url, headers, body, contentType) {
     );
   }
 
-async function findProject(uuid) {
+  async function findProject(uuid) {
     try {
       return await Project.findOne({ uuid }).exec();
     } catch (error) {
       throw new Error(`Error finding project with ID ${uuid}: ${error.message}`);
     }
   }
-
+  
 function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputData, partnershipConfigurations, authenticationConfigurations, partnership){
     var formulas = mappingInputDefinition.formulas
 

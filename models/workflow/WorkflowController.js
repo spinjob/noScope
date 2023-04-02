@@ -6,10 +6,11 @@ const crypto = require('crypto');
 const Workflow = require('../workflow/Workflow');
 const Interface = require('../interface/Interface');
 const Project = require('../project/Project');
+const Job = require('../job/Job');
 const {verifyUser} = require('../../authenticate.js');
 const {runWorkflow} = require('../../lib.js');
 const {triggerWorkflow} = require('../../workflowOrchestrator.js');
-const {addBreeJob} = require('../../bree.js');
+const {addBreeJob, bree} = require('../../bree.js');
 
 // CREATE A WORKFLOW
 router.post('/', function(req,res) {
@@ -105,7 +106,41 @@ router.put('/:workflowId/steps/0', function(req,res) {
     });
 });
 
-router.post('/:workflowId/activate', function(req,res) {
+function returnWorkflow(workflowId) {
+    Workflow.findOne({uuid: workflowId}, function (err, workflow) {
+        if (err) return err;
+        return workflow
+    });
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function createCadenceString (cadence, days, time, timezone){
+    var scheduledTime = new Date(time)
+    
+    if(cadence == 'Daily'){
+        var hours = scheduledTime.getHours().toString().padStart(2, '0')
+        var minutes = scheduledTime.getMinutes().toString().padStart(2, '0')
+        var cadenceString = 'at ' + hours +':' + minutes + ' ' + timezone + ' every day'
+        return 'every 10 seconds'
+    } else if(cadence == 'Weekly'){
+        var daysString = ''
+            days.forEach(day => {
+                daysString += capitalizeFirstLetter(day) + ', '
+            }
+        )
+        var timeString = scheduledTime.getHours() +':' + scheduledTime.getMinutes() + ' ' + timezone
+        daysString = daysString.slice(0, -2)
+        var cadenceString = 'at ' + timeString + ' every ' + daysString
+        return 'every 10 seconds'
+    } 
+    return null
+
+}
+
+router.put('/:workflowId/activate', function(req,res) {
     Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {status: 'active'}, function (err,workflow){
         if(err) return res.status(500).send(err);
         if(workflow.trigger.type == 'scheduled'){
@@ -114,12 +149,96 @@ router.post('/:workflowId/activate', function(req,res) {
                 days: workflow.trigger.days ? workflow.trigger.days : null,
                 hours: workflow.trigger.time ? workflow.trigger.time : null,
             }
-            var testCadence = 'every 10 seconds'
-            addBreeJob(workflow.parent_project_uuid, workflow.uuid,testCadence)
+
+            var cadence = createCadenceString(workflow.trigger.cadence, workflow.trigger.days ? workflow.trigger.days : [], workflow.trigger.time, workflow.trigger.timezone)
+            console.log(cadence)
+            
+            // Check if a breeJob already exists for this workflow.  If so, update the cadence if it's different.  If not, create a new breeJob.
+            var breeJobs = bree.config.jobs.filter(job => job.name == `trigger-workflow-${workflow.parent_project_uuid}-${workflow.uuid}`)
+
+            if(breeJobs.length > 0){
+                //Remove existin breeJob and create a new one with the updated cadence
+                removeBreeJob(workflow.parent_project_uuid, workflow.uuid).then(() => {
+                   // Update the job cadence in the database
+                   console.log('Bree Job UUID: ')
+                   console.log(breeJobs[0].worker.workerData.jobUuid)
+                    Job.findOneAndUpdate({uuid: breeJobs[0].worker.workerData.jobUuid}, {metadata: {cadence: cadence}, status: 'ACTIVE'}, {new: true}).then(job => {
+                        //Re-add the breeJob with the updated cadence and the job UUID in the database
+                        console.log(job)
+                        addBreeJob(workflow.parent_project_uuid, workflow.uuid, cadence, job.uuid).then(() => {
+                            res.status(200).send({message: 'Workflow schedule added.', job: job, schedule: cadence});
+                        }).catch(err => {
+                            res.status(500).send({message: 'There was a problem adding the updated schedule.', err: err});
+                        })
+                    }).catch(err => {
+                        console.log(err)
+                        res.status(404).send({message: 'There was a problem updating the workflow schedule.', err: err});
+                    })
+                }).catch(err => {
+                    res.status(500).send({message: 'There was a problem updating the workflow schedule.', err: err});
+                })
+            }
+            else {
+                var jobUUID = crypto.randomUUID();
+                // Add the breeJob with the updated cadence and the job UUID in the database
+                addBreeJob(workflow.parent_project_uuid, workflow.uuid, cadence,jobUUID).then(() => {
+                    Job.create({
+                        uuid: jobUUID,
+                        metadata: {
+                            cadence: cadence,
+                            project_uuid: workflow.parent_project_uuid,
+                            workflow_uuid: workflow.uuid,
+                            breeJob: `trigger-workflow-${workflow.parent_project_uuid}-${workflow.uuid}`
+                        },
+                        type: 'scheduled_workflow',
+                        created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+                        updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),            
+                        status: 'ACTIVE'
+                    }, function (err, job) {
+                        if (err) return res.status(500).send("There was a problem adding the information to the database.");
+                        res.status(200).send({message: 'Workflow schedule added.', job: job, schedule: cadence});
+                    });
+                }).catch(err => {
+                    res.status(500).send({message: 'There was a problem adding the workflow schedule.', err: err});
+                }) 
+            }
         }
-        res.status(200).send(workflow);
+        
     });
 });
+
+router.put('/:workflowId/deactivate', function(req,res) {
+    Workflow.findOneAndUpdate({uuid: req.params.workflowId}, {status: 'INACTIVE'}, function (err,workflow){
+        if(err) return res.status(500).send(err);
+        if(workflow.trigger.type == 'scheduled'){
+            removeBreeJob(workflow.parent_project_uuid, workflow.uuid).then(() => {
+                Job.findOneAndUpdate({metadata: {breeJob: `trigger-workflow-${workflow.parent_project_uuid}-${workflow.uuid}`}}, {status: 'INACTIVE'}, {new: true}).then(job => {
+                    res.status(200).send({message: 'Workflow schedule removed.', job: job});
+                }).catch(err => {
+                    res.status(500).send({message: 'There was a problem removing the workflow schedule.', err: err});
+                })
+            }).catch(err => {
+                res.status(500).send({message: 'There was a problem removing the workflow schedule.', err: err});
+            })
+        }
+    });
+});
+
+
+async function removeBreeJob (projectUuid, workflowUuid){
+    console.log("Removing breeJob")
+    console.log(`trigger-workflow-${projectUuid}-${workflowUuid}`)
+    var breeJob = bree.config.jobs.find(job => job.name == `trigger-workflow-${projectUuid}-${workflowUuid}`)
+    await bree.remove(breeJob.name).then(() => {
+        console.log("breeJob removed")
+        return true
+    }
+    ).catch(err => {
+        console.log(err)
+        return err
+    }
+    )
+}
 
 router.put('/:workflowId', function(req,res) {
     Workflow.findOneAndUpdate({uuid: req.params.workflowId},{ 

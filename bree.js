@@ -18,7 +18,7 @@ const bree = new Bree({
     ]
 });
 
-async function addBreeJob(projectId, workflowId, cadence) {
+async function addBreeJob(projectId, workflowId, cadence, jobUuid) {
     var newJob = {
         name: `trigger-workflow-${projectId}-${workflowId}`,
         path: path.join(__dirname, './jobs/trigger-workflow.js'),
@@ -26,38 +26,19 @@ async function addBreeJob(projectId, workflowId, cadence) {
         worker: {
             workerData: {
                 projectId: projectId,
-                workflowId: workflowId
+                workflowId: workflowId,
+                jobUuid: jobUuid
             }
         }
     }
     await bree.add(newJob).then(() => {
         console.log('added bree job')
+        console.log(cadence)
         bree.start(`trigger-workflow-${projectId}-${workflowId}`)
     })
-}
-
-function removeBreeJob(projectId, workflowId) {
-    bree.remove(`trigger-workflow-${projectId}-${workflowId}`)
-}
-
-function updateBreeJob(projectId, workflowId) {
-    bree.update({
-        name: `trigger-workflow-${projectId}-${workflowId}`,
-        path: path.join(__dirname, './jobs/trigger-workflow.js'),
-        interval: 'every 10 seconds',
-        worker: {
-            workerData: {
-                projectId: projectId,
-                workflowId: workflowId
-            }
-        }
-    })
-
 }
 
 module.exports = {
     bree,
     addBreeJob,
-    removeBreeJob,
-    updateBreeJob
 }
