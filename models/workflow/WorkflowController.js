@@ -106,12 +106,6 @@ router.put('/:workflowId/steps/0', function(req,res) {
     });
 });
 
-function returnWorkflow(workflowId) {
-    Workflow.findOne({uuid: workflowId}, function (err, workflow) {
-        if (err) return err;
-        return workflow
-    });
-}
 
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -124,7 +118,7 @@ function createCadenceString (cadence, days, time, timezone){
         var hours = scheduledTime.getHours().toString().padStart(2, '0')
         var minutes = scheduledTime.getMinutes().toString().padStart(2, '0')
         var cadenceString = 'at ' + hours +':' + minutes + ' ' + timezone + ' every day'
-        return 'every 10 seconds'
+        return cadenceString
     } else if(cadence == 'Weekly'){
         var daysString = ''
             days.forEach(day => {
@@ -134,7 +128,7 @@ function createCadenceString (cadence, days, time, timezone){
         var timeString = scheduledTime.getHours() +':' + scheduledTime.getMinutes() + ' ' + timezone
         daysString = daysString.slice(0, -2)
         var cadenceString = 'at ' + timeString + ' every ' + daysString
-        return 'every 10 seconds'
+        return cadenceString
     } 
     return null
 
@@ -151,7 +145,6 @@ router.put('/:workflowId/activate', function(req,res) {
             }
 
             var cadence = createCadenceString(workflow.trigger.cadence, workflow.trigger.days ? workflow.trigger.days : [], workflow.trigger.time, workflow.trigger.timezone)
-            console.log(cadence)
             
             // Check if a breeJob already exists for this workflow.  If so, update the cadence if it's different.  If not, create a new breeJob.
             var breeJobs = bree.config.jobs.filter(job => job.name == `trigger-workflow-${workflow.parent_project_uuid}-${workflow.uuid}`)
@@ -202,6 +195,10 @@ router.put('/:workflowId/activate', function(req,res) {
                     res.status(500).send({message: 'There was a problem adding the workflow schedule.', err: err});
                 }) 
             }
+        }
+
+        if(workflow.trigger.type == 'webhook'){
+            res.status(200).send({message: 'Workflow activated.  Webhooks will now be processed as they are received.'});
         }
         
     });
