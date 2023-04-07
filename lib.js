@@ -17,8 +17,6 @@ const outputFile = 'openApi.json'
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-
-
 function processOpenApiV3(json, userId, orgId, jobId) {
 
     var schemaKeys = [];
@@ -2009,13 +2007,13 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
             var responsesArray = [];
             var responseSchemaArray = [];
 
-            var actionParameters = values[j].parameters.filter(function (parameter) {
+            var actionParameters = values[j].parameters ? values[j].parameters.filter(function (parameter) {
                 return parameter.in == "header" || parameter.in == "path";
-            });
+            }) : [];
 
-            var actionRequestBody = values[j].parameters.filter(function (parameter) {
+            var actionRequestBody = values[j].parameters ? values[j].parameters.filter(function (parameter) {
                 return parameter.in == "body";
-            });
+            }) : [];
         
             for (var k = 0; k < responseKeys.length; ++k){
                 if (responseValues[k].schema !== undefined) {
@@ -2367,8 +2365,10 @@ function processOpenApiV2SecuritySchemes(securitySchemeKeys,securitySchemeValues
 
 function convertPostmanCollection(collection, userId){
     var json = JSON.stringify(collection);
-    postmanToOpenApi(json, null, {defaultTag: 'General'} )
+   postmanToOpenApi(json, null, {defaultTag: 'General'} )
     .then(result => {
+        var parsedYaml = yaml.load(result);
+        console.log(parsedYaml)
         var parsedJson = JSON.parse(JSON.stringify(yaml.load(result),null,2));
         if(parsedJson.openapi == "3.0.0"){
             processOpenApiV3(parsedYaml, userId);
