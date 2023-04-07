@@ -661,7 +661,7 @@ function setProperty(propertyName, propertyValues, inputObject) {
       }
     }
   }
-  
+
   function setPropertiesToEmptyObjects(obj1, obj2) {
     const keys = Object.keys(obj1);
     const emptyObjects = Object.values(obj1).reduce((acc, val) => ({...acc, ...val}), {});
@@ -692,14 +692,11 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
         var parentContextIndex = outputPathArray.indexOf(parentContextKey)
         var parentContextArray = outputPathArray.slice(0, parentContextIndex + 1)
         var parentContextObjectWithoutKeys = _.set({}, parentContextArray.join('.'), {})
-        console.log("Parent Context Object Without Keys")
-        console.log(parentContextObjectWithoutKeys)
-        //First Go Example: {"menus":{}}
+
     
         // GENERATE DICTIONARY KEYS
             var dictionaryKeyMapping = Object.values(mappings).filter(mapping => mapping.output.key == context.dictionaryKey) ? Object.values(mappings).filter(mapping => mapping.output.key == context.dictionaryKey)[0] : null
-            console.log("Dictionary Key Mapping")
-            console.log(dictionaryKeyMapping)
+
             var dictionaryKeys = []
 
             if(dictionaryKeyMapping && dictionaryKeyMapping.input.parentContext && dictionaryKeyMapping.input.parentContext.length > 0){
@@ -750,17 +747,10 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                 })
             }
             let parentDictionary = parentContextObjectWithoutKeys
-            console.log("Key Path Array")
-            console.log(keyPathArray)
+
             keyPathArray.forEach((key, index) => {
-                console.log("Key")
-                console.log(key)
-                console.log("Index")
-                console.log(index)
                 parentDictionary[key] = index === keyPathArray.length -1 ? keyedObject : {};
             })
-            console.log("Output Dictionary")
-            console.log(parentDictionary)
             return parentDictionary
     } else if (context.contextType == 'array'){
         if (previousStepOutput){
@@ -770,9 +760,6 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
             var updatedOutput = {}
             var propArray = []
             var prop = {}
-
-            console.log("Iterated Values")
-            console.log(iteratedValues)
             
             if(finalStep){
                 parentContextPath.forEach((path, index) => {
@@ -810,22 +797,9 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                      }
                  })
             }
-        
-            console.log("Prop")
-            console.log(prop)
-            console.log("PreviousStepOutput")
-            console.log(previousStepOutput)
-            console.log("Prop Array")
-            console.log(propArray)
-            console.log("Context")
-            console.log(context)
 
-            // var updatedParent = setProperty(context.parentContextKey, iteratedValues, previousStepOutput)
-            //var updatedParent = setProperty(previousStepOutput, prop,iteratedValues, context)
             var updatedParent = setPropertiesToEmptyObjects(previousStepOutput, propArray)
-            
-            console.log("Updated Parent")
-            console.log(updatedParent)
+
            return updatedParent
             
         }

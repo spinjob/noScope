@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@blueprintjs/core": "^4.11.3",
+    "@mailchimp/mailchimp_marketing": "^3.0.80",
     "axios": "^1.2.0",
     "body-parser": "^1.20.0",
     "bree": "^9.1.3",

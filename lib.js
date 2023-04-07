@@ -1499,21 +1499,27 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     }
                    
                 } else if (propertyValue['allOf']){
-                    var propertyObject = {};
-                    var allOfSchema = processRequestBodySchema("webhook", propertyValue['allOf'], null, schemaMap,  version)
-                    if(propertyValue['allOf'].length == 1) {
-                        if(propertyValue['allOf'][0]['$ref']){
-                            var propertyReference = propertyValue['allOf'][0]['$ref'].split("/")[3];
-                            var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
-                            var propertySchemaMapValues = propertySchemaMap[propertyReference];
-                            propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertySchemaMapValues};
-                        } else {
-                            propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue['allOf'][0]};
-                        }
-                    }
-                    propertyObject[propertyKey].properties = allOfSchema
 
-                    schemaProperties = {...schemaProperties, ...propertyObject}
+                    if(propertyValue['allOf'].length == 1) {
+                        var propertyObject = {};
+                        console.log("allOf Detected: " + propertyKey)
+                        console.log(propertyValue['allOf'])
+                        var allOfSchema = processRequestBodySchema("webhook", propertyValue['allOf'], null, schemaMap,  version)
+                        if(propertyValue['allOf'].length == 1) {
+                            if(propertyValue['allOf'][0]['$ref']){
+                                var propertyReference = propertyValue['allOf'][0]['$ref'].split("/")[3];
+                                var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
+                                var propertySchemaMapValues = propertySchemaMap[propertyReference];
+                                propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertySchemaMapValues};
+                            } else {
+                                propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue['allOf'][0]};
+                            }
+                        }
+                        propertyObject[propertyKey].properties = allOfSchema
+
+                        schemaProperties = {...schemaProperties, ...propertyObject}
+                    }
+
                 }
                   else if (propertyValue.type == 'object' && propertyValue.properties){
                     // console.log("Object Detected: " + propertyKey)

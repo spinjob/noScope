@@ -8,10 +8,37 @@ const crypto = require('crypto');
 const User = require('../user/User');
 const Job = require('../job/Job');
 const {verifyUser} = require('../../authenticate.js');
+const mailchimp = require('@mailchimp/mailchimp_marketing');
 
 // IMPORT AN INTERFACE FROM SWAGGER
 router.post('/upload', (req,res, next) => {
+    
       var jobUUID = crypto.randomUUID();
+
+      if(req.body.userId.includes('temp-')){
+        // example temp-spencer.johnson10@gmail.com-012cbb2f-7778-4462-875a-b97b72e37479
+        var landingPageEmail = req.body.userId.split('-')[1]
+
+        mailchimp.setConfig({
+            apiKey: process.env.MAILCHIMP_API_KEY,
+            server: process.env.MAILCHIMP_SERVER_PREFIX,
+            })
+        
+        const run = async () => {
+            try {
+                const response = await mailchimp.lists.addListMember('8c7771172f', {
+                email_address: landingPageEmail,
+                status: "subscribed",
+                });
+        
+            } catch (error) {
+                console.error("An error occurred:", error.message);
+                // handle the error gracefully here, such as logging it or displaying a user-friendly error message
+            }
+            };
+            
+            run();
+      }
 
       Job.create({
         uuid: jobUUID,

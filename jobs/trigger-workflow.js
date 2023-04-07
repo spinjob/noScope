@@ -1,25 +1,7 @@
-const {Worker, workerData, parentPort} = require('node:worker_threads');
+const {workerData, parentPort} = require('node:worker_threads');
 const axios = require('axios');
 const crypto = require('crypto');
-const Interface = require('../models/interface/Interface');
-const Workflow = require('../models/workflow/Workflow');
 const {triggerWorkflow} = require('../workflowOrchestrator');
-const {returnWorkflow} = require('../lib');
-const mongoose = require('mongoose');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
-
-const url = process.env.MONGO_DB_CONNECTION_STRING
-
-const isJson = (str) => {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
-
 
 function triggerWorkflowJob() {
     console.log('triggering workflow')
