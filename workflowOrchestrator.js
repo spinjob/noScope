@@ -352,7 +352,11 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
             })
 
             if(inputData){
+
+                //If Input Property is in an array...
                 if(contextType == 'array'){
+                    console.log("ParentContext")
+                    console.log(parentContextArray)
                     var inputParentArray = parentContextArray.reduce((obj, i) => obj[i], inputData)
                     var adaptedArray = []
 
@@ -375,6 +379,7 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
                     var outputObject = {}
                     var mappingOutputPathArray = mappingOutputDefinition.path.includes('.') ? mappingOutputDefinition.path.split('.') : [mappingOutputDefinition.path]
 
+                    //Single Array to Single Array
                     if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0 && mappingOutputDefinition.parentContext[0].contextType == 'array'){
 
                         var parentContextKey = mappingOutputDefinition.parentContext[0].parentContextKey
@@ -398,6 +403,17 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
                             }
                         })
 
+                        return outputObject
+                        
+                    } else if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0 && mappingOutputDefinition.parentContext[0].contextType == 'dictionary'){
+                        console.log(adaptedArray)
+                        //Single Array to Dictionary
+                        // This currently outputs the parentDictionary correctly but leaves each entry empty.  
+                        mappingOutputDefinition.parentContext.forEach ((parentContext, index) => {
+                            var finalStep = index == mappingOutputDefinition.parentContext.length - 1 ? true : false
+                            var previousStepOutput = handleOutputIteration(parentContext, inputData, mappingOutputDefinition.path, actionMappings, adaptedArray, finalStep)
+                            outputObject = previousStepOutput
+                        })
                         return outputObject
                     } else {
                         outputObject[mappingOutputPathArray[0]] = adaptedArray
@@ -640,30 +656,6 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
 }
 
 
-function setProperty(propertyName, propertyValues, inputObject) {
-    const objectKeys = Object.keys(inputObject);
-  // [menus]
-    for (let i = 0; i < objectKeys.length; i++) {
-      const objectKey = objectKeys[i];
-      // [{{menuId}}}]
-      if (typeof inputObject[objectKey] === 'object' && inputObject[objectKey] !== null) {
-        const innerKeys = Object.keys(inputObject[objectKey]);
-  
-        for (let j = 0; j < innerKeys.length; j++) {
-          const innerKey = innerKeys[j];
-  
-          if (innerKey === 'id' && typeof inputObject[objectKey][innerKey] === 'string') {
-            inputObject[objectKey][propertyName] = propertyValues.shift().map((value) => value || null);
-          }
-  
-          if (typeof inputObject[objectKey][innerKey] === 'object' && inputObject[objectKey][innerKey] !== null) {
-            setProperty(propertyName, propertyValues, inputObject[objectKey][innerKey]);
-          }
-        }
-      }
-    }
-  }
-
   function setPropertiesToEmptyObjects(obj1, obj2) {
     const keys = Object.keys(obj1);
     const emptyObjects = Object.values(obj1).reduce((acc, val) => ({...acc, ...val}), {});
@@ -765,6 +757,7 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
             keyPathArray.forEach((key, index) => {
                 parentDictionary[key] = index === keyPathArray.length -1 ? keyedObject : {};
             })
+            console.log("Parent Dictionary")
             return parentDictionary
     } else if (context.contextType == 'array'){
         if (previousStepOutput){
