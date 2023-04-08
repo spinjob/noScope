@@ -585,7 +585,9 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
 
                 if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0){
                     //if the output property requires iterative parent construction (e.g. dictionary keys), we need to handle that here
-                   var outputContextPath = mappingOutputDefinition.parentContext[0].path
+                    console.log("Mapping Output Definition")
+                    console.log(mappingOutputDefinition)
+                   var outputContextPath = mappingOutputDefinition.path
                    //initiated with the first parentcontext path but will be updated for each context processed to include only the remaining properties.
                    var outputObject = {}
                    //initiated empty but will be returned populated from each iteration that's processed.
@@ -681,10 +683,22 @@ function setProperty(propertyName, propertyValues, inputObject) {
     });
     return output;
   }
+  
 function handleOutputIteration (context, inputData, parentPath,  mappings, previousStepOutput, iteratedValues, finalStep){
 
+    console.log("Context")
+    console.log(context)
+    console.log("Input Data")
+    console.log(inputData)
+    console.log("Parent Path")
+    console.log(parentPath)
+    console.log("Previous Step Output")
+    console.log(previousStepOutput)
+    console.log("Iterated Values")
+    console.log(iteratedValues)
+
     var input = inputData
-    var outputPathArray = parentPath.split('.')
+    var outputPathArray = parentPath.includes('.') ? parentPath.split('.') : [parentPath]
 
     if(context.contextType == 'dictionary'){
         //If the context is a dictionary, we need to iterate over the keys and create a new object for each key
