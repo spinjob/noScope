@@ -335,236 +335,11 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
         
         // Get the parent context of the input property, if it exists (i.e. if the input property has a parent that's an array or dictionary) - we'll need to handle
         var mappingInputParentContext = mappingInputDefinition.parentContext ? mappingInputDefinition.parentContext : null
-        if (mappingInputParentContext && mappingInputParentContext.length == 1) {
 
-            var contextType = mappingInputParentContext[0].contextType
-            var parentContextKey = mappingInputParentContext[0].parentContextKey
-            var parentContextArray = []
-            var childContextArray = []
-            var parentIndex = mappingInputPathArray.indexOf(parentContextKey)
-
-            mappingInputPathArray.forEach((path, index) => {
-                if (index <= parentIndex){
-                    parentContextArray.push(path)
-                } else {
-                    childContextArray.push(path)
-                }
-            })
-
-            if(inputData){
-
-                //If Input Property is in an array...
-                if(contextType == 'array'){
-                    console.log("ParentContext")
-                    console.log(parentContextArray)
-                    var inputParentArray = parentContextArray.reduce((obj, i) => obj[i], inputData)
-                    var adaptedArray = []
-
-                // Iterate through the array, applying the formula(s) to the input value and returning an array of the output values
-                inputParentArray.forEach((arrayItem, index) => {
-                        var inputArrayItemValue = childContextArray.reduce((obj, i) => obj[i], arrayItem)
-                        if(formulas.length > 0){
-                            //Apply formulas to the input value, if they exist
-                            inputArrayItemValue = applyFormulas(formulas, inputArrayItemValue, mappingOutputDefinition.type, mappingInputDefinition, inputData)
-                        }
-                        console.log("Input Array Item Value")
-                        console.log(inputArrayItemValue)
-                        var outputArrayItem = {}
-                        outputArrayItem[mappingOutputDefinition.key] = inputArrayItemValue
-                        
-                        adaptedArray.push(outputArrayItem)
-
-                    })
-
-                    var outputObject = {}
-                    var mappingOutputPathArray = mappingOutputDefinition.path.includes('.') ? mappingOutputDefinition.path.split('.') : [mappingOutputDefinition.path]
-
-                    //Single Array to Single Array
-                    if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0 && mappingOutputDefinition.parentContext[0].contextType == 'array'){
-
-                        var parentContextKey = mappingOutputDefinition.parentContext[0].parentContextKey
-                        var parentContextArray = []
-                        var childContextArray = []
-                        var parentIndex = mappingOutputPathArray.indexOf(parentContextKey)
-
-                        mappingOutputPathArray.forEach((path, index) => {
-                            if (index <= parentIndex){
-                                parentContextArray.push(path)
-                            } else {
-                                childContextArray.push(path)
-                            }
-                        })
-                        var outputObject = {}
-                        parentContextArray.forEach((path, index) => {
-                            if (path != parentContextKey){
-                                outputObject[path] = {}
-                            } else {
-                                outputObject[path] = adaptedArray
-                            }
-                        })
-
-                        return outputObject
-                        
-                    } else if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0 && mappingOutputDefinition.parentContext[0].contextType == 'dictionary'){
-                        console.log(adaptedArray)
-                        //Single Array to Dictionary
-                        // This currently outputs the parentDictionary correctly but leaves each entry empty.  
-                        mappingOutputDefinition.parentContext.forEach ((parentContext, index) => {
-                            var finalStep = index == mappingOutputDefinition.parentContext.length - 1 ? true : false
-                            var previousStepOutput = handleOutputIteration(parentContext, inputData, mappingOutputDefinition.path, actionMappings, adaptedArray, finalStep)
-                            outputObject = previousStepOutput
-                        })
-                        return outputObject
-                    } else {
-                        outputObject[mappingOutputPathArray[0]] = adaptedArray
-                        console.log("Output Object")
-                        console.log(outputObject)
-                        return outputObject
-                    }
-                        
-                } 
-                if (contextType == 'dictionary' ){
-
-                    //if the mapping is not the dictionary key, we need to ensurde we can still determine what the dictionary key value is for each item in the dictionary
-                    var inputParentDictionary = parentContextArray.reduce((obj, i) => obj[i], inputData)
-
-                    // Array to hold the dictionary key values if the output property is within a dictionary
-                    var keyArray = []
-                    var filteredChildContextArray = childContextArray.filter(path => path != mappingInputDefinition.parentContext[0].dictionaryKey)
-                    var outputObject = {}
-                    var dictionaryValues = []
-
-
-                    //OUTPUT DICTIONARY CASE: what if the output property is within a dictionary? We will need to map the output dictionary key property to set any dictionary key values.
-                    if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0 && mappingOutputDefinition.parentContext[0].contextType == 'dictionary' && mappingOutputDefinition.key != mappingOutputDefinition.parentContext[0].dictionaryKey){
-
-                        var outputDictionaryKey = mappingOutputDefinition.parentContext[0].dictionaryKey
-                        var dictionaryKeyMapping = Object.values(actionMappings).find(mapping => mapping.output.key == outputDictionaryKey)
-                        
-                        // Get the instructions for mapping the output dictionary key
-
-                        if(!dictionaryKeyMapping){
-                            throw new Error("The output dictionary key mapping could not be found")
-                        }
-                        
-                        // If the mapped input property for the output dictionary key is within a dictionary or array itself, we'll need to handle that
-                        if(dictionaryKeyMapping.input.parentContext && dictionaryKeyMapping.input.parentContext.length == 1){
-                            
-                                var contextType = dictionaryKeyMapping.input.parentContext[0].contextType
-                                var parentContextKey = dictionaryKeyMapping.input.parentContext[0].parentContextKey
-                                var keyMappingInputPathArray = dictionaryKeyMapping.input.path.includes('.') ? dictionaryKeyMapping.input.path.split('.') : [dictionaryKeyMapping.input.path]
-                                var keyParentContextArray = []
-                                var keyChildContextArray = []
-                                var keyParentIndex = keyMappingInputPathArray.indexOf(parentContextKey)
-
-                                keyMappingInputPathArray.forEach((path, index) => {
-                                    if (index <= keyParentIndex){
-                                        keyParentContextArray.push(path)
-                                    } else {
-                                        keyChildContextArray.push(path)
-                                    }
-                                })
-
-                                if(contextType == 'dictionary'){
-                                    // Find the parent dictionary of the input property
-                                        var keyInputParentDictionary = keyParentContextArray.reduce((obj, i) => obj[i], inputData)
-                                        var adaptedKeyDictionary = {}
-
-                                        //Filter out the dictionary key property from the child context array, as we will not know what the dictionary key value is.  We'll iterate over keys.
-                                        var filteredKeyChildContextArray = keyChildContextArray.filter(path => path != dictionaryKeyMapping.input.parentContext[0].dictionaryKey)
-                    
-                                    // Iterate through the input dictionary, applying the formula(s) to the mapped input property's value
-                                        Object.keys(keyInputParentDictionary).forEach((dictionaryKey, index) => {
-                                            var inputDictionaryItemValue = filteredKeyChildContextArray.reduce((obj, i) => obj[i], keyInputParentDictionary[dictionaryKey])
-                                            keyArray.push(inputDictionaryItemValue)
-                                        })
-                                }
-                        }
-                        
-                    } 
-
-                    //INPUT DICTIONARY CASE
-                    // For this case, we want to skip any of the input or output keys, as we will handle both of those separately
-                    if(mappingInputDefinition.key != mappingInputDefinition.parentContext[0].dictionaryKey ){
-                    
-                        Object.keys(inputParentDictionary).forEach((dictionaryKey, index) => {
-                            var inputPropertyValue = filteredChildContextArray.reduce((obj, i) => obj[i], inputParentDictionary[dictionaryKey])                              
-                            var outputDictionaryItem = {}    
-                            
-
-                            if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0 && mappingOutputDefinition.parentContext[0].contextType == 'dictionary'){
-                                var outputDictionaryKey = mappingOutputDefinition.parentContext[0].dictionaryKey
-                                var fullOutputPropertyPath = mappingOutputDefinition.path.includes('.') ? mappingOutputDefinition.path.split('.') : [mappingOutputDefinition.path]
-                                var outputPropertyPathPastKey = fullOutputPropertyPath.slice(fullOutputPropertyPath.indexOf(outputDictionaryKey) + 1)
-
-                                console.log("Full Output Property Path")
-                                console.log(fullOutputPropertyPath)
-
-                                console.log("Output Property Path Past Key")
-                                console.log(outputPropertyPathPastKey)
-
-                        
-                                let temp = outputDictionaryItem
-
-                                outputPropertyPathPastKey.forEach((path, index) => {
-                                    temp[path] = index === outputPropertyPathPastKey.length -1 ? inputPropertyValue : {};
-                                    temp = temp[path];
-                                })
-
-                                dictionaryValues.push(outputDictionaryItem)
-                            } else {
-                                outputDictionaryItem[mappingOutputDefinition.key] = inputPropertyValue
-                                dictionaryValues.push(outputDictionaryItem)
-                            }
-
-                            if(formulas.length > 0){
-                                //Apply formulas to the input value, if they exist
-                                inputPropertyValue = applyFormulas(formulas, inputPropertyValue, mappingOutputDefinition, mappingInputDefinition, inputData)
-                            }
-                    
-                        
-                        })
-
-                        keyArray.forEach((key, index) => {
-                            if(!outputObject[key]){
-                                console.log("Output Object Key does not exist")
-                            outputObject[key] = dictionaryValues[index]
-                            } else {
-                                console.log("Output Object Key exists")
-                                outputObject[key] = {...outputObject[key], ...dictionaryValues[index]}
-                            }
-                        })
-
-
-                    } else {
-                        
-                    }
-                    
-                    var parentObject = {}
-
-                    parentContextArray.forEach((path, index) => {
-                        if(path == parentContextKey){
-                            parentObject[path] = outputObject
-                        } else {
-                            parentObject[path] = {}
-                        }
-                    })
-                    
-                    //Key Array is the array of adapted dictionary key values
-                    console.log("Key Array")
-                    console.log(keyArray)
-                    
-                    //Output Object is the full dictionary that will be set to the parent key (i.e. parentContextKey)
-                    console.log("Output Object")
-                    console.log(outputObject)
-                    return parentObject
-                } 
-            }
-        } else if (mappingInputParentContext && mappingInputParentContext.length > 1) {
-            console.log("Input Parent Context is greater than 1")
+        if (mappingInputParentContext && mappingInputParentContext.length > 0) {
+            console.log("Input Parent Context is greater than 0")
             console.log(mappingInputParentContext)
             if(inputData){
-                var parentObject = null
                 var iteratedValues = []
                 var inputContextPath = mappingInputDefinition.parentContext[0].path
                 
@@ -575,29 +350,61 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
                     // console.log("Next Path")
                     // console.log(nextPath)
 
-                    iteratedValues = values
-                    inputContextPath = nextPath
+                    if(index === mappingInputParentContext.length -1){
+                        console.log("This is the last parent context to process.  We need to finish the mapping.")
+                        console.log("Values")
+                        console.log(values)
+                        console.log("Next Path")
+                        console.log(nextPath)
+
+                        var nextPathArray = nextPath.split('.')
+                        var iteratedPropertyValues = []
+                        if(values && Array.isArray(values) && values.length > 0 ){
+                            values.forEach((value, index) => {
+                                if(Array.isArray(value)){
+                                if(value.length > 0 && typeof value[0] !== 'object'){
+                                        console.log("ITEM IS AN INLINE PROPERTY (I.E. STRING, NUMBER, ETC.)")
+                                        iteratedPropertyValues.push(value)
+                                } else {
+                                        var propertyArray = handleNestedArrayReduction(value, mappingInputDefinition.key)
+                                        console.log("Property Array")
+                                        console.log(propertyArray)
+                                        iteratedPropertyValues.push(propertyArray)
+                                    }
+                                } else {
+                                    iteratedPropertyValues.push(nextPathArray.reduce((obj, i) => obj[i], value))
+                                }
+                            })
+                        } else {
+                            iteratedPropertyValues = values
+                        }
+                        // console.log("Iterated Property Values")
+                        // console.log(iteratedPropertyValues)
+
+                        if(iteratedPropertyValues && iteratedPropertyValues.length > 0){
+                            console.log("Iterated Property VAlues")
+                            console.log(mappingInputDefinition.formulas)
+                            if(mappingInputDefinition.formulas && mappingInputDefinition.formulas.length > 0){
+                                var updatedIteratedValues = applyFormulaToNestedArray(iteratedPropertyValues, mappingInputDefinition.formulas, inputData)
+                                if(updatedIteratedValues){
+                                    iteratedPropertyValues = updatedIteratedValues
+                                }
+                            }
+                        }
+                    
+                        iteratedValues = iteratedPropertyValues
+                        inputContextPath = nextPath
+
+                    } else {
+                        iteratedValues = values
+                        inputContextPath = nextPath
+                    }
+
+                    
                 })
-                // console.log("We've handled the iteration.  Now we need to finish the mapping.")
-                // console.log(iteratedValues)
-                var outputArray = []
-                
-                if(inputContextPath.split('.').length > 1){
-                    inputContextPath.split('.').forEach((path, index) => {
-                        iteratedValues.forEach((value, index) => {
-                            var temp = {}
-                            temp[path] = index === inputContextPath.length -1 ? value : {};
-                            temp = temp[path];
-                            outputArray.push(temp)
-                        });
-                    })
-                } else if (inputContextPath.split('.').length == 1){
-                    iteratedValues.forEach((value, index) => {
-                        outputArray.push(value)
-                    })
-                }
-                // console.log("Output Values Array")
-                // console.log(outputArray)
+                console.log("We've handled the iteration.  Now we need to finish the mapping.")
+                console.log(iteratedValues)
+
 
                 if(mappingOutputDefinition.parentContext && mappingOutputDefinition.parentContext.length > 0){
                     //if the output property requires iterative parent construction (e.g. dictionary keys), we need to handle that here
@@ -613,7 +420,7 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
 
                     mappingOutputDefinition.parentContext.forEach((context, index) => {
                         var finalStep = index === mappingOutputDefinition.parentContext.length -1 ? true : false
-                        var previousStepOutput =  handleOutputIteration(context, inputData, outputContextPath, actionMappings, output, iteratedValues, finalStep)
+                        var previousStepOutput =  handleOutputIteration(context, inputData, outputContextPath, actionMappings, output, iteratedValues, finalStep, mappingOutputDefinition)
                         output = previousStepOutput
                     })
 
@@ -655,6 +462,24 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
 
 }
 
+function handleNestedArrayReduction(array, propertyKey){
+    var output = []
+    var propertyObject = {}
+
+
+    array.forEach((item, index) => {
+        if(Array.isArray(item)){
+            output.push(handleNestedArrayReduction(item, propertyKey))
+        }
+        else if (typeof item === 'object'){
+           var propertyValue = item[propertyKey]
+              //propertyObject[propertyKey] = propertyValue
+            output.push(propertyValue)
+        }
+    })
+    return output
+            
+}
 
   function setPropertiesToEmptyObjects(obj1, obj2) {
     const keys = Object.keys(obj1);
@@ -675,9 +500,61 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
     });
     return output;
   }
-  
-function handleOutputIteration (context, inputData, parentPath,  mappings, previousStepOutput, iteratedValues, finalStep){
 
+  function flattenArray(arr, key) {
+    let result = [];
+    for (let i = 0; i < arr.length; i++) {
+      if (Array.isArray(arr[i]) && arr[i].every((x) => Array.isArray(x))) {
+        result = result.concat(flattenArray(arr[i], key));
+      } else {
+        const obj = {};        
+        
+        if(arr[i][0] && key === typeof arr[i][0]){
+            console.log("Key is the same as the type of the array item")
+            console.log(arr[i])
+            result.push(arr[i])
+        } else {
+            obj[key] = arr[i][0];
+            result.push(obj);
+        }
+      }
+    }
+    console.log("Results In Flatten Array")
+    console.log(result)
+
+    return result;
+  }
+
+  function applyFormulaToNestedArray(nestedArray, formulas, inputData) {
+    if (!Array.isArray(nestedArray)) {
+      // if the input is not an array, return it as is
+      return nestedArray;
+    }
+    
+    // create a new array to hold the updated values
+    const updatedArray = [];
+    
+    for (let i = 0; i < nestedArray.length; i++) {
+      const item = nestedArray[i];
+      
+      if (Array.isArray(item)) {
+        // if the item is an array, recursively apply the formula to it
+        const updatedItem = applyFormulaToNestedArray(item, formulas, inputData);
+        updatedArray.push(updatedItem);
+      } else {
+        // if the item is not an array, apply the formula to it and add to the updated array
+        const updatedItem = applyFormulas(formulas, item, null, null, inputData)
+        updatedArray.push(updatedItem);
+      }
+    }
+    
+    return updatedArray;
+  }
+  
+
+function handleOutputIteration (context, inputData, parentPath,  mappings, previousStepOutput, iteratedValues, finalStep, mappingOutputDefinition){
+
+    console.log("HANDLE OUTPUT ITERATION")
     console.log("Context")
     console.log(context)
     console.log("Input Data")
@@ -692,6 +569,7 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
     var input = inputData
     var outputPathArray = parentPath.includes('.') ? parentPath.split('.') : [parentPath]
 
+
     if(context.contextType == 'dictionary'){
         //If the context is a dictionary, we need to iterate over the keys and create a new object for each key
         var parentContextKey = context.parentContextKey
@@ -699,18 +577,17 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
         var parentContextArray = outputPathArray.slice(0, parentContextIndex + 1)
         var parentContextObjectWithoutKeys = _.set({}, parentContextArray.join('.'), {})
 
-    
         // GENERATE DICTIONARY KEYS
             var dictionaryKeyMapping = Object.values(mappings).filter(mapping => mapping.output.key == context.dictionaryKey) ? Object.values(mappings).filter(mapping => mapping.output.key == context.dictionaryKey)[0] : null
 
             var dictionaryKeys = []
 
             if(dictionaryKeyMapping && dictionaryKeyMapping.input.parentContext && dictionaryKeyMapping.input.parentContext.length > 0){
-                var iteratedValues = []
+                var iteratedKeyValues = []
                 var inputContextPath = dictionaryKeyMapping.input.parentContext[0].path
                 dictionaryKeyMapping.input.parentContext.forEach((keyParentContext, index) => {
-                    var {values, nextPath} = handleInputIteration(keyParentContext, input, inputContextPath, iteratedValues)
-                    iteratedValues = values
+                    var {values, nextPath} = handleInputIteration(keyParentContext, input, inputContextPath, iteratedKeyValues)
+                    iteratedKeyValues = values
                     inputContextPath = nextPath
                 })
 
@@ -719,7 +596,7 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                     // If the input context path is nested, we need to iterate over the values and create a new object for each value.
                     inputContextPath.split('.').forEach((path, index) => {
                         
-                        iteratedValues.forEach((value, index) => {
+                        iteratedKeyValues.forEach((value, index) => {
                             var temp = {}
                             temp[path] = index === inputContextPath.length -1 ? value : {};
                             temp = temp[path];
@@ -727,7 +604,7 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                         });
                     })
                 } else if (inputContextPath.split('.').length == 1){
-                    iteratedValues.forEach((value, index) => {
+                    iteratedKeyValues.forEach((value, index) => {
                         if(typeof value != 'object') {
                             dictionaryKeys.push(value)
                         } else {
@@ -737,6 +614,12 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                 }
             }
 
+            if(dictionaryKeyMapping.input.formulas && dictionaryKeyMapping.input.formulas.length > 0){
+                var adaptedDictionaryKeys = applyFormulaToNestedArray(dictionaryKeys, dictionaryKeyMapping.input.formulas, inputData)
+                dictionaryKeys = adaptedDictionaryKeys
+            }
+
+
             // GENERATE DICTIONARY OBJECTS
             var keyPathIndex = parentContextIndex + 1
             var keyPathArray = outputPathArray.slice(0, keyPathIndex)
@@ -744,63 +627,173 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
 
             /// If this is the final step, we will set the keyed objects to the values created from the input mapping.
             if (finalStep){
-                dictionaryKeys.forEach((key, index) => {
-                    keyedObject[key] = iteratedValues[index]
-                })
+                if(mappingOutputDefinition.key == context.dictionaryKey){
+                    console.log("Final Step, the dictionaryKeyMapping")
+                    dictionaryKeys.forEach((key, index) => {
+                        keyedObject[key] = {}
+                    })
+
+                } else {
+                    console.log("Final Step, not the dictionaryKeyMapping")
+                    var temp = {}
+                    dictionaryKeys.forEach((key, index) => {
+                        console.log("MAPPING DEFINITION KEY")
+                        console.log(mappingOutputDefinition.key)
+                        console.log("KEYED OBJECT")
+                        console.log(keyedObject)
+                        keyedObject[key] = {}
+                        keyedObject[key][mappingOutputDefinition.key] = iteratedValues[index]
+                                          
+                    })
+    
+                }
+              
             } else {
                 dictionaryKeys.forEach((key, index) => {
                     keyedObject[key] = {}
                 })
             }
+
+            console.log("Keyed Object")
+            console.log(keyedObject)
+            console.log("Parent Context Object Without Keys")
+            console.log(parentContextObjectWithoutKeys)
+            console.log("Key Path Array")
+            console.log(keyPathArray)
+
             let parentDictionary = parentContextObjectWithoutKeys
 
             keyPathArray.forEach((key, index) => {
                 parentDictionary[key] = index === keyPathArray.length -1 ? keyedObject : {};
             })
             console.log("Parent Dictionary")
+            console.log(parentDictionary)
             return parentDictionary
+
     } else if (context.contextType == 'array'){
         if (previousStepOutput){
-            var contextPathArray = context.path.split('.')
+
+            var contextPathArray = mappingOutputDefinition.path.split('.')
+            var currentContextIndex = mappingOutputDefinition.parentContext.indexOf(context)
+            console.log("CURRENT CONTEXT INDEX")
+            console.log(currentContextIndex)
+
+            var previousContext = mappingOutputDefinition.parentContext[currentContextIndex - 1]
+            console.log("PREVIOUS PARENT CONTEXT")
+            console.log(previousContext)
+
+            var currentContextPathIndex = contextPathArray.indexOf(context.parentContextKey)
+            var previousContextPathIndex = contextPathArray.indexOf(previousContext.parentContextKey)
+
+            // Get the path to the current context from the previous context
+            var intraParentContextPath = contextPathArray.slice(previousContextPathIndex, currentContextPathIndex).filter(path => path != previousContext.parentContextKey)
+
+            // If the previous context is a dictionary, we need to remove the dictionary key and the parentContextKey (i.e. the dictionary property key) from the path
+            if(previousContext.contextType == 'dictionary'){
+                intraParentContextPath = intraParentContextPath.filter(path => path != previousContext.dictionaryKey)
+            }
+
             var parentContextIndex = contextPathArray.indexOf(context.parentContextKey)
-            var parentContextPath = contextPathArray.slice(parentContextIndex)
+            var parentContextPathArray = contextPathArray.slice(parentContextIndex)
+
+            // We'll combine the parent context path array with the intra parent context path to get the full path from the previous parent context to the current parent context
+            intraParentContextPath.push(...parentContextPathArray)
             var updatedOutput = {}
             var propArray = []
-            var prop = {}
-            
+
+            console.log("ARRAY PARENT CONTEXT PATH")
+            console.log(parentContextPathArray)
+
+            console.log("INTRA PARENT CONTEXT PATH")
+            console.log(intraParentContextPath)
+
+
             if(finalStep){
-                parentContextPath.forEach((path, index) => {
+                console.log("FINAL STEP")
+
+                parentContextPathArray.forEach((path, index) => {
                     if(path == context.parentContextKey){
                         var outputArray = []
-                        prop = {[context.parentContextKey]: []}
-                        iteratedValues.forEach((value, index) => {
-                            if(Array.isArray(value)){
-                                outputArray.push(value)
-                            } else { 
-                                outputArray.push(value)
-                            }
-                        })
+                        if(iteratedValues.length > 0 && Array.isArray(iteratedValues[0])){
+                            flattenArray(iteratedValues, mappingOutputDefinition.key).forEach((value, index) => {
+                                var propertyObject = {}
+                              
+                                //If there are objects between the last parent context and the final context, we need to nest the property accordingly.
+                                if(intraParentContextPath.length > 0){
 
-                        outputArray.forEach((value, index) => {
-                            var temp = {}
-                            temp[context.parentContextKey] = value
-                            propArray.push(temp)
-                    
-                        })            
-                     } else if(path != context.parentContextKey && index !== parentContextPath.length -1) {
+                                    let result = {}
+                                    let temp = result
+
+                                    for(let i = 0; i < intraParentContextPath.length; i++){
+                                        if(i== intraParentContextPath.length -2){
+                                            console.log("SECOND TO LAST")
+                                            console.log(intraParentContextPath[i])
+                                            console.log(value)
+                                            if(Array.isArray(value)){
+                                                temp[intraParentContextPath[i]] = value
+
+                                            }else {
+                                                temp[intraParentContextPath[i]] ? temp[intraParentContextPath[i]] = [...temp[intraParentContextPath[i]], ...value] : temp[intraParentContextPath[i]] = [value] 
+                                            }
+                                           temp = temp[intraParentContextPath[i]]
+                                          
+                                        } else if(i == intraParentContextPath.length -1){
+                                            console.log("LAST")
+                                            console.log(intraParentContextPath[i])
+                                                       
+                                        } else {
+                                            console.log("OTHER")
+                                            console.log(intraParentContextPath[i])
+                                            temp[intraParentContextPath[i]] = {}
+                                            temp = temp[intraParentContextPath[i]]
+                                        }
+                                    }
+                                    console.log("RESULT")
+                                    console.log(result)
+                                    propArray.push(result)
+                                } else {
+                                    propertyObject = {...propertyObject, ...value}
+                                    propArray.push(propertyObject)
+                                }
+                                
+                            })
+
+                        } else {
+                            iteratedValues.forEach((value, index) => {
+                                var propertyObject = {}
+                                //If there are objects between the last parent context and the final context, we need to nest the property accordingly.
+                                if(intraParentContextPath.length > 0){
+                                    intraParentContextPath.forEach((path, index) => {
+                                        propertyObject[mappingOutputDefinition.key] = index === intraParentContextPath.length -1 ? value : {};
+                                    })
+                                    propArray.push(propertyObject)
+                                } else {
+                                    propertyObject[mappingOutputDefinition.key] = value
+                                    propArray.push(propertyObject)
+                            }
+                            })
+                        }
+                        updatedOutput[path] = propArray
+
+                     } else if(path != context.parentContextKey && index !== parentContextPathArray.length -1) {
                          updatedOutput[path] = {}
-                     } else if(index === parentContextPath.length -1){
+                     } else if(index === parentContextPathArray.length -1 && path != context.parentContextKey){
                          
                      }
+                     console.log("PROP ARRAY IN FINAL STEP")
+                        console.log(propArray)
                  })
+
+                    
             } else {
-                parentContextPath.forEach((path, index) => {
+                console.log("NOT FINAL STEP")
+                parentContextPathArray.forEach((path, index) => {
                     if(path == context.parentContextKey){
                           updatedOutput[path] = []
-                     } else if(path != context.parentContextKey && index !== parentContextPath.length -1) {
+                     } else if(path != context.parentContextKey && index !== parentContextPathArray.length -1) {
                          updatedOutput[path] = {}
-                     } else if(index === parentContextPath.length -1){
-                         
+                     } else if(index === parentContextPathArray.length -1){
+                         console.log("LAST INDEX")
                      }
                  })
             }
@@ -809,13 +802,65 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
 
            return updatedParent
             
+        } else {
+            // If there is no previous step output, we need to create a new object with the parent context key and an empty array.
+            var contextPathArray = context.path.split('.')
+            var parentContextIndex = contextPathArray.indexOf(context.parentContextKey)
+            var parentContextPathArray = contextPathArray.slice(parentContextIndex)
+            var updatedOutput = {}
+            var propArray = []
+
+            console.log("ARRAY PARENT CONTEXT PATH")
+            console.log(parentContextPathArray)
+
+            if(finalStep){
+                console.log("FINAL STEP")
+
+                parentContextPathArray.forEach((path, index) => {
+                    if(path == context.parentContextKey){
+                        iteratedValues.forEach((value, index) => {
+                            var propertyObject = {}
+                            propertyObject[mappingOutputDefinition.key] = value
+                            propArray.push(propertyObject)
+                        })
+
+                        updatedOutput[path] = propArray
+
+                     } else if(path != context.parentContextKey && index !== parentContextPathArray.length -1) {
+                         updatedOutput[path] = {}
+                     } else if(index === parentContextPathArray.length -1 && path != context.parentContextKey){
+                         
+                     }
+                     console.log("PROP ARRAY IN FINAL STEP")
+                        console.log(propArray)
+                 })
+
+                    
+            } else {
+                console.log("NOT FINAL STEP")
+                parentContextPathArray.forEach((path, index) => {
+                    if(path == context.parentContextKey){
+                          updatedOutput[path] = []
+                     } else if(path != context.parentContextKey && index !== parentContextPathArray.length -1) {
+                         updatedOutput[path] = {}
+                     } else if(index === parentContextPathArray.length -1){
+                         console.log("LAST INDEX")
+                     }
+                 })
+            }
+            console.log("PROP ARRAY")
+                    console.log(propArray)
+                    console.log("UPDATED OUTPUT")
+                    console.log(updatedOutput)
+
+            return updatedOutput
         }
     }
 }
 
 
 function handleInputIteration( context, inputData, parentPath, valuesArray, isDictionaryKey){
-
+    //The goal of this function is to iterate over the input data and return an array of adapted properties that will be merged into the output object.
     var input = inputData
     var inputPathArray = parentPath.split('.')
 
@@ -845,6 +890,8 @@ function handleInputIteration( context, inputData, parentPath, valuesArray, isDi
 
 
     } else if (context.contextType == 'array'){
+        console.log("Input Array Parent Context")
+        console.log(context)
         var parentContextIndex = inputPathArray.indexOf(context.parentContextKey)
         var parentContextPath = inputPathArray.slice(0, parentContextIndex + 1)
         var childContextPathArray = inputPathArray.slice(parentContextIndex + 1)
@@ -852,13 +899,8 @@ function handleInputIteration( context, inputData, parentPath, valuesArray, isDi
         if(valuesArray.length > 0){
             var arrayValues = []
             input.forEach((item, index) => {
-                console.log("Item is an object")
-                console.log(item)
-                console.log(parentContextPath.reduce((obj, i) => obj[i], item))
                 arrayValues.push(parentContextPath.reduce((obj, i) => obj[i], item))
             })
-            console.log("Array Values")
-            console.log(arrayValues)
             return {values: arrayValues, nextPath: childContextPathArray.join('.')}
             
         } else {

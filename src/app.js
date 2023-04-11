@@ -33,7 +33,7 @@ if (process.env.NODE_ENV !== "production") {
 app.use(express.json({limit: "200mb", extended: true}))
 app.use(express.urlencoded({limit: "200mb", extended: true, parameterLimit: 50000}))
 app.use(cookieParser(process.env.COOKIE_SECRET));
-app.use(express.static('client/build'));
+// app.use(express.static('client/build'));
 
 const whitelist = process.env.WHITELISTED_DOMAINS 
 ? process.env.WHITELISTED_DOMAINS.split(',')
@@ -68,18 +68,18 @@ app.use('/customers', CustomerController);
 app.use('/jobs', JobController);
 
 //All other GET requests not handled will return our React app
-app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
-});
+// app.get('*', (req, res) => {
+//     res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
+// });
 
 
-if (process.env.NODE_ENV === 'production') {
-	app.use(express.static('client/build'));
-}
+// if (process.env.NODE_ENV === 'production') {
+// 	app.use(express.static('client/build'));
+// }
 
-app.get('*', (request, response) => {
-	response.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-});
+// app.get('*', (request, response) => {
+// 	response.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+// });
 
 // (async () => {
 //     await bree.start();
