@@ -8,7 +8,7 @@ const passport = require('passport');
 require('../strategies/JwtStrategy');
 require('../strategies/LocalStrategy');
 require('../authenticate.js');
-const {bree} = require('../bree');
+const {bree, addBreeJob} = require('../bree');
 
 const UserController = require('../models/user/UserController');
 const InterfaceController = require('../models/interface/InterfaceController')
@@ -24,6 +24,7 @@ const WorkflowLogController = require('../models/workflow_log/WorkflowLogControl
 const OrganizationController = require('../models/organization/OrganizationController');
 const CustomerController = require('../models/customer/CustomerController');
 const JobController = require('../models/job/JobController');
+const Job = require('../models/job/Job');
 
 if (process.env.NODE_ENV !== "production") {
     // Load environment variables from .env file in non prod environments
@@ -68,18 +69,40 @@ app.use('/customers', CustomerController);
 app.use('/jobs', JobController);
 
 //All other GET requests not handled will return our React app
-// app.get('*', (req, res) => {
-//     res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
-// });
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
+});
 
 
-// if (process.env.NODE_ENV === 'production') {
-// 	app.use(express.static('client/build'));
-// }
+if (process.env.NODE_ENV === 'production') {
+	app.use(express.static('client/build'));
+}
 
-// app.get('*', (request, response) => {
-// 	response.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-// });
+app.get('*', (request, response) => {
+	response.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+var breeJobs = bree.config.jobs ? bree.config.jobs : []
+var processedDbJobs = []
+
+Job.find({type: "scheduled_workflow", status: "ACTIVE"}).then(jobs => {
+    console.log("Active Scheduled Jobs")
+    console.log(jobs)
+    console.log("Bree Jobs")
+    console.log(breeJobs)
+    if(jobs.length - 1 != breeJobs.length) {
+        jobs.forEach(dbJob => {
+            if(!processedDbJobs.includes(dbJob.uuid)) {
+                processedDbJobs.push(dbJob.uuid)
+                if(breeJobs.filter(breeJob => breeJob.name === `trigger-workflow-${dbJob.metadata.project_uuid}-${dbJob.metadata.workflow_uuid}`).length == 0) {
+                    addBreeJob(dbJob.metadata.project_uuid, dbJob.metadata.workflow_uuid, dbJob.metadata.cadence, dbJob.uuid)
+                }
+            } else {
+                console.log("Job already processed")
+            }   
+        })
+    }
+})
 
 // (async () => {
 //     await bree.start();
