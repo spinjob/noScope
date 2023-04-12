@@ -92,7 +92,7 @@ Job.find({type: "scheduled_workflow", status: "ACTIVE"}).then(jobs => {
     console.log(breeJobs)
     if(jobs.length - 1 != breeJobs.length) {
         jobs.forEach(dbJob => {
-            if(!processedDbJobs.includes(dbJob.uuid)) {
+            if(!processedDbJobs.includes(dbJob.uuid) && dbJob.metadata.workflow_uuid && dbJob.metadata.project_uuid && dbJob.metadata.cadence) {
                 processedDbJobs.push(dbJob.uuid)
                 if(breeJobs.filter(breeJob => breeJob.name === `trigger-workflow-${dbJob.metadata.project_uuid}-${dbJob.metadata.workflow_uuid}`).length == 0) {
                     addBreeJob(dbJob.metadata.project_uuid, dbJob.metadata.workflow_uuid, dbJob.metadata.cadence, dbJob.uuid)
@@ -104,8 +104,5 @@ Job.find({type: "scheduled_workflow", status: "ACTIVE"}).then(jobs => {
     }
 })
 
-// (async () => {
-//     await bree.start();
-//   })();
   
 module.exports = app;   

@@ -155,7 +155,7 @@ router.put('/:workflowId/activate', function(req,res) {
                    // Update the job cadence in the database
                    console.log('Bree Job UUID: ')
                    console.log(breeJobs[0].worker.workerData.jobUuid)
-                    Job.findOneAndUpdate({uuid: breeJobs[0].worker.workerData.jobUuid}, {metadata: {cadence: cadence}, status: 'ACTIVE'}, {new: true}).then(job => {
+                    Job.findOneAndUpdate({uuid: breeJobs[0].worker.workerData.jobUuid}, {metadata: {cadence: cadence, project_uuid: workflow.parent_project_uuid, workflow_uuid: workflow.uuid, breeJob: `trigger-workflow-${workflow.parent_project_uuid}-${workflow.uuid}`}, status: 'ACTIVE'}, {new: true}).then(job => {
                         //Re-add the breeJob with the updated cadence and the job UUID in the database
                         console.log(job)
                         addBreeJob(workflow.parent_project_uuid, workflow.uuid, cadence, job.uuid).then(() => {
@@ -181,7 +181,7 @@ router.put('/:workflowId/activate', function(req,res) {
                         if(jobs.length > 0){
                             console.log("Job found for this workflow.  Re-activating it: ")
                             console.log(jobs)
-                            Job.findOneAndUpdate({uuid: jobs[0].uuid}, {'metadata.cadence': cadence, status: 'ACTIVE'}, {new: true}).then(job => {
+                            Job.findOneAndUpdate({uuid: jobs[0].uuid}, {updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ,metadata: {cadence: cadence, project_uuid: workflow.parent_project_uuid, workflow_uuid: workflow.uuid, breeJob: `trigger-workflow-${workflow.parent_project_uuid}-${workflow.uuid}`}, status: 'ACTIVE' }, {new: true}).then(job => {
                                 res.status(200).send({message: 'Workflow schedule added.', job: job, schedule: cadence});
                             }).catch(err => {
                                 res.status(500).send({message: 'There was a problem adding the updated schedule.', err: err});
