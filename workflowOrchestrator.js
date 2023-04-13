@@ -635,14 +635,26 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
 
                 } else {
                     console.log("Final Step, not the dictionaryKeyMapping")
-                    var temp = {}
                     dictionaryKeys.forEach((key, index) => {
-                        console.log("MAPPING DEFINITION KEY")
-                        console.log(mappingOutputDefinition.key)
-                        console.log("KEYED OBJECT")
-                        console.log(keyedObject)
+
+                        var dictionaryKeyIndex = outputPathArray.indexOf(context.dictionaryKey)
+                        var postKeyPathArray = outputPathArray.slice(dictionaryKeyIndex + 1)
+                        
                         keyedObject[key] = {}
-                        keyedObject[key][mappingOutputDefinition.key] = iteratedValues[index]
+                        let result = {}
+                        let temp = result
+                        
+                        // Iterate over the postKeyPathArray and create a new object for each path that isn't the last property in the array.  This handles any nesting.
+                        postKeyPathArray.forEach((path, index) => {
+                            if(index === postKeyPathArray.length -1){
+                                temp[path] = iteratedValues[index]
+                            } else {
+                                temp[path] = {}
+                                temp = temp[path];
+                            }
+                        })
+
+                        keyedObject[key] = result
                                           
                     })
     
@@ -668,6 +680,24 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
             })
             console.log("Parent Dictionary")
             console.log(parentDictionary)
+
+            if(previousStepOutput){
+                var contextPathArray = mappingOutputDefinition.path.split('.')
+                var currentContextIndex = mappingOutputDefinition.parentContext.indexOf(context)
+                console.log("CURRENT CONTEXT INDEX")
+                console.log(currentContextIndex)
+    
+                var previousContext = mappingOutputDefinition.parentContext[currentContextIndex - 1]
+                console.log("PREVIOUS PARENT CONTEXT")
+                console.log(previousContext)
+    
+                var currentContextPathIndex = contextPathArray.indexOf(context.parentContextKey)
+                var previousContextPathIndex = contextPathArray.indexOf(previousContext.parentContextKey)
+    
+                // Get the path to the current context from the previous context
+                var intraParentContextPath = contextPathArray.slice(previousContextPathIndex, currentContextPathIndex).filter(path => path != previousContext.parentContextKey)
+            }
+
             return parentDictionary
 
     } else if (context.contextType == 'array'){
