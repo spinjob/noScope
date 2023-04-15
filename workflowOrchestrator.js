@@ -345,44 +345,45 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
                 
                 mappingInputParentContext.forEach((context, index) => {
                     var {values, nextPath} = handleInputIteration(context,inputData, inputContextPath, iteratedValues, true)
-                    // console.log("Values")
-                    // console.log(values)
-                    // console.log("Next Path")
-                    // console.log(nextPath)
+                    console.log("Values")
+                    console.log(values)
+                    console.log("Next Path")
+                    console.log(nextPath)
 
                     if(index === mappingInputParentContext.length -1){
                         console.log("This is the last parent context to process.  We need to finish the mapping.")
-                        console.log("Values")
-                        console.log(values)
-                        console.log("Next Path")
-                        console.log(nextPath)
 
                         var nextPathArray = nextPath.split('.')
                         var iteratedPropertyValues = []
                         if(values && Array.isArray(values) && values.length > 0 ){
-                            values.forEach((value, index) => {
+                            values.filter(value => value !== undefined).forEach((value, index) => {
                                 if(Array.isArray(value)){
-                                if(value.length > 0 && typeof value[0] !== 'object'){
-                                        console.log("ITEM IS AN INLINE PROPERTY (I.E. STRING, NUMBER, ETC.)")
-                                        iteratedPropertyValues.push(value)
-                                } else {
-                                        var propertyArray = handleNestedArrayReduction(value, mappingInputDefinition.key)
-                                        console.log("Property Array")
-                                        console.log(propertyArray)
-                                        iteratedPropertyValues.push(propertyArray)
-                                    }
-                                } else {
+                                    if(value.length > 0 && typeof value[0] !== 'object'){
+                                            iteratedPropertyValues.push(value)
+                                    } else {
+
+                                            var propertyArray = handleNestedArrayReduction(value, mappingInputDefinition.key)
+                                            console.log("Property Array")
+                                            console.log(propertyArray)
+                                            iteratedPropertyValues.push(propertyArray)
+                                        }
+                                    
+                                } else if(typeof value === 'object') {
                                     iteratedPropertyValues.push(nextPathArray.reduce((obj, i) => obj[i], value))
+                                } else {
+                                    iteratedPropertyValues.push(value)
                                 }
                             })
+                            console.log("INPUT PARENT CONTEXT: Iterated Property Values")
+                            console.log(iteratedPropertyValues)
                         } else {
                             iteratedPropertyValues = values
                         }
-                        // console.log("Iterated Property Values")
-                        // console.log(iteratedPropertyValues)
+                        console.log("Iterated Property Values")
+                        console.log(iteratedPropertyValues)
 
                         if(iteratedPropertyValues && iteratedPropertyValues.length > 0){
-                            console.log("Iterated Property VAlues")
+                            console.log("Iterated Property Formulas")
                             console.log(mappingInputDefinition.formulas)
                             if(mappingInputDefinition.formulas && mappingInputDefinition.formulas.length > 0){
                                 var updatedIteratedValues = applyFormulaToNestedArray(iteratedPropertyValues, mappingInputDefinition.formulas, inputData)
@@ -481,16 +482,25 @@ function handleNestedArrayReduction(array, propertyKey){
             
 }
 
-  function setPropertiesToEmptyObjects(obj1, obj2) {
+  function setEmptyTerminalObjectsToProperties(obj1, obj2, indexedValues) {
     const keys = Object.keys(obj1);
     const emptyObjects = Object.values(obj1).reduce((acc, val) => ({...acc, ...val}), {});
-    obj2.forEach((prop, index) => {
-      const emptyObjectKey = Object.keys(emptyObjects)[index];
-      emptyObjects[emptyObjectKey] = {
-        ...emptyObjects[emptyObjectKey],
-        ...prop
-      };
-    });
+    
+    if(indexedValues == false){
+        const firstObj2 = obj2[0];
+        Object.keys(emptyObjects).forEach(emptyObjectKey => {
+          emptyObjects[emptyObjectKey] = firstObj2;
+        });
+    } else {
+        obj2.forEach((prop, index) => {
+            const emptyObjectKey = Object.keys(emptyObjects)[index];
+            emptyObjects[emptyObjectKey] = {
+              ...emptyObjects[emptyObjectKey],
+              ...prop
+            };
+          });
+    }
+
     const output = {};
     keys.forEach(key => {
       output[key] = {};
@@ -503,19 +513,34 @@ function handleNestedArrayReduction(array, propertyKey){
 
   function flattenArray(arr, key) {
     let result = [];
+    console.log("Flattening Array")
+    console.log(arr)
     for (let i = 0; i < arr.length; i++) {
       if (Array.isArray(arr[i]) && arr[i].every((x) => Array.isArray(x))) {
+        console.log("Array is nested")
+        console.log(arr[i])
         result = result.concat(flattenArray(arr[i], key));
       } else {
-        const obj = {};        
-        
         if(arr[i][0] && key === typeof arr[i][0]){
-            console.log("Key is the same as the type of the array item")
-            console.log(arr[i])
             result.push(arr[i])
         } else {
-            obj[key] = arr[i][0];
-            result.push(obj);
+
+            var arrayItems = []
+            if(arr[i] && Array.isArray(arr[i]) && arr[i].length > 0){
+                arr[i].forEach((item, index) => {
+                    const obj = {};
+                    console.log("key")
+                    console.log(key)
+                    console.log("item")
+                    console.log(item)
+                    obj[key] = item;
+                    arrayItems.push(obj)
+                })
+                console.log("Array Items")
+                console.log(arrayItems)
+                result.push(arrayItems);
+            }
+            
         }
       }
     }
@@ -554,17 +579,17 @@ function handleNestedArrayReduction(array, propertyKey){
 
 function handleOutputIteration (context, inputData, parentPath,  mappings, previousStepOutput, iteratedValues, finalStep, mappingOutputDefinition){
 
-    console.log("HANDLE OUTPUT ITERATION")
-    console.log("Context")
-    console.log(context)
-    console.log("Input Data")
-    console.log(inputData)
-    console.log("Parent Path")
-    console.log(parentPath)
-    console.log("Previous Step Output")
-    console.log(previousStepOutput)
-    console.log("Iterated Values")
-    console.log(iteratedValues)
+    // console.log("HANDLE OUTPUT ITERATION")
+    // console.log("Context")
+    // console.log(context)
+    // console.log("Input Data")
+    // console.log(inputData)
+    // console.log("Parent Path")
+    // console.log(parentPath)
+    // console.log("Previous Step Output")
+    // console.log(previousStepOutput)
+    // console.log("Iterated Values")
+    // console.log(iteratedValues)
 
     var input = inputData
     var outputPathArray = parentPath.includes('.') ? parentPath.split('.') : [parentPath]
@@ -641,9 +666,10 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                         var postKeyPathArray = outputPathArray.slice(dictionaryKeyIndex + 1)
                         
                         keyedObject[key] = {}
+
                         let result = {}
                         let temp = result
-                        
+
                         // Iterate over the postKeyPathArray and create a new object for each path that isn't the last property in the array.  This handles any nesting.
                         postKeyPathArray.forEach((path, index) => {
                             if(index === postKeyPathArray.length -1){
@@ -730,33 +756,36 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
             intraParentContextPath.push(...parentContextPathArray)
             var updatedOutput = {}
             var propArray = []
+            var isInlineProperty = false
 
             console.log("ARRAY PARENT CONTEXT PATH")
             console.log(parentContextPathArray)
 
-            console.log("INTRA PARENT CONTEXT PATH")
+            console.log("INTRA PARENT CONTEXT  PATH")
             console.log(intraParentContextPath)
 
-
             if(finalStep){
-                console.log("FINAL STEP")
+                console.log("FINAL STEP ln 743")
 
                 parentContextPathArray.forEach((path, index) => {
                     if(path == context.parentContextKey){
                         var outputArray = []
                         if(iteratedValues.length > 0 && Array.isArray(iteratedValues[0])){
+                            console.log("ARRAY OF ARRAYS")
                             flattenArray(iteratedValues, mappingOutputDefinition.key).forEach((value, index) => {
                                 var propertyObject = {}
                               
                                 //If there are objects between the last parent context and the final context, we need to nest the property accordingly.
                                 if(intraParentContextPath.length > 0){
-
+                                    console.log("NESTED PROPERTY")
+                                    console.log(intraParentContextPath)
                                     let result = {}
                                     let temp = result
 
                                     for(let i = 0; i < intraParentContextPath.length; i++){
-                                        if(i== intraParentContextPath.length -2){
-                                            console.log("SECOND TO LAST")
+
+                                        if(intraParentContextPath[i] == context.parentContextKey){
+                                            console.log("Parent Array")
                                             console.log(intraParentContextPath[i])
                                             console.log(value)
                                             if(Array.isArray(value)){
@@ -782,6 +811,9 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                                     console.log(result)
                                     propArray.push(result)
                                 } else {
+                                    console.log("NO INTRA PARENT CONTEXT PATH")
+                                    console.log(value)
+                                    
                                     propertyObject = {...propertyObject, ...value}
                                     propArray.push(propertyObject)
                                 }
@@ -789,17 +821,60 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                             })
 
                         } else {
+                            console.log("ARRAY OF OBJECTS OR PROPERTIES")
+                            console.log(iteratedValues)
                             iteratedValues.forEach((value, index) => {
-                                var propertyObject = {}
-                                //If there are objects between the last parent context and the final context, we need to nest the property accordingly.
-                                if(intraParentContextPath.length > 0){
-                                    intraParentContextPath.forEach((path, index) => {
-                                        propertyObject[mappingOutputDefinition.key] = index === intraParentContextPath.length -1 ? value : {};
-                                    })
-                                    propArray.push(propertyObject)
+                                if(typeof value == mappingOutputDefinition.key ){
+
+                                    isInlineProperty = true
+                                    var propertyObject = {}
+                                    var temp = propertyObject
+                                    //If there are objects between the last parent context and the final context, we need to nest the property accordingly.
+                                    if(intraParentContextPath.length > 0){
+                                        console.log("NESTED PROPERTY")
+                                        console.log(intraParentContextPath)
+
+                                        intraParentContextPath.forEach((path, index) => {
+                                           if(path == context.parentContextKey){
+                                               temp[path] = [value]
+                                           } else if (index == intraParentContextPath.length -1){
+                                              //skipping because we've set the value above.
+                                           } else {
+                                                  temp[path] = {}
+                                                  temp = temp[path]
+                                           }
+                                        })
+
+                                        propArray.push(propertyObject)
+                                    } else {
+                                        propertyObject[context.parentContextKey] = [value]
+                                        propArray.push(propertyObject)
+                                    }
                                 } else {
-                                    propertyObject[mappingOutputDefinition.key] = value
-                                    propArray.push(propertyObject)
+                                    var propertyObject = {}
+                                    var temp = propertyObject
+                                    //If there are objects between the last parent context and the final context, we need to nest the property accordingly.
+                                    if(intraParentContextPath.length > 0){
+                                        console.log("NESTED PROPERTY")
+                                        console.log(intraParentContextPath)
+
+                                        intraParentContextPath.forEach((path, index) => {
+                                            console.log("PATH")
+                                            console.log(path)
+                                            temp[path] = index === intraParentContextPath.length -1 ? value : {};
+                                            console.log("TEMP")
+                                            console.log(temp)
+                                            temp = propertyObject[path]
+                                            console.log("Property Object")
+                                            console.log(propertyObject)
+                                        })
+
+                                        propArray.push(propertyObject)
+                                    } else {
+                                        propertyObject[mappingOutputDefinition.key] = value
+                                        propArray.push(propertyObject)
+                                }
+                                
                             }
                             })
                         }
@@ -810,8 +885,25 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                      } else if(index === parentContextPathArray.length -1 && path != context.parentContextKey){
                          
                      }
+                     
+                     if(previousContext && previousContext.contextType == "array" && path == context.parentContextKey){
+                        var pathFromPreviousArrayContextToCurrentContext = contextPathArray.slice(previousContextPathIndex, currentContextIndex+2)
+                        if(pathFromPreviousArrayContextToCurrentContext && pathFromPreviousArrayContextToCurrentContext.length == 2 && propArray && propArray.length > 0){
+                            console.log("Back to Back Arrays. Need to nest the array in the previous array.")
+                            console.log(propArray)
+                            if(!Array.isArray(propArray[0])){
+                                console.log("Prop Array is not a nested array - meaning the parentContext array key can be used as the key for the nested array.")
+                                var nestedArrayObject = {}
+                                nestedArrayObject[previousContext.parentContextKey] = propArray
+                                propArray = [nestedArrayObject]
+                            } else {
+                                //If the propArray is a nested array, then there will be iteration to handle here
+                            }
+                        }
+                     }
+
                      console.log("PROP ARRAY IN FINAL STEP")
-                        console.log(propArray)
+                     console.log(propArray)
                  })
 
                     
@@ -826,11 +918,20 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                          console.log("LAST INDEX")
                      }
                  })
+                 console.log("UPDATED OUTPUT")
+                    console.log(updatedOutput)
+
             }
 
-            var updatedParent = setPropertiesToEmptyObjects(previousStepOutput, propArray)
-
-           return updatedParent
+            if(isInlineProperty && propArray.length == 1 && Array.isArray(propArray[0]) == false){
+                // If the final context is an inline property, and the propArray only contains a single nonArray property...this means the input property is not indexed and all empty output properties should be set to the same value.
+                var updatedParent = setEmptyTerminalObjectsToProperties(previousStepOutput, propArray, false)
+                return updatedParent
+            } else {
+                var updatedParent = setEmptyTerminalObjectsToProperties(previousStepOutput, propArray, true)
+                return updatedParent
+            }
+            
             
         } else {
             // If there is no previous step output, we need to create a new object with the parent context key and an empty array.
@@ -844,7 +945,7 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
             console.log(parentContextPathArray)
 
             if(finalStep){
-                console.log("FINAL STEP")
+                console.log("FINAL STEP ln 859")
 
                 parentContextPathArray.forEach((path, index) => {
                     if(path == context.parentContextKey){
@@ -852,17 +953,24 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                             var propertyObject = {}
                             propertyObject[mappingOutputDefinition.key] = value
                             propArray.push(propertyObject)
-                        })
+                            console.log("PROPERTY OBJECT")
+                            console.log(propertyObject)
+                        })  
 
                         updatedOutput[path] = propArray
 
                      } else if(path != context.parentContextKey && index !== parentContextPathArray.length -1) {
                          updatedOutput[path] = {}
+                         console.log("PROPERTY OBJECT")
+                        console.log(updatedOutput)
                      } else if(index === parentContextPathArray.length -1 && path != context.parentContextKey){
-                         
+                         console.log("LAST INDEX")
+                     } else {
+                            console.log("ELSE")
+                            console.log(path)
                      }
                      console.log("PROP ARRAY IN FINAL STEP")
-                        console.log(propArray)
+                    console.log(propArray)
                  })
 
                     
@@ -871,8 +979,12 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                 parentContextPathArray.forEach((path, index) => {
                     if(path == context.parentContextKey){
                           updatedOutput[path] = []
-                     } else if(path != context.parentContextKey && index !== parentContextPathArray.length -1) {
+                     } else if(path != context.parentContextKey && index !== parentContextPathArray.length -1 && mappingInputDefinition.parentContext.filter((context) => context.parentContextKey == path).length == 0) {
                          updatedOutput[path] = {}
+                     } else if (path != context.parentContextKey && index !== parentContextPathArray.length -1 && mappingInputDefinition.parentContext.filter((context) => context.parentContextKey == path).length > 1) {
+                            if(mappingInputDefinition.parentContext.filter((context) => context.parentContextKey == path)[0].contextType == 'dictionary'){
+                                updatedOutput[path] = {}
+                            }
                      } else if(index === parentContextPathArray.length -1){
                          console.log("LAST INDEX")
                      }
@@ -898,6 +1010,9 @@ function handleInputIteration( context, inputData, parentPath, valuesArray, isDi
        input = valuesArray
     } 
 
+    console.log("INPUT")
+    console.log(input)
+
     if(context.contextType == 'dictionary'){
         var parentContextIndex = inputPathArray.indexOf(context.parentContextKey)
 
@@ -922,14 +1037,45 @@ function handleInputIteration( context, inputData, parentPath, valuesArray, isDi
     } else if (context.contextType == 'array'){
         console.log("Input Array Parent Context")
         console.log(context)
+        console.log("VALUES ARRAY")
+        console.log(valuesArray)
         var parentContextIndex = inputPathArray.indexOf(context.parentContextKey)
         var parentContextPath = inputPathArray.slice(0, parentContextIndex + 1)
         var childContextPathArray = inputPathArray.slice(parentContextIndex + 1)
 
         if(valuesArray.length > 0){
             var arrayValues = []
-            input.forEach((item, index) => {
-                arrayValues.push(parentContextPath.reduce((obj, i) => obj[i], item))
+            console.log("INPUT ARRAY ln 932")
+            console.log(input)
+
+            // Check if the values array is an array of arrays, this would indicate that there was a previous parent context array that's a direct parent.  We'll want to flatten the array in this case.
+            input.filter((item => item !== undefined)).forEach((item, index) => {
+
+                if(Array.isArray(item)){
+                    console.log("Values Array is an array of arrays")
+                    console.log(item)
+                    var updatedArray = []
+                    item.forEach((subItem, index) => {
+                        var parentContext = parentContextPath.reduce((obj, i) => obj[i], subItem)
+                        updatedArray.push(parentContext)
+                    })
+                    arrayValues.push(updatedArray)
+                } else {
+                    console.log("ITEM ln 1029")
+                    console.log(item)
+                    try {
+                        var parentContext = parentContextPath.reduce((obj, i) => obj[i], item)
+                        arrayValues.push(parentContext)
+                    } catch (error) {
+                        console.log("ERROR")
+                        console.log(error)
+                    }
+                    if(parentContext) {
+                        console.log("PARENT CONTEXT")
+                        console.log(parentContext)
+                    }
+                }
+              
             })
             return {values: arrayValues, nextPath: childContextPathArray.join('.')}
             
