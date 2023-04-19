@@ -1,0 +1,1854 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Affinity Documentation Collection",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://{{base_url}}"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Lists"
+    },
+    {
+      "name": "List Entries"
+    },
+    {
+      "name": "Fields"
+    },
+    {
+      "name": "Field Values"
+    },
+    {
+      "name": "Field Value Changes"
+    },
+    {
+      "name": "Persons"
+    },
+    {
+      "name": "Organizations"
+    },
+    {
+      "name": "Opportunities"
+    },
+    {
+      "name": "Interactions"
+    },
+    {
+      "name": "Relationship Strengths"
+    },
+    {
+      "name": "Notes"
+    },
+    {
+      "name": "Entity Files"
+    },
+    {
+      "name": "Reminders"
+    },
+    {
+      "name": "Webhooks"
+    },
+    {
+      "name": "Whoami"
+    },
+    {
+      "name": "Rate Limit"
+    }
+  ],
+  "paths": {
+    "/lists": {
+      "get": {
+        "tags": [
+          "Lists"
+        ],
+        "summary": "Get all lists",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Lists"
+        ],
+        "summary": "Create a New List",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "name": "NAME",
+                  "type": 0,
+                  "is_public": false,
+                  "owner_id": 111,
+                  "additional_permissions": [
+                    {
+                      "internal_person_id": 222,
+                      "role_id": 0
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/lists/{default_list_id}": {
+      "get": {
+        "tags": [
+          "Lists"
+        ],
+        "summary": "Get a specific list",
+        "parameters": [
+          {
+            "name": "default_list_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/lists/{default_list_id}/list-entries": {
+      "get": {
+        "tags": [
+          "List Entries"
+        ],
+        "summary": "Get all list entries",
+        "parameters": [
+          {
+            "name": "default_list_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "List Entries"
+        ],
+        "summary": "Create a new list entry",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entity_id": {
+                    "type": "string",
+                    "description": "The unique id of the person or organization to add to this list. Opportunities cannot be created using this endpoint. See note below."
+                  },
+                  "creator_id": {
+                    "type": "string",
+                    "description": "The id of a Person resource who should be recorded as adding the entry to the list. Must be a person who can access Affinity. If not provided the creator defaults to the owner of the API key."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_list_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/lists/{default_list_id}/list-entries/{default_list_entry_id}": {
+      "get": {
+        "tags": [
+          "List Entries"
+        ],
+        "summary": "Get a specific list entry",
+        "parameters": [
+          {
+            "name": "default_list_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "default_list_entry_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/lists/{default_list_id}/list-entries/{insert_list_entry_id}": {
+      "delete": {
+        "tags": [
+          "List Entries"
+        ],
+        "summary": "Delete a specific list entry",
+        "parameters": [
+          {
+            "name": "default_list_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "insert_list_entry_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/fields": {
+      "get": {
+        "tags": [
+          "Fields"
+        ],
+        "summary": "Get fields",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Fields"
+        ],
+        "summary": "Create a field",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the field."
+                  },
+                  "entity_type": {
+                    "type": "string",
+                    "description": "This describes what type of list this field will be associated with the field. This can be one of three values, see below for all value types."
+                  },
+                  "value_type": {
+                    "type": "string",
+                    "description": "This describes what values can be associated with the field. This can be one of many values, see the Field Resource section for all value types."
+                  },
+                  "list_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the list that the field object belongs to if it is specific to a list. This is null if the field is global."
+                  },
+                  "allows_multiple": {
+                    "type": "string",
+                    "description": "This determines whether multiple values can be added to a single cell for the field."
+                  },
+                  "is_list_specific": {
+                    "type": "string",
+                    "description": "This determines whether the field object belongs to a specific list. If set to true, you must pass in the appropriate list_id."
+                  },
+                  "is_required": {
+                    "type": "string",
+                    "description": "This determines whether the field object is required."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/fields/{insert_field_id}": {
+      "delete": {
+        "tags": [
+          "Fields"
+        ],
+        "summary": "Delete a field",
+        "parameters": [
+          {
+            "name": "insert_field_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/field-values": {
+      "get": {
+        "tags": [
+          "Field Values"
+        ],
+        "summary": "Get field values",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Field Values"
+        ],
+        "summary": "Create a new field value",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "field_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the field (column) that the field value is associated with."
+                  },
+                  "entity_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the entity (person, organization, or opportunity) that the field value is associated with."
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "See the Field Value Resource section for all value types. The value specified must correspond to the value_type of the supplied field."
+                  },
+                  "list_entry_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the list entry (list row) that the field value is associated with. Only specify the list_entry_id if the field that the field value is associated with is list specific."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/field-values/{default_field_value_id}": {
+      "put": {
+        "tags": [
+          "Field Values"
+        ],
+        "summary": "Update a field value",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "See the Field Value Resource section for all value types. The value specified must correspond to the value_type of the supplied field."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_field_value_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/field-values/{insert_field_value_id}": {
+      "delete": {
+        "tags": [
+          "Field Values"
+        ],
+        "summary": "Delete a field value",
+        "parameters": [
+          {
+            "name": "insert_field_value_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/field-value-changes": {
+      "get": {
+        "tags": [
+          "Field Value Changes"
+        ],
+        "summary": "Get field values changes",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/persons": {
+      "get": {
+        "tags": [
+          "Persons"
+        ],
+        "summary": "Search for persons",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Persons"
+        ],
+        "summary": "Create a new person",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "description": "The first name of the person."
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "description": "The last name of the person."
+                  },
+                  "emails[]": {
+                    "type": "string",
+                    "description": "The email addresses of the person. If there are no email addresses, please specify an empty array."
+                  },
+                  "organization_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of organizations that the person is associated with"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/persons/{default_external_person_id}": {
+      "get": {
+        "tags": [
+          "Persons"
+        ],
+        "summary": "Get a specific person",
+        "parameters": [
+          {
+            "name": "default_external_person_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/persons/{default_person_id}": {
+      "put": {
+        "tags": [
+          "Persons"
+        ],
+        "summary": "Update a person",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "description": "The first name of the person."
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "description": "The last name of the person."
+                  },
+                  "emails[]": {
+                    "type": "string",
+                    "description": "The email addresses of the person. If there are no email addresses, please specify an empty array."
+                  },
+                  "organization_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of organizations that the person is associated with"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_person_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/persons/{insert_person_id}": {
+      "delete": {
+        "tags": [
+          "Persons"
+        ],
+        "summary": "Delete a person",
+        "parameters": [
+          {
+            "name": "insert_person_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/persons/fields": {
+      "get": {
+        "tags": [
+          "Persons"
+        ],
+        "summary": "Get global person fields",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/organizations": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Search for organizations",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Create a new organization",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the organization."
+                  },
+                  "domain": {
+                    "type": "string",
+                    "description": "The domain name of the organization."
+                  },
+                  "person_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of persons that the organization will be associated with."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{default_organization_id}": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Get a specific organization",
+        "parameters": [
+          {
+            "name": "default_organization_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Update an organization",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the organization."
+                  },
+                  "domain": {
+                    "type": "string",
+                    "description": "The domain name of the organization."
+                  },
+                  "person_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of persons that the organization will be associated with."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_organization_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{insert_organization_id}": {
+      "delete": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Delete an organization",
+        "parameters": [
+          {
+            "name": "insert_organization_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/organizations/fields": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Get global organizations fields",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/opportunities": {
+      "get": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Search for opportunities",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Create a new opportunity",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the opportunity.",
+                    "example": "meow"
+                  },
+                  "list_id": {
+                    "type": "integer",
+                    "description": "An unique identifier of the list that the new opportunity will be associated with. This list must be of type opportunity.",
+                    "example": "91630"
+                  },
+                  "person_ids[]": {
+                    "type": "integer",
+                    "description": "An array of unique identifiers of persons that the new opportunity will be associated with.",
+                    "example": "65676670"
+                  },
+                  "organization_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of organizations that the new opportunity will be associated with."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/opportunities/{default_opportunity_id}": {
+      "get": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Get a specific opportunity",
+        "parameters": [
+          {
+            "name": "default_opportunity_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Update an opportunity",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the opportunity."
+                  },
+                  "person_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of persons that the opportunity will be associated with."
+                  },
+                  "organization_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of organizations that the opportunity will be associated with."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_opportunity_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/opportunities/{insert_opportunity_id}": {
+      "delete": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Delete an opportunity",
+        "parameters": [
+          {
+            "name": "insert_opportunity_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/interactions": {
+      "get": {
+        "tags": [
+          "Interactions"
+        ],
+        "summary": "Get all interactions",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Interactions"
+        ],
+        "summary": "Create a new interaction",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The type of interaction to be created. Only meetings (type == 0), calls (type == 1) and chat messages (type == 2) are supported."
+                  },
+                  "person_ids[]": {
+                    "type": "string",
+                    "description": "The list of person IDs that are associated with the event. At least one internal person ID must be included (see Person Resource for more details on internal persons)."
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The string containing the content of the new interaction."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The direction of the chat message to be created. Only applies to chat messages (type == 2)."
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "A string (formatted according to ISO 8601) representing the date time the interaction occurred."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/interactions/{default_interaction_id}": {
+      "get": {
+        "tags": [
+          "Interactions"
+        ],
+        "summary": "Get a specific interaction",
+        "parameters": [
+          {
+            "name": "default_interaction_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Interactions"
+        ],
+        "summary": "Update an interaction",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The type of interaction to be updated."
+                  },
+                  "person_ids[]": {
+                    "type": "string",
+                    "description": "The list of person IDs that are associated with the event."
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The string containing the content of the interaction."
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "A string (formatted according to ISO 8601) representing the date time the interaction occurred."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_interaction_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Interactions"
+        ],
+        "summary": "Delete an interaction",
+        "parameters": [
+          {
+            "name": "default_interaction_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/relationships-strengths": {
+      "get": {
+        "tags": [
+          "Relationship Strengths"
+        ],
+        "summary": "Fetch a relationship strength",
+        "parameters": [
+          {
+            "name": "internal_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "The internal person associated with this relationship strength.",
+            "example": "{{default_internal_person_id}}"
+          },
+          {
+            "name": "external_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "The external person associated with this relationship strength.",
+            "example": "{{default_external_person_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/notes": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Get all notes",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create a new note",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "person_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of person objects that are associated with the new note."
+                  },
+                  "organization_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of organization objects that are associated with the new note."
+                  },
+                  "opportunity_ids[]": {
+                    "type": "string",
+                    "description": "An array of unique identifiers of opportunity objects that are associated with the new note."
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The string containing the content of the new note."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of the new note. Defaults to 0. The types 0 and 2 represent plain text and HTML notes, respectively."
+                  },
+                  "parent_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the note to which the newly created note should reply."
+                  },
+                  "creator_id": {
+                    "type": "string",
+                    "description": "The ID of a Person resource who should be recorded as the author of the note. Must be a person who can access Affinity. If not provided the creator defaults to the owner of the API key."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "A string (formatted according to ISO 8601) representing the creation time to be recorded for the note. If not provided, defaults to the current time."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/notes/{default_note_id}": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Get a specific note",
+        "parameters": [
+          {
+            "name": "default_note_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/notes/{notes_id}": {
+      "put": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Update a note",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "The new content of the note."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "notes_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/notes/{insert_note_id}": {
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete a note",
+        "parameters": [
+          {
+            "name": "insert_note_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/entity-files": {
+      "get": {
+        "tags": [
+          "Entity Files"
+        ],
+        "summary": "Get all files",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Entity Files"
+        ],
+        "summary": "Upload files",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "A singular file to be uploaded, formatted as form data (multipart/form-data)."
+                  },
+                  "files": {
+                    "type": "string",
+                    "description": "An array of files to be uploaded, formatted as form data (multipart/form-data)."
+                  },
+                  "person_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the person object to attach the file(s) to."
+                  },
+                  "organization_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the organization object to attach the file(s) to."
+                  },
+                  "opportunity_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the opportunity object to attach the file(s) to."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/entity-files/download/{default_entity_file_id}": {
+      "get": {
+        "tags": [
+          "Entity Files"
+        ],
+        "summary": "Download File",
+        "parameters": [
+          {
+            "name": "default_entity_file_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/reminders": {
+      "get": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Get Reminders",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Create a new reminder",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "owner_id": {
+                    "type": "string",
+                    "description": "A unique identifier that represents an internal person that is assigned to the reminder."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of reminder to be created."
+                  },
+                  "person_id": {
+                    "type": "string",
+                    "description": "A unique identifier that represents a Person that is tagged in the reminder to be created."
+                  },
+                  "organization_id": {
+                    "type": "string",
+                    "description": "A unique identifier that represents an Organization that is tagged in the reminder to be created."
+                  },
+                  "opportunity_id": {
+                    "type": "string",
+                    "description": "A unique identifier that represents an Opportunity that is tagged in the reminder to be created."
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "description": "A string (formatted according to ISO 8601) representing the due date of the reminder to be created. Required when type == 0."
+                  },
+                  "reminder_days": {
+                    "type": "string",
+                    "description": "When a recurring reminder is completed or reset, the number of days before the reminder is due again. Required when type == 1."
+                  },
+                  "reset_type": {
+                    "type": "string",
+                    "description": "The reset type of reminder to be created. Required when type == 1."
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The string containing the content of the new reminder."
+                  },
+                  "is_completed": {
+                    "type": "string",
+                    "description": "Indicator if the reminder has been completed."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{default_reminder_id}": {
+      "get": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Get a specific reminder",
+        "parameters": [
+          {
+            "name": "default_reminder_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Update a reminder",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "owner_id": {
+                    "type": "string",
+                    "description": "A unique identifier that represents an internal person that is assigned to the reminder."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of reminder to be created."
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "description": "A string (formatted according to ISO 8601) representing the due date of the reminder to be created. Required when type == 0."
+                  },
+                  "reminder_days": {
+                    "type": "string",
+                    "description": "When a recurring reminder is completed or reset, the number of days before the reminder is due again. Required when type == 1."
+                  },
+                  "reset_type": {
+                    "type": "string",
+                    "description": "The reset type of reminder to be created. Required when type == 1."
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The string containing the content of the new reminder."
+                  },
+                  "is_completed": {
+                    "type": "string",
+                    "description": "Indicator if the reminder has been completed."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_reminder_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/reminders/{insert_reminder_id}": {
+      "delete": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Delete a reminder",
+        "parameters": [
+          {
+            "name": "insert_reminder_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/webhook": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Get all webhook subscriptions",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/webhook/{default_webhook_subscription_id}": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Get a specific webhook subscription",
+        "parameters": [
+          {
+            "name": "default_webhook_subscription_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Update a webhook subscription",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "webhook_url": {
+                    "type": "string",
+                    "description": "The URL to which the webhooks will be sent to."
+                  },
+                  "subscriptions[]": {
+                    "type": "string",
+                    "description": "An array of webhook events that will be enabled for that endpoint. Leave out this parameter or pass an empty array to subscribe to all webhook events. You can find the complete list of supported webhook events here: https://api-docs.affinity.co/#supported-webhook-events "
+                  },
+                  "disabled": {
+                    "type": "string",
+                    "description": "Change the status of a subscription. To enable a subscription, provide the value as false. Otherwise, provide the value as true."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "default_webhook_subscription_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/webhook/subscribe": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Create a new webhook subscription",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "webhook_url": {
+                    "type": "string",
+                    "description": "The URL to which the webhooks will be sent to."
+                  },
+                  "subscriptions[]": {
+                    "type": "string",
+                    "description": "An array of webhook events that will be enabled for that endpoint. Leave out this parameter or pass an empty array to subscribe to all webhook events. You can find the complete list of supported webhook events here."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/webhook/{insert_webhook_subscription_id}": {
+      "delete": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Delete a specific webhook subscription",
+        "parameters": [
+          {
+            "name": "insert_webhook_subscription_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/auth/whoami": {
+      "get": {
+        "tags": [
+          "Whoami"
+        ],
+        "summary": "Get whoami",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/rate-limit": {
+      "get": {
+        "tags": [
+          "Rate Limit"
+        ],
+        "summary": "Get rate limit information",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

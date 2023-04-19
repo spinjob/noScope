@@ -606,6 +606,10 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
 
             } else if (values[j].requestBody !== undefined && values[j].parameters !== undefined ) {
                 // Request Body and Parameters exist for the Action (i.e. POST, PUT, PATCH)
+                console.log("requestBody and parameters exist (ln 609)");
+                console.log(values[j].summary)
+                console.log(values[j].requestBody);
+                console.log(values[j].parameters);
                 if (values[j].requestBody.content["application/json"] !== undefined) {
                     const parameters = processRequestParameterSchema(processReferences(values[j].parameters), parameterMap, schemaMap)
             
@@ -717,6 +721,8 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
 
                 } else if (values[j].requestBody.content["application/x-www-form-urlencoded"] !== undefined) {
 
+                    console.log("Processing References")
+                    console.log(processReferences(values[j].parameters))
                     const parameters = processRequestParameterSchema(processReferences(values[j].parameters), parameterMap, schemaMap)
   
                     var requestBodyKeys = Object.keys(values[j].requestBody.content["application/x-www-form-urlencoded"].schema);
@@ -2383,5 +2389,6 @@ function convertPostmanCollection(collection, userId){
         console.log(err);
     });
 }
+
 
 module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection};

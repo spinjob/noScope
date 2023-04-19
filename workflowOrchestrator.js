@@ -644,7 +644,6 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
                 dictionaryKeys = adaptedDictionaryKeys
             }
 
-
             // GENERATE DICTIONARY OBJECTS
             var keyPathIndex = parentContextIndex + 1
             var keyPathArray = outputPathArray.slice(0, keyPathIndex)
@@ -664,6 +663,8 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
 
                         var dictionaryKeyIndex = outputPathArray.indexOf(context.dictionaryKey)
                         var postKeyPathArray = outputPathArray.slice(dictionaryKeyIndex + 1)
+
+                        var keyIndex = index
                         
                         keyedObject[key] = {}
 
@@ -672,8 +673,10 @@ function handleOutputIteration (context, inputData, parentPath,  mappings, previ
 
                         // Iterate over the postKeyPathArray and create a new object for each path that isn't the last property in the array.  This handles any nesting.
                         postKeyPathArray.forEach((path, index) => {
+        
+                            console.log(postKeyPathArray)
                             if(index === postKeyPathArray.length -1){
-                                temp[path] = iteratedValues[index]
+                                temp[path] = iteratedValues[keyIndex]
                             } else {
                                 temp[path] = {}
                                 temp = temp[path];
@@ -1042,6 +1045,11 @@ function handleInputIteration( context, inputData, parentPath, valuesArray, isDi
         var parentContextIndex = inputPathArray.indexOf(context.parentContextKey)
         var parentContextPath = inputPathArray.slice(0, parentContextIndex + 1)
         var childContextPathArray = inputPathArray.slice(parentContextIndex + 1)
+        console.log("PARENT CONTEXT PATH")
+        console.log(parentContextPath)
+        console.log("CHILD CONTEXT PATH")
+        console.log(childContextPathArray)
+
 
         if(valuesArray.length > 0){
             var arrayValues = []
@@ -1080,9 +1088,17 @@ function handleInputIteration( context, inputData, parentPath, valuesArray, isDi
             return {values: arrayValues, nextPath: childContextPathArray.join('.')}
             
         } else {
-            var parentContext = parentContextPath.reduce((obj, i) => obj[i], input)
-            var arrayValues = parentContext
-            return {values: arrayValues, nextPath: childContextPathArray.join('.')}
+            try {
+                var parentContext = parentContextPath.reduce((obj, i) => obj[i], input)
+                var arrayValues = parentContext
+                return {values: arrayValues, nextPath: childContextPathArray.join('.')}
+            } catch (error) {
+                console.log("ERROR")
+                console.log(error)
+                return {values: [], nextPath: childContextPathArray.join('.')}
+            }
+            
+            
         }
 
             
