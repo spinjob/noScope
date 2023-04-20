@@ -95,11 +95,11 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
                                         if(mapping.input.parentContext){
                                             if(mapping.input.parentContext.length > 0){
                                                 if (mapping.input.parentContext[0].contextType == 'array'){
-                                                    var adaptedValues = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership,actionMappings)
+                                                    var adaptedValues = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership,actionMappings, logWorkflowUUID, action, traceUUID)
                                                     _.merge(adaptedRequestBodyObject, adaptedValues) 
                                                 }
                                                 if (mapping.input.parentContext[0].contextType == 'dictionary'){
-                                                    var adaptedValues = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership,actionMappings)
+                                                    var adaptedValues = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership,actionMappings,logWorkflowUUID, action, traceUUID)
                                                 
                                                     _.merge(adaptedRequestBodyObject, adaptedValues) 
                                                     console.log("Dictionary adapted values:")
@@ -110,7 +110,7 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
 
                                             }
                                         } else {
-                                            var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership,actionMappings)
+                                            var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations, partnership,actionMappings,logWorkflowUUID, action, traceUUID)
                                             _.merge(adaptedRequestBodyObject, adaptedObject)    
                                         }
                                     }
@@ -120,7 +120,7 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
                             
                                 Object.values(actionMappings).forEach((mapping) => {
                                     if(mapping.output.in == 'header') {
-                                        var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data,partnershipConfigurations, authenticationConfigurations, partnership)
+                                        var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data,partnershipConfigurations, authenticationConfigurations, partnership,logWorkflowUUID, action, traceUUID)
                                         adaptedHeaderObject = {...adaptedHeaderObject, ...adaptedObject}
                                     }
                                 })  
@@ -129,7 +129,7 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
                                     
                                     Object.values(actionMappings).forEach((mapping) => {
                                         if(mapping.output.in == 'path') {
-                                            var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations,partnership)
+                                            var adaptedObject = adaptProperty(mapping.input, mapping.output, input[index].data, partnershipConfigurations, authenticationConfigurations,partnership,logWorkflowUUID, action, traceUUID)
                                             adaptedPathObject = {...adaptedPathObject, ...adaptedObject}
                                         }
                                     }) 
@@ -280,7 +280,7 @@ async function findProject(uuid) {
     }
 }
 
-function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputData, partnershipConfigurations, authenticationConfigurations, partnership, actionMappings){
+function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputData, partnershipConfigurations, authenticationConfigurations, partnership, actionMappings, workflowId, action, traceUUID){
     var formulas = mappingInputDefinition.formulas
 
     // Check if the input value is a configured value. If so, set the output value to the configured value.
@@ -439,9 +439,11 @@ function adaptProperty (mappingInputDefinition, mappingOutputDefinition, inputDa
 
             if (inputData) {
                 try {
-                mappingInputValue = mappingInputPathArray.reduce((obj, i) => obj[i], inputData);
+                    mappingInputValue = mappingInputPathArray.reduce((obj, i) => obj[i], inputData);
                 } catch (error) {
-                console.log("Error accessing property:", error.message);
+                    console.log("Error accessing property:", error.message);
+
+                    logEvent("Input data does not match the documented schema. Please check that the input data schema matches what the API or webhook is providing.", workflowId, action.name, "error", traceUUID)  
                 }
             }
     

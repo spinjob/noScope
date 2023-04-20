@@ -102,6 +102,7 @@ router.post('/upload', (req,res, next) => {
 // CREATE AN INTERFACE
 router.post('/', function(req,res) {
     Interface.create({
+        uuid: crypto.randomUUID(),
         name: req.body.name,
         description: req.body.description,
         version: req.body.version,
