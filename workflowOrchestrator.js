@@ -24,8 +24,8 @@ mongoose.connect(url, {
 async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUID){
     const workflowActionNodes = workflow.nodes.filter((node) => node.type === 'action')
     const workflowMappings = workflow.definition.mappings
-    const actionApi = apis.filter((api) => api.uuid === workflowActionNodes[0].data.selectedAction.parent_interface_uuid)[0]
-    const productionServer = actionApi.production_server
+    //const actionApi = apis.filter((api) => api.uuid === workflowActionNodes[0].data.selectedAction.parent_interface_uuid)[0]
+    
     const partnership = await findProject(workflow.parent_project_uuid);
     const partnershipConfigurations = partnership?.configuration && Object.keys(partnership?.configuration).length > 0 ? partnership?.configuration : null
     const input = {
@@ -42,6 +42,9 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
         let promiseChain = Promise.resolve();
         
         workflowActionNodes.forEach((actionNode, index) => {
+            const actionApi = apis.filter((api) => api.uuid === actionNode.data.selectedAction.parent_interface_uuid)[0]
+            const productionServer = apis.filter((api) => api.uuid === actionNode.data.selectedAction.parent_interface_uuid)[0].production_server
+
             promiseChain = promiseChain.then(() => {
                 return new Promise((resolve, reject) => {
                         if(input[index].result == 'failure'){
@@ -151,12 +154,13 @@ async function triggerWorkflow (workflow, apis, environment, inputJSON, traceUUI
                             if (authenticationConfigurations && authenticationConfigurations.tokenData?.token){
                                 const { tokenData } = authenticationConfigurations
                                 const { token, tokenType, expiresIn } = tokenData
+                                const formattedTokenType = tokenType == 'bearer' ? 'Bearer' : tokenType
                                 const currentTime = new Date().getTime()
                                 const tokenExpirationTime = currentTime + (expiresIn * 1000)
                                 if (tokenExpirationTime < currentTime){
                                     console.log("Token Expired")
                                 } else {
-                                    adaptedHeaderObject['Authorization'] = `${tokenType} ${token}`;
+                                    adaptedHeaderObject['Authorization'] = `${formattedTokenType} ${token}`;
 
                                 }
                             }
