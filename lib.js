@@ -522,20 +522,29 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
             var actionUUID = crypto.randomUUID();
             
             //Adapt the Path+Method (i.e. Action) Responses into an Array
-            var responseKeys = Object.keys(values[j].responses);
-            var responseValues = Object.values(values[j].responses);
+            var responseKeys = values[j].responses ? Object.keys(values[j].responses) : [];
+            var responseValues = values[j].responses ? Object.values(values[j].responses) : [];
             var responsesArray = [];
             var responseSchemaArray = [];
 
             for (var k = 0; k < responseKeys.length; ++k){
+                console.log("RESPONSE VALUES")
+                console.log(responseValues[k])
+
                 if (responseValues[k].content !== undefined) {
                     var responseSchema = responseValues[k].content["application/json"].schema;
                     responseSchemaArray.push(responseSchema);
+                    console.log("RESPONSE SCHEMA")
+                    console.log(responseSchema)
                     var response = {
                         "http_status_code": responseKeys[k],
                         "content_type": "json",
                         "schema": processRequestBodySchema("action",responseSchemaArray, parent_interface_uuid, schemaMap, "response")                    
                     }
+                    console.log("PATH")
+                    console.log(path)
+                    console.log("RESPONSE")
+                    console.log(response)
 
                     responsesArray.push(response);
         
@@ -610,7 +619,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                 console.log(values[j].summary)
                 console.log(values[j].requestBody);
                 console.log(values[j].parameters);
-                if (values[j].requestBody.content["application/json"] !== undefined) {
+                if (values[j].requestBody && values[j].requestBody.content && values[j].requestBody.content["application/json"] !== undefined) {
                     const parameters = processRequestParameterSchema(processReferences(values[j].parameters), parameterMap, schemaMap)
             
                     var requestBodyKeys = Object.keys(values[j].requestBody.content["application/json"].schema);
@@ -719,7 +728,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                         });  
                     }
 
-                } else if (values[j].requestBody.content["application/x-www-form-urlencoded"] !== undefined) {
+                } else if (values[j] && values[j].requestBody && values[j].requestBody.content && values[j].requestBody.content["application/x-www-form-urlencoded"] !== undefined) {
 
                     console.log("Processing References")
                     console.log(processReferences(values[j].parameters))
@@ -1396,6 +1405,10 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
     var schemaArray = []
     var inlineSchemaProperties = []
 
+    console.log("Processing Request Body Schema: ")
+    console.log(schemas)
+
+
     //This will build our two input arrays for their respective for loops.
     for (var i = 0; i < schemas.length; ++i) {
         
@@ -1436,7 +1449,12 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
             inlineSchema = {...inlineSchema, ...schemaProperties}
 
         } else if (schemaValues.items && schemaValues.type == 'array'){
-                // console.log("Top Level Array Schema")
+            //If the schema is an array, we'll need to process it differently.
+                var propertyKeys = Object.keys(schemaValues.items.properties);
+                var propertyValues = Object.values(schemaValues.items.properties);
+                var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, schemaKey, schemaMapCopy, true, version);
+
+
         } else {
             //If the schema doesn't have a properties object, we'll need to process it differently.
             schemaValues = Object.assign(schemaObject, schemaValues);
@@ -1444,10 +1462,20 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
 
     }
 
+    console.log("Inline Schema Processed: ")
+    console.log(inlineSchema)
+    console.log("Inline Schema Properties: ")
+    console.log(inlineSchemaProperties)
+
     //This for loop will not assume a reference and will build out the schema object from the inline properties.
     for (var i = 0; i < inlineSchemaProperties.length; ++i){
 
+        console.log("Processing Inline Schema Properties:")
+        console.log(inlineSchemaProperties[i])
+
         if(inlineSchemaProperties[i] && inlineSchemaProperties[i].properties){
+            console.log("Processing Inline Schema Properties with Properties:")
+            console.log(inlineSchemaProperties[i].properties)
             var propertyKeys = Object.keys(inlineSchemaProperties[i].properties);
             var propertyValues = Object.values(inlineSchemaProperties[i].properties);
             var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, null, schemaMap, true, version);
@@ -1462,9 +1490,35 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
                     inlineSchema = {...inlineSchema, ...schemaProperties}
                 }
             }
+        } else if(inlineSchemaProperties[i] && inlineSchemaProperties[i].items && inlineSchemaProperties[i].items.properties){
+            console.log("Processing Inline Schema Properties with Items and Properties:")
+            console.log(inlineSchemaProperties[i].items.properties)
+
+            var propertyKeys = Object.keys(inlineSchemaProperties[i].items.properties);
+            var propertyValues = Object.values(inlineSchemaProperties[i].items.properties);
+            var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, null, schemaMap, true, version);
+            var schemaPropertyKeys = Object.keys(schemaProperties);
+            var schemaPropertyValues = Object.values(schemaProperties);
+
+            console.log("top level array propertyKeys:") 
+            console.log(propertyKeys)
+            console.log("top level array propertyValues: ")
+            console.log(propertyValues)
+
+            // if the inline schema has properties defined already (i.e. if it has the same key as a refernced property already added to the inlineSchema) we'll ensure we are only adding properties and not overwriting
+            for (var i = 0; i < schemaPropertyKeys.length; ++i){
+                if(inlineSchema[schemaPropertyKeys[i]]){
+                    inlineSchema[schemaPropertyKeys[i]].properties = {...inlineSchema[schemaPropertyKeys[i]].properties, ...schemaPropertyValues[i].properties}
+                } else {
+                    inlineSchema = {...inlineSchema, ...schemaProperties}
+                }
+            }
+
+           
         }
     }
-    
+    console.log("Inline Schema Processed: ")
+    console.log(inlineSchema)
     return inlineSchema;
 
 }
@@ -1480,8 +1534,11 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                 var propertyValue = propertyValues[i];
 
                 //Check for infinite loop and return an empty object if one is detected.
-                if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers" || parentPath?.includes(propertyKey)){
+                // REMOVED FOR NOW -- || parentPath?.includes(propertyKey)
+                if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers"){
                     console.log("Infinite Loop Detected: " + parentSchema + " and " + propertyKey + " reference loop.")
+                    console.log("Parent Path")
+                    console.log(parentPath)
                     return {};
                 }
                 //Check if the property is a reference to another schema.
@@ -1527,7 +1584,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     }
 
                 }
-                  else if (propertyValue.type == 'object' && propertyValue.properties){
+                  else if (propertyValue.type == 'object' && propertyValue.properties && Object.keys(propertyValue.properties).length > 0){
                     // console.log("Object Detected: " + propertyKey)
                     // console.log("Property Key: " + propertyKey)
                     // console.log("Property Value: ")
@@ -1579,6 +1636,8 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     }
                 } else if (propertyValue.type == 'array'){
 
+                    console.log("Array Detected: " + propertyKey)
+
                     var propertyObject = {};
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
 
@@ -1624,6 +1683,14 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                             "type": propertyValue.items.type ? propertyValue.items.type : null,
                             schemaName: 'inlineSchema'
                         }
+
+                        if(propertyValue.items.properties){
+                            var nestedPropertyKeys = Object.keys(propertyValue.items.properties);
+                            var nestedPropertyValues = Object.values(propertyValue.items.properties);
+                            var mappedPropertyValueNestedProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyKey, schemaMap, false, version, parentPath + "." + propertyKey);
+                            itemsSchemaObject.properties = mappedPropertyValueNestedProperties;
+                        }
+
                         propertyObject[propertyKey].items = itemsSchemaObject;
                         //schemaProperties = Object.assign(schemaProperties, propertyObject);
                         schemaProperties = {...schemaProperties, ...propertyObject}
