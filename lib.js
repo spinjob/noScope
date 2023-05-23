@@ -17,6 +17,10 @@ const outputFile = 'openApi.json'
 const fs = require('fs');
 const yaml = require('js-yaml');
 
+const {PineconeClient} = require('@pinecone-database/pinecone');
+const {Configuration, OpenAIApi } = require("openai");
+
+
 function processOpenApiV3(json, userId, orgId, jobId) {
 
     var schemaKeys = [];
@@ -2457,5 +2461,175 @@ function convertPostmanCollection(collection, userId){
     });
 }
 
+async function upsertVectors(vectors) {
+    const pinecone = new PineconeClient();
 
-module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection};
+    console.log("Upserting vectors")
+    console.log(vectors)
+
+    try {
+      await pinecone.init({
+        environment: 'us-central1-gcp',
+        apiKey: process.env.REACT_APP_PINECONE_API_KEY
+      });
+      console.log('Pinecone client initialized');
+  
+      const index = pinecone.Index('api-index');
+      const upsertRequest = {
+        vectors: vectors
+      };
+  
+      const response = await index.upsert({ upsertRequest });
+      console.log(response);
+  
+      return {
+        status: "Success",
+        message: "Vectors upserted successfully",
+        data: response
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        status: "Error",
+        message: error
+      };
+    }
+  }
+
+async function processApiForVectorDb(apiSpec) {
+
+    let api_uuid = apiSpec.uuid;
+    let openAiConfiguration = new Configuration({
+        apiKey: process.env.REACT_APP_OPENAPI_API_KEY
+    })
+    const openai = new OpenAIApi(openAiConfiguration);
+ 
+    // Chunk the spec into smaller pieces
+    async function chunkAndEmbedSpec() {
+        let vectors = [];
+      
+        async function processChunk(text, metadataType) {
+          if (text.length > 8191) {
+            for (let i = 0; i < text.length; i += 8191) {
+              let chunk = text.slice(i, i + 8191);
+              let vectorObject = await generateEmbeddings(chunk, metadataType);
+              vectors.push(vectorObject);
+            }
+          } else {
+            let vectorObject = await generateEmbeddings(text, metadataType);
+            vectors.push(vectorObject);
+          }
+        }
+      
+        let actions = apiSpec.actions || {};
+        let security = apiSpec.security || {};
+        let webhooks = apiSpec.webhooks || {};
+        let documentation = apiSpec.documentation || {};
+        let integrationFlows = apiSpec.integration_flows || {};
+      
+        let actionPromises = Object.values(actions).map((action) => {
+          let text = "API-ACTION:  " + JSON.stringify(action);
+          return processChunk(text, "http_action");
+        });
+      
+        let securityPromises = Object.values(security).map((sec) => {
+          let text = "API-SECURITY:  " + JSON.stringify(sec);
+          return processChunk(text, "api_authentication");
+        });
+      
+        let webhookPromises = Object.values(webhooks).map((webhook) => {
+          let text = "API-WEBHOOK:  " + JSON.stringify(webhook);
+          return processChunk(text, "api_webhook");
+        });
+      
+        let documentationPromises = Object.values(documentation).map((doc) => {
+          let text = "API-DOCUMENTATION:  " + JSON.stringify(doc);
+          return processChunk(text, "api_documentation");
+        });
+      
+        let integrationFlowPromises = Object.values(integrationFlows).map((flow) => {
+          let text = "API-INTEGRATION-FLOW:  " + JSON.stringify(flow);
+          return processChunk(text, "api_integration_flow");
+        });
+      
+        await Promise.all([
+          ...actionPromises,
+          ...securityPromises,
+          ...webhookPromises,
+          ...documentationPromises,
+          ...integrationFlowPromises
+        ]);
+      
+        return vectors;
+      }
+    // Generate embeddings for each chunk
+    async function generateEmbeddings(chunk, metadataType) {
+        let vectorObjectId = crypto.randomUUID();
+        let vectorObject;
+      
+        try {
+          let response = await openai.createEmbedding({
+            model: 'text-embedding-ada-002',
+            input: chunk
+          });
+          
+          let vectors = response.data.data[0].embedding;
+      
+          vectorObject = {
+            id: vectorObjectId,
+            values: vectors,
+            metadata: {
+              api_uuid: api_uuid,
+              metadata_type: metadataType,
+              text: chunk
+            }
+          };
+      
+          console.log(vectorObject);
+        } catch (error) {
+          console.log(error.response.data.error);
+      
+          vectorObject = {
+            id: vectorObjectId,
+            values: [],
+            metadata: {
+              api_uuid: api_uuid,
+              metadata_type: metadataType,
+              text: chunk
+            }
+          };
+        }
+      
+        return vectorObject;
+      }
+      
+    return new Promise((resolve, reject) => {
+        chunkAndEmbedSpec()
+          .then((vectors) => {
+            console.log("Vectors: " + vectors.length);
+            upsertVectors(vectors)
+              .then((result) => {
+                console.log("Result");
+                console.log(result);
+                resolve(result);
+              })
+              .catch((err) => {
+                console.log(err);
+                reject({
+                  status: "Error",
+                  message: err
+                });
+              });
+          })
+          .catch((err) => {
+            console.log(err);
+            reject({
+              status: "Error",
+              message: err
+            });
+          });
+      });
+   
+}
+
+module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection, processApiForVectorDb};

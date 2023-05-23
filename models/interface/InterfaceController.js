@@ -3,12 +3,17 @@ var router = express.Router();
 router.use(express.urlencoded({extended: true}));
 router.use(express.json());
 var Interface = require('./Interface');
+var InterfaceAction = require('../interface_action/InterfaceAction');
+var InterfaceWebhook = require('../interface_webhook/InterfaceWebhook');
+var InterfaceSecurityScheme = require('../interface_security_scheme/InterfaceSecurityScheme');
+
 const lib = require('../../lib.js')
 const crypto = require('crypto');
 const User = require('../user/User');
 const Job = require('../job/Job');
 const {verifyUser} = require('../../authenticate.js');
 const mailchimp = require('@mailchimp/mailchimp_marketing');
+const {PineconeClient} = require('@pinecone-database/pinecone');
 
 // IMPORT AN INTERFACE FROM SWAGGER
 router.post('/upload', (req,res, next) => {
@@ -106,14 +111,14 @@ router.post('/', function(req,res) {
         name: req.body.name,
         description: req.body.description,
         version: req.body.version,
-        owning_organization: req.body.organizationId
+        owning_organization: req.body.organizationId,
+        indexed: false
     },
     function (err,interface) {
         if (err) return res.status(500).send("There was a problem adding the information to the database.");
         res.status(200).send(interface);
     });
 });
-
 
 
 //GET ALL INTERFACES (NO USER AUTH)
@@ -160,6 +165,121 @@ router.put('/:id/servers', function(req,res){
   });
 });
 
+router.post('/:id/query', function(req,res){
+    const pinecone = new PineconeClient();
+    const embeddings = req.body.embeddings;
 
+    // Query Pinecone
+    pinecone.init({
+        environment: 'us-central1-gcp',
+        apiKey: '5fa49b09-228a-4f50-8b40-286772b0a52f'
+    }).then(() => {
+        console.log('Pinecone client initialized')
+        
+        const index = pinecone.Index('api-index')
+        
+        const queryRequest = {
+            vector: embeddings,
+            topK: 10,
+            includeValues: false,
+            includeMetadata: true,
+            filter: {
+                api_uuid: req.params.id
+            }
+          };
+
+        index.query({queryRequest}).then((response) => {
+            console.log(response)
+
+            res.status(200).send(response)
+        }).catch((err) => {
+            console.log(err)
+            res.status(500).send(err)
+        })
+
+    }).catch((err) => {
+        console.log(err)
+        res.status(500).send(err)
+    })
+});
+
+router.post('/:id/embed', function(req,res){
+
+    let actions = [];
+    let webhooks= [];
+    let securitySchemes = [];
+    
+    // Promise-based function to get API Actions
+    const getActions = () => {
+        return new Promise((resolve, reject) => {
+        InterfaceAction.find({ parent_interface_uuid: req.params.id }, function (err, interfaceActions) {
+            if (err) reject(err);
+            else resolve(interfaceActions);
+        });
+        });
+    };
+  
+
+    // Promise-based function to get API Webhooks
+    const getWebhooks = () => {
+        return new Promise((resolve, reject) => {
+        InterfaceWebhook.find({ parent_interface_uuid: req.params.id }, function (err, interfaceWebhooks) {
+            if (err) reject(err);
+            else resolve(interfaceWebhooks);
+        });
+        });
+    };
+
+    // Promise-based function to get API Security Schemes
+    const getSecuritySchemes = () => {
+        return new Promise((resolve, reject) => {
+        InterfaceSecurityScheme.find({ parent_interface_uuid: req.params.id }, function (err, interfaceSecuritySchemes) {
+            if (err) reject(err);
+            else resolve(interfaceSecuritySchemes);
+        });
+        });
+    };
+    
+    // Execute all asynchronous operations using Promise.all
+    Promise.all([getActions(), getWebhooks(), getSecuritySchemes()])
+    .then(([interfaceActions, interfaceWebhooks, interfaceSecuritySchemes]) => {
+        actions = interfaceActions;
+        webhooks = interfaceWebhooks;
+        securitySchemes = interfaceSecuritySchemes;
+
+        let api_spec = {
+            actions: actions,
+            webhooks: webhooks,
+            security: securitySchemes,
+            uuid: req.params.id,
+        };
+
+        lib.processApiForVectorDb(api_spec).then((results) => {
+
+            if(results && results.status !== 'Error'){
+                console.log(results)
+                res.status(200).send(results)
+
+                Interface.findOneAndUpdate({uuid: req.params.id}, {"indexed": true}, {new: true}, function(err,interface) {
+                    if(err) console.log(err)
+                    else console.log("Interface updated successfully")
+                });
+
+            } else {
+                console.log(results)
+                res.status(500).send(results)
+            }
+                
+        }).catch((err) => {
+            console.log(err)
+            res.status(500).send(err)
+        })
+    })
+    .catch((error) => {
+        console.error(error);
+        res.status(500).send("An error occurred while generating the API spec.");
+    });
+
+})
 
 module.exports = router;
