@@ -2541,12 +2541,15 @@ async function processApiForVectorDb(apiSpec) {
           let text = "API-WEBHOOK:  " + JSON.stringify(webhook);
           return processChunk(text, "api_webhook");
         });
-      
-        let documentationPromises = Object.values(documentation).map((doc) => {
-          let text = "API-DOCUMENTATION:  " + JSON.stringify(doc);
-          return processChunk(text, "api_documentation");
-        });
-      
+    
+        let documentationPromises = Object.keys(documentation).map((docKey) =>{
+            console.log(docKey)
+            console.log(documentation[docKey])
+            let doc = documentation[docKey];
+            let text = "ADDITIONAL_DOCUMENTATION :" + JSON.stringify(doc);
+            return processChunk(text, docKey+"_documentation");
+        })
+
         let integrationFlowPromises = Object.values(integrationFlows).map((flow) => {
           let text = "API-INTEGRATION-FLOW:  " + JSON.stringify(flow);
           return processChunk(text, "api_integration_flow");
@@ -2585,7 +2588,7 @@ async function processApiForVectorDb(apiSpec) {
             }
           };
       
-          console.log(vectorObject);
+        //   console.log(vectorObject);
         } catch (error) {
           console.log(error.response.data.error);
       
@@ -2606,11 +2609,11 @@ async function processApiForVectorDb(apiSpec) {
     return new Promise((resolve, reject) => {
         chunkAndEmbedSpec()
           .then((vectors) => {
-            console.log("Vectors: " + vectors.length);
+            // console.log("Vectors: " + vectors.length);
             upsertVectors(vectors)
               .then((result) => {
-                console.log("Result");
-                console.log(result);
+                // console.log("Result");
+                // console.log(result);
                 resolve(result);
               })
               .catch((err) => {

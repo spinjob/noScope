@@ -157,6 +157,14 @@ router.put('/:id', function(req,res){
     });
 });
 
+router.put('/:id/documentation', function(req,res){
+    Interface.findOneAndUpdate({uuid: req.params.id}, {"documentation": req.body.documentation}, {new: true}, function(err,interface) {
+        if (err) return res.status(500).send("There was a problem updating the interface's documentation.");
+        res.status(200).send(interface);
+    });
+});
+
+
 // UPDATE AN INTERFACE'S SERVERS
 router.put('/:id/servers', function(req,res){ 
   Interface.findOneAndUpdate({uuid: req.params.id}, {"sandbox_server": req.body.sandboxServer, "production_server": req.body.productionServer,"credentials":req.body.credentials}, {new: true}, function(err,interface) {
@@ -172,7 +180,7 @@ router.post('/:id/query', function(req,res){
     // Query Pinecone
     pinecone.init({
         environment: 'us-central1-gcp',
-        apiKey: '5fa49b09-228a-4f50-8b40-286772b0a52f'
+        apiKey: process.env.REACT_APP_PINECONE_API_KEY
     }).then(() => {
         console.log('Pinecone client initialized')
         
@@ -239,20 +247,41 @@ router.post('/:id/embed', function(req,res){
         });
         });
     };
+
+    const getOpsDocumentation = () => {
+        return new Promise((resolve, reject) => {
+        Interface.findOne({ uuid: req.params.id }, function (err, interface) {
+            if (err) reject(err);
+            console.log("Interface: ")
+            console.log(interface)
+            if(interface && interface.documentation) resolve(interface.documentation);
+            else resolve({});
+        });
+        });
+    };
     
     // Execute all asynchronous operations using Promise.all
-    Promise.all([getActions(), getWebhooks(), getSecuritySchemes()])
-    .then(([interfaceActions, interfaceWebhooks, interfaceSecuritySchemes]) => {
+    Promise.all([getActions(), getWebhooks(), getSecuritySchemes(), getOpsDocumentation()])
+    .then(([interfaceActions, interfaceWebhooks, interfaceSecuritySchemes, interfaceDocumentation]) => {
         actions = interfaceActions;
         webhooks = interfaceWebhooks;
         securitySchemes = interfaceSecuritySchemes;
+        documentation = interfaceDocumentation;
+
+        Object.keys(interfaceDocumentation).map((documentationGroupKey) =>{
+            let documentationString = documentationGroupKey + ' Context: ' + interfaceDocumentation[documentationGroupKey].text.replace(/\n/g, '')
+            documentation[key] = documentationString
+        })
 
         let api_spec = {
             actions: actions,
             webhooks: webhooks,
             security: securitySchemes,
+            documentation: documentation,
             uuid: req.params.id,
         };
+
+        console.log(api_spec)
 
         lib.processApiForVectorDb(api_spec).then((results) => {
 

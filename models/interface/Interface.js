@@ -16,6 +16,7 @@ var InterfaceSchema = new mongoose.Schema({
     owning_organization: String,
     jobIds: Array,
     indexed: Boolean,
+    documentation: Object
 });
 
 mongoose.model('Interface', InterfaceSchema);
