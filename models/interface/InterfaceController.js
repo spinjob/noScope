@@ -6,6 +6,8 @@ var Interface = require('./Interface');
 var InterfaceAction = require('../interface_action/InterfaceAction');
 var InterfaceWebhook = require('../interface_webhook/InterfaceWebhook');
 var InterfaceSecurityScheme = require('../interface_security_scheme/InterfaceSecurityScheme');
+var InterfaceParameter = require('../interface_parameter/InterfaceParameter');
+var InterfaceEntity = require('../interface_entity/InterfaceEntity');
 
 const lib = require('../../lib.js')
 const crypto = require('crypto');
@@ -192,30 +194,70 @@ router.post('/:id/query', function(req,res){
             includeValues: false,
             includeMetadata: true,
             filter: {
-                api_uuid: req.params.id
+                api_uuid: req.params.id,
             }
-          };
+          }
 
         index.query({queryRequest}).then((response) => {
+            console.log("Pinecone Query Response: ")
             console.log(response)
-
-            res.status(200).send(response)
+            res.status(200).send(response.matches)
         }).catch((err) => {
             console.log(err)
             res.status(500).send(err)
         })
 
-    }).catch((err) => {
-        console.log(err)
-        res.status(500).send(err)
-    })
+            // const queryGroup = (metadataType) => {
+            //     const queryRequest = {
+            //         vector: embeddings,
+            //         topK: 10,
+            //         includeValues: false,
+            //         includeMetadata: true,
+            //         filter: {
+            //             api_uuid: req.params.id,
+            //             metadata_type: metadataType
+            //         }
+            //     }
+            //     return new Promise((resolve, reject) => {
+            //         index.query({queryRequest}).then((response) => {
+            //             console.log(response)
+            //             resolve(response)
+            //         }).catch((err) => {
+            //             console.log(err)
+            //             reject(err)
+            //         })
+            //     })
+            // }
+
+            // Promise.all([queryGroup('http_action'), queryGroup('api_webhook'), queryGroup('api_authentication', queryGroup('additional_documentation'), queryGroup('base_urls'))]).then((values) => {
+                
+            //     const passingMatches = []
+            //     const similarityThreshold = process.env.PINECONE_QUERY_SIMILARITY_THRESHOLD ? process.env.PINECONE_QUERY_SIMILARITY_THRESHOLD : 0.70
+
+            //     values.forEach((value) => {
+            //         value.matches.forEach((match) => {
+            //             if (match.score >= similarityThreshold) {
+            //                 passingMatches.push(match)
+            //             }
+            //         })
+            //     })
+            //     res.status(200).send(passingMatches)
+
+
+            // }).catch((err) => {
+            //     console.log(err)
+            //     res.status(500).send(err)
+            // })
+            
+        }).catch((err) => {
+            console.log(err)
+            res.status(500).send(err)
+        })
+        
+
 });
 
 router.post('/:id/embed', function(req,res){
-
-    let actions = [];
-    let webhooks= [];
-    let securitySchemes = [];
     
     // Promise-based function to get API Actions
     const getActions = () => {
@@ -248,29 +290,50 @@ router.post('/:id/embed', function(req,res){
         });
     };
 
-    const getOpsDocumentation = () => {
+    const getInterfaceEntities = () => {
+        return new Promise((resolve, reject) => {
+        InterfaceEntity.find({ parent_interface_uuid: req.params.id }, function (err, interfaceEntities) {
+            if (err) reject(err);
+            else resolve(interfaceEntities);
+        });
+        });
+    };
+
+    const getInterfaceParameters = () => {
+        return new Promise((resolve, reject) => {
+        InterfaceParameter.find({ parent_interface_uuid: req.params.id }, function (err, interfaceParameters) {
+            if (err) reject(err);
+            else resolve(interfaceParameters);
+        });
+        });
+    };
+
+    const getInterface = () => {
         return new Promise((resolve, reject) => {
         Interface.findOne({ uuid: req.params.id }, function (err, interface) {
             if (err) reject(err);
             console.log("Interface: ")
             console.log(interface)
-            if(interface && interface.documentation) resolve(interface.documentation);
+            if(interface) resolve(interface);
             else resolve({});
         });
         });
     };
     
     // Execute all asynchronous operations using Promise.all
-    Promise.all([getActions(), getWebhooks(), getSecuritySchemes(), getOpsDocumentation()])
-    .then(([interfaceActions, interfaceWebhooks, interfaceSecuritySchemes, interfaceDocumentation]) => {
-        actions = interfaceActions;
-        webhooks = interfaceWebhooks;
-        securitySchemes = interfaceSecuritySchemes;
-        documentation = interfaceDocumentation;
+    Promise.all([getActions(), getWebhooks(), getSecuritySchemes(), getInterface(), getInterfaceEntities(), getInterfaceParameters()])
+    .then(([interfaceActions, interfaceWebhooks, interfaceSecuritySchemes, interface, interfaceEntities, interfaceParameters]) => {
+        let actions = interfaceActions;
+        let webhooks = interfaceWebhooks;
+        let securitySchemes = interfaceSecuritySchemes;
+        let documentation = interface.documentation ? interface.documentation : {};
+        let entities = interfaceEntities;
+        let parameters = interfaceParameters;
 
-        Object.keys(interfaceDocumentation).map((documentationGroupKey) =>{
-            let documentationString = documentationGroupKey + ' Context: ' + interfaceDocumentation[documentationGroupKey].text.replace(/\n/g, '')
-            documentation[key] = documentationString
+
+        Object.keys(documentation).map((documentationGroupKey) =>{
+            let documentationString = documentationGroupKey + ' Context: ' + documentation[documentationGroupKey].text.replace(/\n/g, '')
+            documentation[documentationGroupKey] = documentationString
         })
 
         let api_spec = {
@@ -278,10 +341,14 @@ router.post('/:id/embed', function(req,res){
             webhooks: webhooks,
             security: securitySchemes,
             documentation: documentation,
+            entities: entities,
+            parameters: parameters,
+            base_urls: {
+                sandbox: interface.sandbox_server,
+                production: interface.production_server
+            },
             uuid: req.params.id,
         };
-
-        console.log(api_spec)
 
         lib.processApiForVectorDb(api_spec).then((results) => {
 

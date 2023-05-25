@@ -2463,10 +2463,11 @@ function convertPostmanCollection(collection, userId){
 
 async function upsertVectors(vectors) {
     const pinecone = new PineconeClient();
-
-    console.log("Upserting vectors")
-    console.log(vectors)
-
+    const MAX_BATCH_SIZE = 100;
+  
+    console.log("Upserting vectors");
+    console.log(vectors);
+  
     try {
       await pinecone.init({
         environment: 'us-central1-gcp',
@@ -2475,17 +2476,21 @@ async function upsertVectors(vectors) {
       console.log('Pinecone client initialized');
   
       const index = pinecone.Index('api-index');
-      const upsertRequest = {
-        vectors: vectors
-      };
   
-      const response = await index.upsert({ upsertRequest });
-      console.log(response);
-  
+      // Split vectors into batches
+      for (let i = 0; i < vectors.length; i += MAX_BATCH_SIZE) {
+        const batch = vectors.slice(i, i + MAX_BATCH_SIZE);
+        const upsertRequest = {
+          vectors: batch
+        };
+    
+        const response = await index.upsert({ upsertRequest });
+        console.log(response);
+      }
+    
       return {
         status: "Success",
-        message: "Vectors upserted successfully",
-        data: response
+        message: "Vectors upserted successfully"
       };
     } catch (error) {
       console.log(error);
@@ -2508,15 +2513,15 @@ async function processApiForVectorDb(apiSpec) {
     async function chunkAndEmbedSpec() {
         let vectors = [];
       
-        async function processChunk(text, metadataType) {
+        async function processChunk(text, metadataType, uuid, chunkLabel) {
           if (text.length > 8191) {
             for (let i = 0; i < text.length; i += 8191) {
               let chunk = text.slice(i, i + 8191);
-              let vectorObject = await generateEmbeddings(chunk, metadataType);
+              let vectorObject = await generateEmbeddings(chunk, metadataType, uuid+"_"+i);
               vectors.push(vectorObject);
             }
           } else {
-            let vectorObject = await generateEmbeddings(text, metadataType);
+            let vectorObject = await generateEmbeddings(text, metadataType, uuid);
             vectors.push(vectorObject);
           }
         }
@@ -2525,49 +2530,79 @@ async function processApiForVectorDb(apiSpec) {
         let security = apiSpec.security || {};
         let webhooks = apiSpec.webhooks || {};
         let documentation = apiSpec.documentation || {};
-        let integrationFlows = apiSpec.integration_flows || {};
+        let base_urls = apiSpec.base_urls || {};
+        let entities = apiSpec.entities || {};
+        let parameters = apiSpec.parameters || {};
+
       
         let actionPromises = Object.values(actions).map((action) => {
-          let text = "API-ACTION:  " + JSON.stringify(action);
-          return processChunk(text, "http_action");
+            console.log(action.name)
+            let actionSummary = "The " +action.name+ " request is made by using the " + action.method + " method on this endpoint " + action.path +"." 
+            let parameterSchemaSummary =  action.parameterSchema ? " This request supports header and/or path parameters as described in this JSON object: " + JSON.stringify(action.parameterSchema) : " This request has no header or path parameters documented."  
+            let requestBodySchemaSummary = action.requestBody2 ? " This request also supports a request body described by this JSON object: " + JSON.stringify(action.requestBody2) : " This request does not have documented support for a request body."
+            let responsesSummary = action.responses ? " This request supports the following responses: " + JSON.stringify(action.responses) : " This request does not have documented details for the expected responses."
+            
+            let text = action.name + ": " + actionSummary + parameterSchemaSummary + requestBodySchemaSummary + responsesSummary;
+            return processChunk(text, "http_action", action.uuid);
         });
       
         let securityPromises = Object.values(security).map((sec) => {
           let text = "API-SECURITY:  " + JSON.stringify(sec);
-          return processChunk(text, "api_authentication");
+          return processChunk(text, "api_authentication", sec.uuid);
         });
       
         let webhookPromises = Object.values(webhooks).map((webhook) => {
-          let text = "API-WEBHOOK:  " + JSON.stringify(webhook);
-          return processChunk(text, "api_webhook");
+
+            let webhookSummary = "The " + webhook.name + " will provide the following information when triggered: " + JSON.stringify(webhook.requestBody2) + "."
+            let webhookDescription = webhook.description ? " This webhook has the following description: " + webhook.description : ""
+            let text = webhook.name + ": " + webhookSummary + webhookDescription;
+            return processChunk(text, "api_webhook", webhook.uuid);
         });
     
         let documentationPromises = Object.keys(documentation).map((docKey) =>{
-            console.log(docKey)
-            console.log(documentation[docKey])
             let doc = documentation[docKey];
-            let text = "ADDITIONAL_DOCUMENTATION :" + JSON.stringify(doc);
-            return processChunk(text, docKey+"_documentation");
+            let text = docKey +" DOCUMENTATION:  " + JSON.stringify(doc);
+            return processChunk(text, "additional_documentation", docKey+"_"+api_uuid);
         })
 
-        let integrationFlowPromises = Object.values(integrationFlows).map((flow) => {
-          let text = "API-INTEGRATION-FLOW:  " + JSON.stringify(flow);
-          return processChunk(text, "api_integration_flow");
-        });
+        let baseUrlPromises = Object.keys(base_urls).map((baseUrlKey) =>{
+            let baseUrl = base_urls[baseUrlKey];
+            let text = "The base URL to use for API requests in the " + baseUrlKey + " environment is"  + JSON.stringify(baseUrl);
+            return processChunk(text, "base_url", baseUrlKey+"_"+api_uuid);
+        })
+
+        // let schemaPromises = Object.values(entities).map((schema) => {
+        //     let schemaSummary = 'This schema is called ' + schema.name + ' and is a type of ' + schema.type + '.'
+        //     let schemaDescription = schema.description ? ' This schema is described as: ' + schema.description : ''
+        //     let schemaProperties = schema.properties ? ' This schema has properties that are described by the following JSON object: ' + JSON.stringify(schema.properties) : ''
+        //     let schemaExamples = schema.examples ? ' Here are examples of this schema: ' + JSON.stringify(schema.examples) : ''
+        //     let schemaItems = schema.items ? ' This schema is an array that has items with a schema described by the following JSON object: ' + JSON.stringify(schema.items) : ''
+
+        //     let text = "DATA-SCHEMA (NOT AN ACTION): " + schemaSummary + schemaDescription + schemaProperties + schemaItems + schemaExamples;
+
+        //     return processChunk(text, "api_schema", schema.uuid);
+        //   });
+
+        // let parameterPromises = Object.values(parameters).map((parameter) => {
+        //     let text = "API-PARAMETER:  " + JSON.stringify(parameter);
+        //     return processChunk(text, "api_parameter", parameter.uuid);
+        // });
       
         await Promise.all([
           ...actionPromises,
           ...securityPromises,
           ...webhookPromises,
           ...documentationPromises,
-          ...integrationFlowPromises
+          ...baseUrlPromises,
+        //   ...schemaPromises,
+        //   ...parameterPromises
         ]);
       
         return vectors;
       }
     // Generate embeddings for each chunk
-    async function generateEmbeddings(chunk, metadataType) {
-        let vectorObjectId = crypto.randomUUID();
+    async function generateEmbeddings(chunk, metadataType, uuid) {
+        
         let vectorObject;
       
         try {
@@ -2579,7 +2614,7 @@ async function processApiForVectorDb(apiSpec) {
           let vectors = response.data.data[0].embedding;
       
           vectorObject = {
-            id: vectorObjectId,
+            id: uuid,
             values: vectors,
             metadata: {
               api_uuid: api_uuid,
@@ -2593,7 +2628,7 @@ async function processApiForVectorDb(apiSpec) {
           console.log(error.response.data.error);
       
           vectorObject = {
-            id: vectorObjectId,
+            id: uuid,
             values: [],
             metadata: {
               api_uuid: api_uuid,
