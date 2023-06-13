@@ -14,7 +14,8 @@ var ProjectSchema = new mongoose.Schema({
     configuration: Object,
     customer_configuration: Object,
     authentication: Object,
-    owning_organization: String
+    owning_organization: String,
+    indexed: Boolean
 });
 
 mongoose.model('Project', ProjectSchema);

@@ -535,7 +535,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                 console.log("RESPONSE VALUES")
                 console.log(responseValues[k])
 
-                if (responseValues[k].content !== undefined) {
+                if (responseValues[k].content !== undefined && responseValues[k].content["application/json"] !== undefined) {
                     var responseSchema = responseValues[k].content["application/json"].schema;
                     responseSchemaArray.push(responseSchema);
                     console.log("RESPONSE SCHEMA")
@@ -552,6 +552,22 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
 
                     responsesArray.push(response);
         
+                } else if (responseValues[k].content !== undefined && responseValues[k].content["application/xml"] !== undefined) {
+                    var responseSchema = responseValues[k].content["application/xml"].schema;
+                    responseSchemaArray.push(responseSchema);
+                    console.log("RESPONSE SCHEMA")
+                    console.log(responseSchema)
+                    var response = {
+                        "http_status_code": responseKeys[k],
+                        "content_type": "xml",
+                        "schema": processRequestBodySchema("action",responseSchemaArray, parent_interface_uuid, schemaMap, "response")                    
+                    }
+                    console.log("PATH")
+                    console.log(path)
+                    console.log("RESPONSE")
+                    console.log(response)
+
+                    responsesArray.push(response);
                 } else {
                        
                         var response = {
@@ -594,7 +610,9 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
 
             } else if (values[j].requestBody == undefined && values[j].parameters !== undefined ) {
              // No Request Body but Parameters exist for the Action (i.e. GET request with an ID in the path or a documented Header parameter) 
-                const parameters = processRequestParameterSchema(processReferences(values[j].parameters), parameterMap, schemaMap)
+
+                let parameterSchemas = processReferences(values[j].parameters).length > 0 ? processReferences(values[j].parameters): values[j].parameters;
+                let parameters =  processRequestParameterSchema(parameterSchemas, parameterMap, schemaMap)
 
                 InterfaceAction.create({
                     uuid: actionUUID,
@@ -619,13 +637,10 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
 
             } else if (values[j].requestBody !== undefined && values[j].parameters !== undefined ) {
                 // Request Body and Parameters exist for the Action (i.e. POST, PUT, PATCH)
-                console.log("requestBody and parameters exist (ln 609)");
-                console.log(values[j].summary)
-                console.log(values[j].requestBody);
-                console.log(values[j].parameters);
                 if (values[j].requestBody && values[j].requestBody.content && values[j].requestBody.content["application/json"] !== undefined) {
-                    const parameters = processRequestParameterSchema(processReferences(values[j].parameters), parameterMap, schemaMap)
-            
+                    let parameterSchemas = processReferences(values[j].parameters).length > 0 ? processReferences(values[j].parameters): values[j].parameters;
+                    let parameters =  processRequestParameterSchema(parameterSchemas, parameterMap, schemaMap)
+    
                     var requestBodyKeys = Object.keys(values[j].requestBody.content["application/json"].schema);
                     var requestBodyArray = [];
                     var requestBody = values[j].requestBody.content["application/json"].schema;
@@ -664,7 +679,7 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                                     console.log(path + " requestBody is undefined but parameters exist (ln 366)")
                                     return; 
                                 }
-                                //  console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                //console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
                                 //console.log("Interface Action Created with ID: " + interfaceAction._id);
                                 
                         });  
@@ -732,10 +747,117 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
                         });  
                     }
 
-                } else if (values[j] && values[j].requestBody && values[j].requestBody.content && values[j].requestBody.content["application/x-www-form-urlencoded"] !== undefined) {
+                } else if (values[j].requestBody && values[j].requestBody.content && values[j].requestBody.content["application/xml"] !== undefined) {
 
-                    console.log("Processing References")
-                    console.log(processReferences(values[j].parameters))
+                    let parameterSchemas = processReferences(values[j].parameters).length > 0 ? processReferences(values[j].parameters): values[j].parameters;
+                    let parameters =  processRequestParameterSchema(parameterSchemas, parameterMap, schemaMap)
+    
+                    var requestBodyKeys = Object.keys(values[j].requestBody.content["application/xml"].schema);
+                    var requestBodyArray = [];
+                    var requestBody = values[j].requestBody.content["application/xml"].schema;
+                    
+
+                    if(requestBodyKeys.length > 1 && requestBodyKeys.includes("$ref") == true) {
+                    
+                        for (var h = 0; h < requestBodyKeys.length; ++h){
+                            requestBodyArray.push(requestBody[h]);
+                        }
+            
+                        InterfaceAction.create({
+                            uuid: actionUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: values[j].operationId,
+                            path: path,
+                            method: methods[j],
+                            parameters: processReferences(values[j].parameters),
+                            parameterSchema: parameters,
+                            requestBody: {
+                                schema: processReferences(requestBodyArray),
+                                type: "xml",
+                                required: values[j].requestBody.required
+                            },
+                            requestBody2: {
+                                type: "xml",
+                                required: values[j].requestBody.required,
+                                requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
+                                schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
+                            },
+                            responses: responsesArray
+                        },
+                            function(err,interfaceAction){
+                                if (err) {
+                                    console.log(err);
+                                    console.log(path + " requestBody is undefined but parameters exist (ln 366)")
+                                    return; 
+                                }
+                                //  console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                
+                        });  
+
+                    } else if(requestBodyKeys.includes("$ref") == true) {
+                        requestBodyArray.push(requestBody);
+
+                        InterfaceAction.create({
+                            uuid: actionUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: values[j].operationId,
+                            path: path,
+                            method: methods[j],
+                            parameters: processReferences(values[j].parameters),
+                            parameterSchema: parameters,
+                            requestBody: {
+                                schema: processReferences(requestBodyArray),
+                                type: "xml",
+                                required: values[j].requestBody.required
+                            },
+                            requestBody2: {
+                                type: "xml",
+                                required: values[j].requestBody.required,
+                                requiredSchema: processTopLevelRequiredProperties(requestBodyArray, schemaMap, 3),
+                                schema: processRequestBodySchema("action",requestBodyArray, parent_interface_uuid, schemaMap)
+                            },
+                            responses: responsesArray
+                        },
+                            function(err,interfaceAction){
+                                if (err) {
+                                    console.log(err);
+                                    console.log(path + " request body and parameters exist (ln 443)")
+                                    return; 
+                                }
+                                // console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                
+                        });  
+
+                    } else {
+                        ///Implement a function to validate new InterfaceEntity and add it as a Request Body Schema
+
+                        const parameters = processRequestParameterSchema(processReferences(values[j].parameters), parameterMap, schemaMap)
+
+                        InterfaceAction.create({
+                            uuid: actionUUID,
+                            parent_interface_uuid: parent_interface_uuid,
+                            name: values[j].operationId,
+                            path: path,
+                            method: methods[j],
+                            parameters: processReferences(values[j].parameters),
+                            parameterSchema: parameters,
+                            requestBody: null,
+                            responses: responsesArray
+                        },
+                            function(err,interfaceAction){
+                                if (err) {
+                                    console.log(err);
+                                    return; 
+                                }
+                                // console.log(JSON.parse(JSON.stringify(interfaceAction)).requestBody2.schema)
+                                //console.log("Interface Action Created with ID: " + interfaceAction._id);
+                                actionVariable = "";
+                                
+                        });  
+                    }
+                } else if (values[j] && values[j].requestBody && values[j].requestBody.content && values[j].requestBody.content["application/x-www-form-urlencoded"] !== undefined) {
                     const parameters = processRequestParameterSchema(processReferences(values[j].parameters), parameterMap, schemaMap)
   
                     var requestBodyKeys = Object.keys(values[j].requestBody.content["application/x-www-form-urlencoded"].schema);
@@ -1355,51 +1477,67 @@ function processTopLevelRequiredProperties(schemas, schemaMap, version){
             requiredSchemas.push(...schemaObject.required)
         }
     })
-    console.log("Processing Top Level Required Properties:")
-    console.log(requiredSchemas)
+
     return requiredSchemas
 }
 
 function processRequestParameterSchema(schemas, parameterMap, schemaMap){
+
     var transitionalSchemaMap = {}
     var parameters = {
         "header": {},
-        "path": {}
+        "path": {},
+        "query": {}
     };
 
-    for (var i = 0; i < schemas.length; ++i) {
-        var parameterMapCopy = JSON.parse(JSON.stringify(parameterMap));
-        var parameterObject = parameterMapCopy[schemas[i]]
-        transitionalSchemaMap[schemas[i]] = parameterObject
-    }
+    let parameterObject = {}
 
+    if(parameterMap){
+        for (var i = 0; i < schemas.length; ++i) {
+            var parameterMapCopy = JSON.parse(JSON.stringify(parameterMap));
+            parameterObject = parameterMapCopy[schemas[i]]
+            transitionalSchemaMap[schemas[i]] = parameterObject
+        }
+    } else {
+
+       for (var i = 0; i < schemas.length; i++){
+         parameterObject = schemas[i]
+         transitionalSchemaMap[schemas[i].name] = schemas[i]
+       }
+    }
     var parameterSchemaKeys = Object.keys(transitionalSchemaMap);
     var parameterSchemaValues = Object.values(transitionalSchemaMap);
 
     for (var i = 0; i < parameterSchemaKeys.length; ++i) {
         var parameterName = parameterSchemaValues[i].name ? parameterSchemaValues[i].name : parameterSchemaKeys[i]
 
-        var parameterObject = {}
-        parameterObject[parameterSchemaValues[i].name] = parameterSchemaValues[i];
-
         if(parameterSchemaValues[i].schema["$ref"] !== undefined){
+            parameterObject[parameterName] = parameterSchemaValues[i];
             var schemaMapCopy = JSON.parse(JSON.stringify(schemaMap));
             var reference = parameterSchemaValues[i].schema["$ref"].split("/")[3]
             parameterObject[parameterName].schema = schemaMapCopy[reference]
             parameterObject[parameterName].schemaRef = reference
             
         } else {
-            parameterObject[parameterName].schema = parameterSchemaValues[i].schema
-            parameterObject[parameterName].schemaRef = 'inlineSchema'
+            // parameterObject[parameterName].schema = parameterSchemaValues[i].schema
+            // parameterObject[parameterName] = parameterSchemaValues[i];
+            // parameterObject[parameterName].schemaRef = 'inlineSchema'
+            let inlineParameterObject = {}
+            inlineParameterObject[parameterName] = parameterSchemaValues[i]
+            inlineParameterObject[parameterName].schemaRef = 'inlineSchema'
+            parameterObject = inlineParameterObject
         }
 
         if (parameterSchemaValues[i].in == "header"){
             Object.assign(parameters.header, parameterObject);
         } else if (parameterSchemaValues[i].in == "path"){
             Object.assign(parameters.path, parameterObject);
+        } else if (parameterSchemaValues[i].in == "query"){
+            Object.assign(parameters.query, parameterObject);
         }
 
     }
+
     return parameters;
 }
 
@@ -1409,13 +1547,8 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
     var schemaArray = []
     var inlineSchemaProperties = []
 
-    console.log("Processing Request Body Schema: ")
-    console.log(schemas)
-
-
     //This will build our two input arrays for their respective for loops.
     for (var i = 0; i < schemas.length; ++i) {
-        
         if(schemas[i] && schemas[i]["$ref"] !== undefined && version != 2){
             schemaArray.push(schemas[i]["$ref"].split("/")[3]);
         } else if (schemas[i] && schemas[i]["$ref"] !== undefined && version == 2) {
@@ -1424,6 +1557,7 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
             inlineSchemaProperties.push(schemas[i])
         }
     }
+
     //This is the object we'll use to build the schema for the requestBody.  We'll be using Object.assign to ensure any properties that are affected by both for loops are not updated and not overwritten.
     var inlineSchema = {}
 
@@ -1539,7 +1673,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
 
                 //Check for infinite loop and return an empty object if one is detected.
                 // REMOVED FOR NOW -- || parentPath?.includes(propertyKey)
-                if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers"){
+                if(parentSchema == propertyKey || parentSchema == "ItemModifier" || parentSchema == "ModifierItem"  || propertyKey == "sourceExternalIdentifiers" || propertyKey == "childCategories"){
                     console.log("Infinite Loop Detected: " + parentSchema + " and " + propertyKey + " reference loop.")
                     console.log("Parent Path")
                     console.log(parentPath)
@@ -2501,6 +2635,169 @@ async function upsertVectors(vectors) {
     }
   }
 
+
+function processWorkflow(workflow){
+
+    var apis = workflow.nodes[0].data.apis;
+    
+
+    let processedWorkflow = {};
+    processedWorkflow.name = workflow.name;
+    processedWorkflow.status = workflow.status;
+    processedWorkflow.created_at = workflow.created_at;
+    processedWorkflow.updated_at = workflow.updated_at;
+    processedWorkflow.uuid = workflow.uuid;
+    processedWorkflow.workflow_trigger = workflow.trigger.type == 'webhook' && workflow.trigger.selectedWebhook ? {
+        type: workflow.trigger.type,
+        webhook_name: workflow.trigger.selectedWebhook.name,
+        webhook_description: workflow.trigger.selectedWebhook.description,
+        webhook_apis: apis.filter(api => api.uuid == workflow.trigger.selectedWebhook.parent_interface_uuid)[0] ? apis.filter(api => api.uuid == workflow.trigger.selectedWebhook.parent_interface_uuid)[0].name : null,
+        webhook_schema: workflow.trigger.selectedWebhook.requestBody2 ? workflow.trigger.selectedWebhook.requestBody2 : null,
+    } : {
+        type: workflow.trigger.type,
+        execution_cadence: workflow.trigger.cadence,
+        execution_time: workflow.time,
+        execution_timezone: workflow.timezone,
+        execution_days: workflow.type == 'Weekly' ? workflow.days : 'Every Day',
+    };
+
+    let workflow_steps = {} 
+    
+    workflow.nodes.filter(node => node.type != 'trigger').map((node, index) => {
+        workflow_steps[index] = {
+            http_request_name: node.data.selectedAction?.name,
+            http_request_method: node.data.selectedAction?.method,
+            http_request_path: node.data.selectedAction?.path,
+            http_request_parent_api_name: apis.filter(api => api.uuid == node.data.selectedAction?.parent_interface_uuid)[0] ? apis.filter(api => api.uuid == node.data.selectedAction?.parent_interface_uuid)[0].name : null,
+            http_request_parameters: node.data.selectedAction?.parameterSchema ? node.data.selectedAction?.parameterSchema : null,
+            http_request_requestBody: node.data.selectedAction?.requestBody2 ? node.data.selectedAction?.requestBody2 : null,
+            http_request_responses: node.data.selectedAction?.responses ? node.data.selectedAction?.responses : null,
+        }
+    })
+
+    processedWorkflow.workflow_steps = workflow_steps;
+
+    return processedWorkflow;
+}
+
+
+async function processPartnershipForVectorDb(partnership){
+
+    let partnership_uuid = partnership.uuid;
+    let openAiConfiguration = new Configuration({
+        apiKey: process.env.REACT_APP_OPENAPI_API_KEY
+    })
+    const openai = new OpenAIApi(openAiConfiguration);
+
+    // Chunk the details and each workflow into smaller pieces
+    async function chunkAndEmbedPartnership() {
+        let vectors = [];
+
+        async function processChunk(text, metadataType, uuid, chunkLabel) {
+            if (text.length > 8191) {
+                for (let i = 0; i < text.length; i += 8191) {
+                    let chunk = text.slice(i, i + 8191);
+                    let vectorObject = await generateEmbeddings(chunk, metadataType, chunkLabel+"_"+i);
+                    vectors.push(vectorObject);
+                }
+            } else {
+                let vectorObject = await generateEmbeddings(text, metadataType, chunkLabel);
+                vectors.push(vectorObject);
+            }
+        }
+
+        // Process the partnership details
+        let partnershipDetails = {
+            "name": partnership.name,
+            "status": partnership.status,
+            "configurations": partnership.configuration,
+            "created_at": partnership.created_at
+        }
+
+        let partnershipDetailsPromise = processChunk(JSON.stringify(partnershipDetails), "partnership_details", partnership_uuid, partnership_uuid);
+       
+        // Process the workflows
+        let workflowPromises = partnership.workflows ? partnership.workflows.map(async (workflow) => {
+            let processedWorkflow = processWorkflow(workflow);
+            let workflowPromise = processChunk(JSON.stringify(processedWorkflow), "partnership_workflow", workflow.uuid, "partnership_"+partnership_uuid + "_workflow_" + workflow.uuid);
+            await workflowPromise;
+        }) : []
+  
+        await Promise.all([partnershipDetailsPromise, ...workflowPromises]);
+
+        return vectors;
+    }
+
+    // Generate embeddings for the chunks
+    async function generateEmbeddings(chunk, metadataType, uuid) {
+        
+        let vectorObject;
+      
+        try {
+          let response = await openai.createEmbedding({
+            model: 'text-embedding-ada-002',
+            input: chunk
+          });
+          
+          let vectors = response.data.data[0].embedding;
+      
+          vectorObject = {
+            id: uuid,
+            values: vectors,
+            metadata: {
+              partnership_uuid: partnership_uuid,
+              metadata_type: metadataType,
+              text: chunk
+            }
+          };
+      
+        //   console.log(vectorObject);
+        } catch (error) {
+          console.log(error.response.data.error);
+      
+          vectorObject = {
+            id: uuid,
+            values: [],
+            metadata: {
+            partnership_uuid: partnership_uuid,
+              metadata_type: metadataType,
+              text: chunk
+            }
+          };
+        }
+      
+        return vectorObject;
+    }
+      
+    return new Promise((resolve, reject) => {
+        chunkAndEmbedPartnership()
+          .then((vectors) => {
+            // console.log("Vectors: " + vectors.length);
+            upsertVectors(vectors)
+              .then((result) => {
+                // console.log("Result");
+                // console.log(result);
+                resolve(result);
+              })
+              .catch((err) => {
+                console.log(err);
+                reject({
+                  status: "Error",
+                  message: err
+                });
+              });
+          })
+          .catch((err) => {
+            console.log(err);
+            reject({
+              status: "Error",
+              message: err
+            });
+          });
+    });
+
+}
+
 async function processApiForVectorDb(apiSpec) {
 
     let api_uuid = apiSpec.uuid;
@@ -2533,7 +2830,6 @@ async function processApiForVectorDb(apiSpec) {
         let base_urls = apiSpec.base_urls || {};
         let entities = apiSpec.entities || {};
         let parameters = apiSpec.parameters || {};
-
       
         let actionPromises = Object.values(actions).map((action) => {
             console.log(action.name)
@@ -2666,8 +2962,8 @@ async function processApiForVectorDb(apiSpec) {
               message: err
             });
           });
-      });
+    });
    
 }
 
-module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection, processApiForVectorDb};
+module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection, processApiForVectorDb, processPartnershipForVectorDb};

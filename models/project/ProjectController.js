@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const Project = require('../project/Project');
 const {verifyUser} = require('../../authenticate.js');
 const Interface = require('../interface/Interface');
+const Workflow = require('../workflow/Workflow');
+const lib = require('../../lib.js')
 
 // CREATE A PROJECT
 router.post('/new', function(req,res) {
@@ -110,6 +112,103 @@ router.put('/:id/authentication', function(req,res){
     });
 })
 
+router.post('/:id/embed', function(req,res){
+
+    const getProject = () => {
+        return new Promise((resolve, reject) => {
+        Project.findOne({uuid: req.params.id}, function (err, project) {
+            if (err) reject(err);
+            else resolve(project)
+        });
+        })
+    }
+
+    const getWorkflows = () => {
+        return new Promise((resolve, reject) => {
+        Workflow.find({parent_project_uuid: req.params.id}, function (err, workflows) {
+            if (err) reject(err);
+            else resolve(workflows)
+        });
+        })
+    }
+
+    // Execute all asynchronous operations using Promise.all
+    Promise.all([getProject(), getWorkflows()])
+    .then(([project, workflows]) => {
+
+        let filteredWorkflows = workflows.filter(workflow => workflow.status != 'Archived')
+        let partnership = {
+            details: project,
+            workflows: filteredWorkflows,
+            uuid: req.params.id,
+        };
+
+        lib.processPartnershipForVectorDb(partnership).then((results) => {
+
+            if(results && results.status !== 'Error'){
+                console.log(results)
+                res.status(200).send(results)
+
+                Project.findOneAndUpdate({uuid: req.params.id}, {"indexed": true}, {new: true}, function(err,interface) {
+                    if(err) console.log(err)
+                    else console.log("Interface updated successfully")
+                });
+
+            } else {
+                console.log(results)
+                res.status(500).send(results)
+            }
+                
+        }).catch((err) => {
+            console.log(err)
+            res.status(500).send(err)
+        })
+    })
+    .catch((error) => {
+        console.error(error);
+        res.status(500).send("An error occurred while generating the API spec.");
+    });
+
+})
+
+router.post('/:id/query', function(req,res){
+    const pinecone = new PineconeClient();
+    const embeddings = req.body.embeddings;
+
+    // Query Pinecone
+    pinecone.init({
+        environment: 'us-central1-gcp',
+        apiKey: process.env.REACT_APP_PINECONE_API_KEY
+    }).then(() => {
+        console.log('Pinecone client initialized')
+        
+        const index = pinecone.Index('api-index')
+        
+        const queryRequest = {
+            vector: embeddings,
+            topK: 10,
+            includeValues: false,
+            includeMetadata: true,
+            filter: {
+                partnership_uuid: req.params.id,
+            }
+          }
+
+        index.query({queryRequest}).then((response) => {
+            console.log("Pinecone Query Response: ")
+            console.log(response)
+            res.status(200).send(response.matches)
+        }).catch((err) => {
+            console.log(err)
+            res.status(500).send(err)
+        })
+        }).catch((err) => {
+            console.log(err)
+            res.status(500).send(err)
+        })
+        
+
+});
 
 
 module.exports = router;
