@@ -87,6 +87,20 @@ var ReactFlowEdgeSchema = new mongoose.Schema({
     data: Object,
 })
 
+var MachineStepsSchema = new mongoose.Schema({
+    uuid: String,
+    api: String,
+    actionName: String,
+    requestInfo: {
+        method: String,
+        path: String,
+        headers: Object,
+        body: Object
+    },
+    successTransition: String,
+    failureTransition: String,
+    transforms: Array
+})
 
 var WorkflowSchema = new mongoose.Schema({
     uuid: String,
@@ -95,7 +109,7 @@ var WorkflowSchema = new mongoose.Schema({
     interfaces: Array,
     parent_project_uuid: String,
     trigger: Object,
-    steps: [WorkflowStepSchema],
+    steps: [MachineStepsSchema],
     status: String,
     nodes: [ReactFlowNodeSchema],
     edges: [ReactFlowEdgeSchema],

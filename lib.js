@@ -5,23 +5,15 @@ const InterfaceParameter = require('./models/interface_parameter/InterfaceParame
 const InterfaceAction = require('./models/interface_action/InterfaceAction');
 const InterfaceSecurityScheme = require('./models/interface_security_scheme/InterfaceSecurityScheme');
 const Job = require('./models/job/Job');
-const Workflow = require('./models/workflow/Workflow');
-const WorkflowLog = require('./models/workflow_log/WorkflowLog');
-const { castObject, schema } = require('./models/interface/Interface');
 const InterfaceWebhook = require('./models/interface_webhook/InterfaceWebhook');
-const {Liquid} = require('liquidjs');
-const engine = new Liquid();
-const axios = require('axios');
 const postmanToOpenApi = require('postman-to-openapi');
-const outputFile = 'openApi.json'
-const fs = require('fs');
 const yaml = require('js-yaml');
 
+const {generateGraph} = require('./utils/generateGraph');
 const {PineconeClient} = require('@pinecone-database/pinecone');
 const {Configuration, OpenAIApi } = require("openai");
 
-
-function processOpenApiV3(json, userId, orgId, jobId) {
+function processOpenApiV3(json, userId, owningOrganization, importingOrganzation, jobId) {
 
     var schemaKeys = [];
     var schemaValues = [];
@@ -34,6 +26,15 @@ function processOpenApiV3(json, userId, orgId, jobId) {
     var webhookKeys = [];
     var webhookValues = [];
     var errorArray = [];
+    var nodes = null;
+    var edges = null;
+
+    if(json){
+        nodes, edges = generateGraph(json) ? generateGraph(json) : null
+
+        nodes = Buffer.from(JSON.stringify(nodes)).toString('base64')
+        edges = Buffer.from(JSON.stringify(edges)).toString('base64')
+    }
 
     if(json.components.schemas === undefined) {
         errorArray.push({
@@ -138,8 +139,10 @@ function processOpenApiV3(json, userId, orgId, jobId) {
             deleted_at: null,
             production_server: "",
             sandbox_server: "",
-            owning_organization: orgId,
-            jobIds: [jobId]
+            owning_organization: owningOrganization,
+            importing_organization: importingOrganzation,
+            jobIds: [jobId],
+            graph: edges
         },
             function(err,interface){
                 if (err) {
@@ -169,7 +172,7 @@ function processOpenApiV3(json, userId, orgId, jobId) {
 
 }
 
-function processOpenApiV2(json, userId, orgId, jobId) {
+function processOpenApiV2(json, userId, owningOrganization, importingOrganzation, jobId) {
 
     var schemaKeys = [];
     var schemaValues = [];
@@ -252,6 +255,8 @@ function processOpenApiV2(json, userId, orgId, jobId) {
         }
     })
 
+    
+
     Interface.create({
         uuid: interfaceUUID,
         name: json.info.title,
@@ -263,7 +268,8 @@ function processOpenApiV2(json, userId, orgId, jobId) {
         deleted_at: null,
         production_server: server,
         sandbox_server: server,
-        owning_organization: orgId,
+        owning_organization: owningOrganization,
+        importing_organization: importingOrganzation,
         jobIds: [jobId]
     },
         function(err,interface){
@@ -389,32 +395,6 @@ function processSchema(schemaKeys, schemaValues, parent_interface_uuid, schemaMa
     return true
 }
 
-function processProperties(properties, required){
-    var propertiesMap = {}
-    var propertyNames = Object.keys(properties);
-    var propertyAttributes = Object.values(properties);
-
-    for (var i = 0; i < propertyNames.length; ++i) {
-        
-        if (required.includes(propertyNames[i])) {
-            propertyAttributes[i].required = true
-            propertiesMap[propertyNames[i]]= propertyAttributes[i]
-            if(propertyAttributes[i].items !== undefined) {
-                propertiesMap[propertyNames[i]].items = processArrayItemsReferences(propertyAttributes[i].items, schemaMap)
-            } else if(propertyAttributes[i].properties !== undefined) {
-                propertiesMap[propertyNames[i]].properties = processProperties(propertyAttributes[i].properties, propertyAttributes[i].required)
-            }
-        } else {
-            propertyAttributes[i].required = false
-            propertiesMap[propertyNames[i]]= propertyAttributes[i]
-        }
-
-    }
-
-    return propertiesMap
-
-}
-
 function processArrayItemsReferences(items, schemaMap) {
 
     if(items === undefined) {
@@ -532,40 +512,34 @@ function processPathActions(pathKeys, pathValues, parent_interface_uuid, schemaM
             var responseSchemaArray = [];
 
             for (var k = 0; k < responseKeys.length; ++k){
-                console.log("RESPONSE VALUES")
-                console.log(responseValues[k])
-
                 if (responseValues[k].content !== undefined && responseValues[k].content["application/json"] !== undefined) {
                     var responseSchema = responseValues[k].content["application/json"].schema;
                     responseSchemaArray.push(responseSchema);
-                    console.log("RESPONSE SCHEMA")
-                    console.log(responseSchema)
                     var response = {
                         "http_status_code": responseKeys[k],
                         "content_type": "json",
                         "schema": processRequestBodySchema("action",responseSchemaArray, parent_interface_uuid, schemaMap, "response")                    
                     }
-                    console.log("PATH")
-                    console.log(path)
-                    console.log("RESPONSE")
-                    console.log(response)
-
                     responsesArray.push(response);
         
                 } else if (responseValues[k].content !== undefined && responseValues[k].content["application/xml"] !== undefined) {
                     var responseSchema = responseValues[k].content["application/xml"].schema;
                     responseSchemaArray.push(responseSchema);
-                    console.log("RESPONSE SCHEMA")
-                    console.log(responseSchema)
                     var response = {
                         "http_status_code": responseKeys[k],
                         "content_type": "xml",
                         "schema": processRequestBodySchema("action",responseSchemaArray, parent_interface_uuid, schemaMap, "response")                    
                     }
-                    console.log("PATH")
-                    console.log(path)
-                    console.log("RESPONSE")
-                    console.log(response)
+
+                    responsesArray.push(response);
+                } else if(responseValues[k]['$ref']){
+                    var responseSchema = responseValues[k];
+                    responseSchemaArray.push(responseSchema);
+                    var response = {
+                        "http_status_code": responseKeys[k],
+                        "content_type": "json",
+                        "schema": processRequestBodySchema("action",responseSchemaArray, parent_interface_uuid, schemaMap, "response")                    
+                    }
 
                     responsesArray.push(response);
                 } else {
@@ -1219,7 +1193,7 @@ function processParameters(parameterKeys, parameterValues,parent_interface_uuid,
     for (var i = 0; i < parameterNames.length; ++i) {
         var parameterUUID = crypto.randomUUID();
 
-        if (!parameterAttributes[i].schema["$ref"]) {
+        if (parameterAttributes[i].schema && !parameterAttributes[i].schema["$ref"]) {
             InterfaceParameter.create({
                 uuid: parameterUUID,
                 parent_interface_uuid: parent_interface_uuid,
@@ -1242,7 +1216,7 @@ function processParameters(parameterKeys, parameterValues,parent_interface_uuid,
                     }
                     //console.log("Interface Parameter Created "+ interfaceParameter._id);
             });
-        } else {
+        } else if(parameterAttributes[i].schema){
             InterfaceParameter.create({
                 uuid: parameterUUID,
                 parent_interface_uuid: parent_interface_uuid,
@@ -1579,11 +1553,10 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
 
             var propertyKeys = Object.keys(schemaValues.properties);
             var propertyValues = Object.values(schemaValues.properties);
-
+        
             //Let's process the properties for the schema.
 
             var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, schemaKey, schemaMapCopy, true, version);
-
             inlineSchema = {...inlineSchema, ...schemaProperties}
 
         } else if (schemaValues.items && schemaValues.type == 'array'){
@@ -1591,29 +1564,21 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
                 var propertyKeys = Object.keys(schemaValues.items.properties);
                 var propertyValues = Object.values(schemaValues.items.properties);
                 var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, schemaKey, schemaMapCopy, true, version);
-
-
         } else {
             //If the schema doesn't have a properties object, we'll need to process it differently.
             schemaValues = Object.assign(schemaObject, schemaValues);
         }
 
-    }
+        // Set the type of the top-level keys
+        if (inlineSchema[schemaKey] && !inlineSchema[schemaKey].type) {
+            inlineSchema[schemaKey].type = schemaValues.properties ? 'object' : 'array';
+        }
 
-    console.log("Inline Schema Processed: ")
-    console.log(inlineSchema)
-    console.log("Inline Schema Properties: ")
-    console.log(inlineSchemaProperties)
+    }
 
     //This for loop will not assume a reference and will build out the schema object from the inline properties.
     for (var i = 0; i < inlineSchemaProperties.length; ++i){
-
-        console.log("Processing Inline Schema Properties:")
-        console.log(inlineSchemaProperties[i])
-
         if(inlineSchemaProperties[i] && inlineSchemaProperties[i].properties){
-            console.log("Processing Inline Schema Properties with Properties:")
-            console.log(inlineSchemaProperties[i].properties)
             var propertyKeys = Object.keys(inlineSchemaProperties[i].properties);
             var propertyValues = Object.values(inlineSchemaProperties[i].properties);
             var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, null, schemaMap, true, version);
@@ -1624,24 +1589,19 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
             for (var i = 0; i < schemaPropertyKeys.length; ++i){
                 if(inlineSchema[schemaPropertyKeys[i]]){
                     inlineSchema[schemaPropertyKeys[i]].properties = {...inlineSchema[schemaPropertyKeys[i]].properties, ...schemaPropertyValues[i].properties}
+                    if(!inlineSchema[schemaPropertyKeys[i]].type){
+                        inlineSchema[schemaPropertyKeys[i]].type = 'object'
+                    }
                 } else {
                     inlineSchema = {...inlineSchema, ...schemaProperties}
                 }
             }
         } else if(inlineSchemaProperties[i] && inlineSchemaProperties[i].items && inlineSchemaProperties[i].items.properties){
-            console.log("Processing Inline Schema Properties with Items and Properties:")
-            console.log(inlineSchemaProperties[i].items.properties)
-
             var propertyKeys = Object.keys(inlineSchemaProperties[i].items.properties);
             var propertyValues = Object.values(inlineSchemaProperties[i].items.properties);
             var schemaProperties = processSchemaProperties(propertyKeys, propertyValues, null, schemaMap, true, version);
             var schemaPropertyKeys = Object.keys(schemaProperties);
             var schemaPropertyValues = Object.values(schemaProperties);
-
-            console.log("top level array propertyKeys:") 
-            console.log(propertyKeys)
-            console.log("top level array propertyValues: ")
-            console.log(propertyValues)
 
             // if the inline schema has properties defined already (i.e. if it has the same key as a refernced property already added to the inlineSchema) we'll ensure we are only adding properties and not overwriting
             for (var i = 0; i < schemaPropertyKeys.length; ++i){
@@ -1655,8 +1615,22 @@ function processRequestBodySchema(type, schemas, parent_interface_uuid, schemaMa
            
         }
     }
-    console.log("Inline Schema Processed: ")
-    console.log(inlineSchema)
+
+    let inlineSchemaKeys = Object.keys(inlineSchema);
+    let inlineSchemaValues = Object.values(inlineSchema);
+
+    for (var i = 0; i < inlineSchemaKeys.length; ++i){
+        if(!inlineSchemaValues[i].type){
+            if(inlineSchemaValues[i].properties){
+                if(Object.keys(inlineSchemaValues[i].properties).length > 0){
+                    inlineSchemaValues[i].type = 'object'
+                }
+            } else if (inlineSchemaValues[i].items){
+                inlineSchemaValues[i].type = 'array'
+            }
+        }
+    }
+
     return inlineSchema;
 
 }
@@ -1679,12 +1653,21 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     console.log(parentPath)
                     return {};
                 }
+                // console.log("Property Key: " + propertyKey)
+                // console.log("Property Value: ")
+                // console.log(JSON.parse(JSON.stringify(propertyValue)))
                 //Check if the property is a reference to another schema.
                 if (propertyValue['$ref']){
+                    // console.log("Reference Detected: " + propertyKey)
+                    // console.log(propertyValue['$ref'])
                     var propertyObject = {};
                     var propertyReference = propertyValue['$ref'].split("/")[3];
                     var propertySchemaMap = JSON.parse(JSON.stringify(schemaMap));
                     var propertySchemaMapValues = propertySchemaMap[propertyReference];
+                    
+                    // console.log("Property Schema for: " + propertyKey)
+                    // console.log(propertySchemaMapValues)
+
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertySchemaMapValues};
                     if(propertySchemaMapValues && propertySchemaMapValues.properties){
                         var nestedPropertyKeys = Object.keys(propertySchemaMapValues.properties);
@@ -1693,6 +1676,10 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                         propertyObject[propertyKey].properties = {...propertyObject[propertyKey].properties, ...propertyProperties}
 
                         //schemaProperties = Object.assign(schemaProperties, propertyObject);
+                        schemaProperties = {...schemaProperties, ...propertyObject}
+                    } else if(propertySchemaMapValues && propertySchemaMapValues['allOf']){
+                        var allOfSchema = processRequestBodySchema("webhook", propertySchemaMapValues['allOf'], null, schemaMap,  version)
+                        propertyObject[propertyKey].properties = allOfSchema
                         schemaProperties = {...schemaProperties, ...propertyObject}
                     } else {
                         //schemaProperties = Object.assign(schemaProperties, propertyObject);
@@ -1758,7 +1745,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                         mapPropertyObject[mapPropertyKey] = mapPropertyValueSchema;
 
                         //With the schema reference details, we can now process the schema properties if they exist.
-                        if(mapPropertyValueSchema.properties){
+                        if(mapPropertyValueSchema && mapPropertyValueSchema.properties){
                             var nestedPropertyKeys = Object.keys(propertySchemaMap[propertyReference].properties);
                             var nestedPropertyValues = Object.values(propertySchemaMap[propertyReference].properties);
                             var mappedPropertyValueNestedProperties = processSchemaProperties(nestedPropertyKeys, nestedPropertyValues, propertyReference, schemaMap, false, version, parentPath + "." + propertyKey);
@@ -1774,7 +1761,7 @@ function processSchemaProperties(propertyKeys, propertyValues, parentSchema, sch
                     }
                 } else if (propertyValue.type == 'array'){
 
-                    console.log("Array Detected: " + propertyKey)
+                    // console.log("Array Detected: " + propertyKey)
 
                     var propertyObject = {};
                     propertyObject[propertyKey] = {...propertyObject[propertyKey], ...propertyValue};
@@ -1855,31 +1842,70 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
         var thisWebhookKey = webhookKeys[i];
         var thisWebhookValues = webhookValues[i]["post"];
     
-        // allOf Schema Handling
+        // Check if the value we're processing is actually a webhook and not a boolean or other property.
+        if(typeof thisWebhookValues == "object"){
+            //Check if the webhook has a requestBody schema in json defined.
+            if (thisWebhookValues.requestBody.content["application/json"].schema !== undefined) {
 
-        if (thisWebhookValues.requestBody.content["application/json"].schema["allOf"] !== undefined) {
-            var allOfSchemas = thisWebhookValues.requestBody.content["application/json"].schema["allOf"];
-            var webhookSchemas = processReferences(allOfSchemas);
-
-            if (thisWebhookValues.responses !== undefined) {
-
-                    //Adapt the Path+Method (i.e. Action) Responses into an Array
-                    var responseKeys = Object.keys(thisWebhookValues.responses);
-                    var responseValues = Object.values(thisWebhookValues.responses);
-                    var responsesArray = [];
-                    
-                    for (var j = 0; j < responseKeys.length; ++j){
-
-                        var response = {
-                                "http_status_code": responseKeys[j],
-                                "content_type": "json",
-                                "schema": processReferences(responseValues)
-                            };
-
-                            responsesArray.push(response); 
-                     }
+                // Check if allOf is set in the schema body.  Set the schema accordingly. 
+                var schema = thisWebhookValues.requestBody.content["application/json"].schema["allOf"] ? thisWebhookValues.requestBody.content["application/json"].schema["allOf"] : [thisWebhookValues.requestBody.content["application/json"].schema]
+                console.log("Webhook Schema")
+                console.log(schema)
+                var webhookSchemas = processReferences(schema);
+    
+                if (thisWebhookValues.responses !== undefined) {
+    
+                        //Adapt the Path+Method (i.e. Action) Responses into an Array
+                        var responseKeys = Object.keys(thisWebhookValues.responses);
+                        var responseValues = Object.values(thisWebhookValues.responses);
+                        var responsesArray = [];
                         
-                    InterfaceWebhook.create({
+                        for (var j = 0; j < responseKeys.length; ++j){
+    
+                            var response = {
+                                    "http_status_code": responseKeys[j],
+                                    "content_type": "json",
+                                    "schema": processReferences(responseValues)
+                                };
+    
+                                responsesArray.push(response); 
+                         }
+                            
+                        InterfaceWebhook.create({
+                                uuid: webhookUUID,
+                                parent_interface_uuid: parent_interface_uuid,
+                                name: thisWebhookValues.operationId,
+                                description: thisWebhookValues.summary,
+                                method: "post",
+                                requestBody: {
+                                    type: "json",
+                                    schema: webhookSchemas,
+                                    validationType: "allOf"
+                                },
+                                requestBody2: {
+                                    type: "json",
+                                    schema: processRequestBodySchema("webhook",schema, parent_interface_uuid, schemaMap),
+                                    validationType: "all_of"
+                                },
+                                responses: responsesArray
+                            },
+                                function(err,interfaceWebhook){
+                                    if (err) {
+                                        console.log(err);
+                                        errorArray.push({
+                                            "webhook": thisWebhookValues.operationId,
+                                            "error": err
+                                        });
+                                        return; 
+                                    }
+                                // console.log("Interface Webhook Created With Responses"+ interfaceWebhook._id);
+                                // console.log(interfaceWebhook);
+                        });
+                        
+    
+                } else {
+    
+                        InterfaceWebhook.create({
                             uuid: webhookUUID,
                             parent_interface_uuid: parent_interface_uuid,
                             name: thisWebhookValues.operationId,
@@ -1888,14 +1914,14 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
                             requestBody: {
                                 type: "json",
                                 schema: webhookSchemas,
-                                validationType: "allOf"
+                                validationType: "all_of"
                             },
                             requestBody2: {
                                 type: "json",
-                                schema: processRequestBodySchema("webhook",allOfSchemas, parent_interface_uuid, schemaMap),
+                                schema: processRequestBodySchema("webhook",schema, parent_interface_uuid, schemaMap),
                                 validationType: "all_of"
                             },
-                            responses: responsesArray
+                            responses: []
                         },
                             function(err,interfaceWebhook){
                                 if (err) {
@@ -1906,46 +1932,16 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
                                     });
                                     return; 
                                 }
-                            // console.log("Interface Webhook Created With Responses"+ interfaceWebhook._id);
-                            // console.log(interfaceWebhook);
-                    });
-                    
-
+                                // console.log("Interface Webhook Created Without Responses"+ interfaceWebhook._id);
+                                // console.log(interfaceWebhook)
+                        });
+                }
+    
             } else {
 
-                    InterfaceWebhook.create({
-                        uuid: webhookUUID,
-                        parent_interface_uuid: parent_interface_uuid,
-                        name: thisWebhookValues.operationId,
-                        description: thisWebhookValues.summary,
-                        method: "post",
-                        requestBody: {
-                            type: "json",
-                            schema: webhookSchemas,
-                            validationType: "all_of"
-                        },
-                        requestBody2: {
-                            type: "json",
-                            schema: processRequestBodySchema("webhook",allOfSchemas, parent_interface_uuid, schemaMap),
-                            validationType: "all_of"
-                        },
-                        responses: []
-                    },
-                        function(err,interfaceWebhook){
-                            if (err) {
-                                console.log(err);
-                                errorArray.push({
-                                    "webhook": thisWebhookValues.operationId,
-                                    "error": err
-                                });
-                                return; 
-                            }
-                            // console.log("Interface Webhook Created Without Responses"+ interfaceWebhook._id);
-                            // console.log(interfaceWebhook)
-                    });
             }
+        }
 
-        } else {}
         
         Job.findOneAndUpdate({uuid: jobId}, {
             'metadata.webhooks':{
@@ -1965,231 +1961,6 @@ function processWebhooks(webhookKeys,webhookValues,parent_interface_uuid, schema
     }
     
     return true
-}
-
-function runWorkflow(workflow, actionInterface, environment, inputJSON){
-    
-    const traceUUID = crypto.randomUUID();
-
-    //Check the workflow's status
-    if (workflow.status == "needs_mapping") {
-        return {
-            error: "Action requires further work.  All required fields for the request are not mapped."
-        }
-    } else if (workflow.status == "disabled") {
-        return {
-            error: "Workflow has been disabled."
-        }
-    } else if (workflow.status === "active") {
-        //Continue
-
-        console.log(workflow.trigger)
-        const header = JSON.parse(workflow.trigger.translation).header ? JSON.parse(workflow.trigger.translation).header : {}
-        const stringifiedHeaderTemplate = JSON.stringify(header)
-        const path = JSON.parse(workflow.trigger.translation).path ? JSON.parse(workflow.trigger.translation).path : {}
-        const stringifiedPathTemplate = JSON.stringify(path)
-        const requestBodyTemplate = JSON.parse(workflow.trigger.translation)
-        delete requestBodyTemplate["header"]
-        delete requestBodyTemplate["path"]
-        const stringifiedTemplate = workflow.trigger.liquidTemplate
-        const nextStep = workflow.steps[0]
-        const nextStepSandboxUrl = actionInterface.sandbox_server + nextStep.request.path
-        const nextStepProductionUrl = actionInterface.production_server + nextStep.request.path
-
-        if (nextStep.type === 'httpRequest') {
-            if (environment == "sandbox") {
-                //Apply Trigger's Liquid Template to Input JSON
-                //TO DO: Create Workflow in MongoDB with a 'running' status
-                //TO DO: Update Workflow in MongoDB with a 'completed' or 'failed' status 
-
-                console.log("Stringified Request Body Template:")
-                console.log(stringifiedTemplate)
-                engine.parseAndRender(stringifiedTemplate, inputJSON).then((result) => {
-                    WorkflowLog.create({
-                        uuid: crypto.randomUUID(),
-                        created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                        message:  "Request Body: " + result,
-                        level: "debug",
-                        workflow_uuid: workflow.uuid,
-                        traceUUID: traceUUID
-                    },
-                        function(err,workflowLog){
-                            if (err) {
-                                console.log(err);
-                                return;
-                            }
-                    })
-                        const requestBody = JSON.parse(result)
-                        console.log("Translated Request Body:")
-                        console.log(requestBody)
-                        console.log("HEADER TEMPLATE: ")
-                        console.log(header)
-                        console.log("PATH TEMPLATE: ")
-                        console.log(path)
-
-                    // if Header Translation exists, apply it to the input JSON
-                        
-                        if (Object.keys(header).length > 0 && Object.keys(path).length == 0) {
-                            console.log("Header ONLY Translation")
-                            engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
-                                console.log("Header Translation")
-                                const translatedHeader = JSON.parse(result)
-                                
-                                WorkflowLog.create({
-                                    uuid: crypto.randomUUID(),
-                                    created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                                    message: "Header Translation: " + result,
-                                    level: "debug",
-                                    workflow_uuid: workflow.uuid,
-                                    traceUUID: traceUUID
-                                },
-                                    function(err,workflowLog){
-                                        if (err) {
-                                            console.log(err);
-                                            return;
-                                        }
-                                })
-
-                                if (nextStep.request.method === 'post') {
-                                    //For testing purposes.  Will need solution for authentication.
-                                    const authToken = "Bearer " + "B0tdSnWi24drSpEwI1-8SV2ufO5fFGiyMSX7GfPzTBs.csegtsjNPPoKA7U6BAeWkDtdwiJ7AZ0p02WcLWgl8mo"
-                                    translatedHeader["Authorization"] = authToken
-
-                                    console.log(translatedHeader)
-
-                                    axios.post(nextStepSandboxUrl, requestBody,{headers: translatedHeader}).then((response) => {
-                                        console.log(response.data)
-                                        WorkflowLog.create({
-                                            uuid: crypto.randomUUID(),
-                                            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                                            message: response.data,
-                                            level: "info",
-                                            workflow_uuid: workflow.uuid
-                                        },
-                                            function(err,workflowLog){
-                                                if (err) {
-                                                    console.log(err);
-                                                    return;
-                                                }
-                                            }
-                                        )
-                                    }).catch((error) => {
-                                        console.log(error)
-                                        WorkflowLog.create({
-                                            uuid: crypto.randomUUID(),
-                                            created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                                            message: error,
-                                            level: "error",
-                                            workflow_uuid: workflow.uuid,
-                                            traceUUID: traceUUID
-                                        },
-                                            function(err,workflowLog){
-                                                if (err) {
-                                                    console.log(err);
-                                                    return;
-                                                }
-                                            })
-                                    })
-                            
-                                } 
-                            
-                            }).catch((err) => {
-                                console.log(err);
-                            })
-                            
-                        } else if (Object.keys(header).length > 0 && Object.keys(path).length > 0) {
-                            // engine.parseAndRender(stringifiedHeaderTemplate, inputJSON).then((result) => {
-                            //     const translatedHeader = JSON.parse(result)
-                            //     engine.parseAndRender(stringifiedPathTemplate, inputJSON).then((result) => {
-                            //         if (nextStep.request.method === 'post') {
-                            //             axios.post(nextStepUrl + result, requestBody,{headers: translatedHeader}).then((response) => {
-                            //                 console.log(response.data)
-                            //                 WorkflowLog.create({
-                            //                     uuid: crypto.randomUUID(),
-                            //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                            //                     message: response.data,
-                            //                     level: "info",
-                            //                     workflow_uuid: workflow.uuid
-                            //                 },
-                            //                     function(err,workflowLog){
-                            //                         if (err) {
-                            //                             console.log(err);
-                            //                             return;
-                            //                         }
-                            //                     })
-                            //             }).catch((error) => {
-                            //                 console.log(error)
-                            //                 WorkflowLog.create({
-                            //                     uuid: crypto.randomUUID(),
-                            //                     created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                            //                     message: error,
-                            //                     level: "error",
-                            //                     workflow_uuid: workflow.uuid,
-                            //                     traceUUID: traceUUID
-                            //                 },
-                            //                     function(err,workflowLog){
-                            //                         if (err) {
-                            //                             console.log(err);
-                            //                             return;
-                            //                         }
-                            //                     })
-                            //             })
-                            //         }
-                            //     })
-                            // }).catch((err) => {
-                            //     console.log(err);
-                            // })
-
-                        } else if (Object.keys(header).length == 0 && Object.keys(path).length > 0) {
-                            // engine.parseAndRender(stringifiedPathTemplate, inputJSON).then((result) => {
-                            //     if (nextStep.request.method === 'post') {
-                                
-                            //         axios.post(nextStepUrl + result, requestBody).then((response) => {
-                            //             console.log(response.data)
-                            //             WorkflowLog.create({
-                            //                 uuid: crypto.randomUUID(),
-                            //                 created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                            //                 message: response.data,
-                            //                 level: "info",
-                            //                 workflow_uuid: workflow.uuid
-                            //             },
-                            //                 function(err,workflowLog){
-                            //                     if (err) {
-                            //                         console.log(err);
-                            //                         return;
-                            //                     }
-                            //                 })
-                            //         }).catch((error) => {
-                            //             console.log(error)
-                            //             WorkflowLog.create({
-                            //                 uuid: crypto.randomUUID(),
-                            //                 created_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''),
-                            //                 message: error,
-                            //                 level: "error",
-                            //                 workflow_uuid: workflow.uuid,
-                            //                 traceUUID: traceUUID
-                            //             },
-                            //                 function(err,workflowLog){
-                            //                     if (err) {
-                            //                         console.log(err);
-                            //                         return;
-                            //                     }
-                            //                 })
-                            //         })
-                            
-                            //     } 
-                            
-                            // }).catch((err) => {
-                            //     console.log(err);
-                            // })
-
-                        }
-                })
-
-            }
-       
-        }
-    }
 }
 
 function retrieveInterfaces(userId){
@@ -2229,9 +2000,10 @@ function processOpenApiV2PathActions(pathKeys, pathValues, parent_interface_uuid
             }) : [];
 
             var actionRequestBody = values[j].parameters ? values[j].parameters.filter(function (parameter) {
+                
                 return parameter.in == "body";
             }) : [];
-        
+
             for (var k = 0; k < responseKeys.length; ++k){
                 if (responseValues[k].schema !== undefined) {
                     var responseSchema = responseValues[k].schema;
@@ -2595,6 +2367,7 @@ function convertPostmanCollection(collection, userId){
     });
 }
 
+// HELPER FUNCTIONS FOR RAG USE CASES (Assistants for Workflow, API, and Partnerships)
 async function upsertVectors(vectors) {
     const pinecone = new PineconeClient();
     const MAX_BATCH_SIZE = 100;
@@ -2633,8 +2406,7 @@ async function upsertVectors(vectors) {
         message: error
       };
     }
-  }
-
+}
 
 function processWorkflow(workflow){
 
@@ -2679,7 +2451,6 @@ function processWorkflow(workflow){
 
     return processedWorkflow;
 }
-
 
 async function processPartnershipForVectorDb(partnership){
 
@@ -2966,4 +2737,4 @@ async function processApiForVectorDb(apiSpec) {
    
 }
 
-module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, runWorkflow, convertPostmanCollection, processApiForVectorDb, processPartnershipForVectorDb};
+module.exports = { processOpenApiV3, processOpenApiV2, retrieveInterfaces, convertPostmanCollection, processApiForVectorDb, processPartnershipForVectorDb};

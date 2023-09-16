@@ -90,15 +90,16 @@ router.post('/upload', (req,res, next) => {
             } else {
                 if(req.body.spec.openapi?.split('.')[0] == "2" || req.body.spec.swagger?.split('.')[0] == "2"){
                     console.log("OPEN API 2.X")
-                    lib.processOpenApiV2(req.body.spec, req.body.userId, req.body.organizationId,jobUUID);
+                    lib.processOpenApiV2(req.body.spec, req.body.userId, req.body.owning_organization, req.body.importing_organization, jobUUID);
                     
                   } else if (req.body.spec.openapi?.split('.')[0] == "3" || req.body.spec.swagger?.split('.')[0] == "3"){
                     console.log("OPEN API 3.X")
-                    lib.processOpenApiV3(req.body.spec, req.body.userId, req.body.organizationId, jobUUID)
+                    
+                    lib.processOpenApiV3(req.body.spec, req.body.userId, req.body.owning_organization, req.body.importing_organization, jobUUID)
             
                   } else {
                     console.log("NOT OPENAPI OR SWAGGER, TRYING POSTMAN")
-                    lib.convertPostmanCollection(req.body.spec, req.body.userId, req.body.organizationId, jobUUID);
+                    lib.convertPostmanCollection(req.body.spec, req.body.userId, req.body.owning_organization, req.body.importing_organization, jobUUID);
                   }
                 res.status(200).send(job)
             } 
@@ -113,7 +114,8 @@ router.post('/', function(req,res) {
         name: req.body.name,
         description: req.body.description,
         version: req.body.version,
-        owning_organization: req.body.organizationId,
+        owning_organization: req.body.owning_organization,
+        importing_organization: req.body.importing_organization,
         indexed: false
     },
     function (err,interface) {
@@ -122,17 +124,23 @@ router.post('/', function(req,res) {
     });
 });
 
-
-//GET ALL INTERFACES (NO USER AUTH)
+//FIND INTERFACES
 router.get('/', (req,res) => {
     if (req.query.organization) {
-        Interface.find({owning_organization: req.query.organization}, function (err, interfaces) {
+        Interface.find({importing_organization: req.query.organization}, function (err, interfaces) {
             if (err) return res.status(404).send("There was a problem finding the interfaces with the provided organization ID.");
             res.status(200).send(interfaces);
         })
+    } else if (req.query.job){
+        Interface.findOne({ jobIds: { $in: [req.params.jobId] } }, function (err, interface) {
+            if (err) return res.status(500).send("There was a problem finding the interface.");
+            if (!interface) return res.status(404).send("No interface found with the provided jobId.");
+            res.status(200).send(interface);
+        });
     } else {
-        res.status(400).send({message: "No organization ID provided."})
-      }   
+        res.status(400).send({message: "No parameters provided."})
+    } 
+   
 });
 
 // GET AN INTERFACE

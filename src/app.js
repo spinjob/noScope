@@ -24,6 +24,7 @@ const WorkflowLogController = require('../models/workflow_log/WorkflowLogControl
 const OrganizationController = require('../models/organization/OrganizationController');
 const CustomerController = require('../models/customer/CustomerController');
 const JobController = require('../models/job/JobController');
+const CodeController = require('../models/code/CodeController');
 const Job = require('../models/job/Job');
 
 if (process.env.NODE_ENV !== "production") {
@@ -67,6 +68,7 @@ app.use('/transform', TransformerController);
 app.use('/organizations', OrganizationController);
 app.use('/customers', CustomerController);
 app.use('/jobs', JobController);
+app.use('/code', CodeController);
 
 //All other GET requests not handled will return our React app
 app.get('*', (req, res) => {

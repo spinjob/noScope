@@ -43,7 +43,6 @@ router.get('/:id/details', function(req,res) {
 // FIND PROJECTS BY ORGANIZATION
 router.get('/', (req,res) => {
     if (req.query.organization) {
-      console.log("ORGANIZATION QUERY: " + req.query.organization)
         Project.find({owning_organization: req.query.organization}, function (err, projects) {
             if (err) return res.status(404).send("There was a problem finding the projects with the provided organization ID.");
             res.status(200).send(projects);
@@ -73,12 +72,19 @@ router.post('/interfaces', function(req,res){
 
 //UPDATE A PROJECT
 router.put('/:id', function (req,res){
-
-    Project.findOneAndUpdate({uuid: req.params.id}, { $push: {workflows: req.body.uuid}}, function (err, project) {
-        if (err) return res.status(500).send("There was a problem updating the project.");
-        res.status(200).send(project);
-    });
-
+    Project.findOneAndUpdate(
+        {uuid: req.params.id}, 
+        { 
+            $addToSet: {
+                workflows: req.body.uuid,
+                interfaces: { $each: req.body.interfaces }
+            }
+        }, 
+        function (err, project) {
+            if (err) return res.status(500).send(err);
+            res.status(200).send(project);
+        }
+    );
 })
 
 //UPDATE PROJECT CUSTOMER LIST

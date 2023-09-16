@@ -22,11 +22,32 @@ router.post('/', function(req,res) {
 
 // GET INTERFACE OBJECTS
 router.get('/:id/objects', function(req,res){
-    InterfaceEntity.find({parent_interface_uuid:req.params.id}, function (err, interfaceEntity) {
-        if (err) return res.status(500).send("There was a problem finding objects for the provided interface ID.");
-        //if (!user) return res.status(404).send("The interface you provided was not found.")
-        res.status(200).send(interfaceEntity);
-    });
+    InterfaceEntity.find(
+        {
+            parent_interface_uuid:req.params.id, 
+            type: 'object',
+            properties: {$exists: true}
+        }, 
+        function (err, interfaceEntity) {
+            if (err) return res.status(500).send("There was a problem finding objects for the provided interface ID.");
+            //if (!user) return res.status(404).send("The interface you provided was not found.")
+            res.status(200).send(interfaceEntity);
+        }
+    );
+});
+
+// GET INTERFACE OBJECT
+router.get('/objects/:objectId', function(req,res){
+    InterfaceEntity.findOne(
+        {
+            uuid: req.params.objectId
+        }, 
+        function (err, interfaceEntity) {
+            if (err) return res.status(500).send("There was a problem finding objects for the provided interface ID.");
+            //if (!user) return res.status(404).send("The interface you provided was not found.")
+            res.status(200).send(interfaceEntity);
+        }
+    );
 });
 
 

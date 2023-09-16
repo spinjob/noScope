@@ -14,9 +14,11 @@ var InterfaceSchema = new mongoose.Schema({
     created_by: String,
     actions: Array,
     owning_organization: String,
+    importing_organization: String,
     jobIds: Array,
     indexed: Boolean,
-    documentation: Object
+    documentation: Object,
+    graph: Object,
 });
 
 mongoose.model('Interface', InterfaceSchema);
