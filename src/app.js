@@ -26,6 +26,7 @@ const CustomerController = require('../models/customer/CustomerController');
 const JobController = require('../models/job/JobController');
 const CodeController = require('../models/code/CodeController');
 const Job = require('../models/job/Job');
+const ConnectionController = require('../models/connection/ConnectionController');
 
 if (process.env.NODE_ENV !== "production") {
     // Load environment variables from .env file in non prod environments
@@ -69,6 +70,7 @@ app.use('/organizations', OrganizationController);
 app.use('/customers', CustomerController);
 app.use('/jobs', JobController);
 app.use('/code', CodeController);
+app.use('/connections', ConnectionController);
 
 //All other GET requests not handled will return our React app
 app.get('*', (req, res) => {

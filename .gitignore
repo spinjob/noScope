@@ -3,3 +3,4 @@
 .generator
 .client.env.development
 .z-specs
+node_modules
